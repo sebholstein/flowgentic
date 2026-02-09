@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package controlplane.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
+
+// ThreadManagementService provides CRUD operations for managing thread
+// configurations on the control plane.
+service ThreadManagementService {
+  // ListThreads returns all threads for a given project.
+  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse) {}
+
+  // GetThread returns a single thread by ID.
+  rpc GetThread(GetThreadRequest) returns (GetThreadResponse) {}
+
+  // CreateThread registers a new thread.
+  rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {}
+
+  // UpdateThread modifies an existing thread configuration.
+  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse) {}
+
+  // DeleteThread removes a thread by ID.
+  rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse) {}
+}
+
+// ThreadConfig describes a thread.
+message ThreadConfig {
+  string id = 1;
+  string project_id = 2;
+  string agent = 3;
+  string model = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message ListThreadsRequest {
+  string project_id = 1;
+}
+
+message ListThreadsResponse {
+  repeated ThreadConfig threads = 1;
+}
+
+message GetThreadRequest {
+  string id = 1;
+}
+
+message GetThreadResponse {
+  ThreadConfig thread = 1;
+}
+
+message CreateThreadRequest {
+  string id = 1;
+  string project_id = 2;
+  string agent = 3;
+  string model = 4;
+}
+
+message CreateThreadResponse {
+  ThreadConfig thread = 1;
+}
+
+message UpdateThreadRequest {
+  string id = 1;
+  string agent = 2;
+  string model = 3;
+}
+
+message UpdateThreadResponse {
+  ThreadConfig thread = 1;
+}
+
+message DeleteThreadRequest {
+  string id = 1;
+}
+
+message DeleteThreadResponse {}

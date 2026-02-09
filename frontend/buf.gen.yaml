@@ -1,0 +1,8 @@
+version: v2
+inputs:
+  - directory: ../internal/proto/definitions
+plugins:
+  - local: protoc-gen-es
+    out: src/proto/gen
+    opt:
+      - target=ts

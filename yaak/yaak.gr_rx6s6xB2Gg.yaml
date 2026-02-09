@@ -1,0 +1,20 @@
+type: grpc_request
+model: grpc_request
+id: gr_rx6s6xB2Gg
+createdAt: 2026-02-06T09:48:53.699770
+updatedAt: 2026-02-09T13:18:48.970670
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_pQ4pznSF9y
+authenticationType: bearer
+authentication:
+  disabled: false
+  key: Bearer
+  token: dev-secret
+description: ''
+message: ''
+metadata: []
+method: ListAgents
+name: SystemService/ListAgents
+service: worker.v1.SystemService
+sortPriority: 0.0
+url: localhost:8081

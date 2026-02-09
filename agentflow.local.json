@@ -1,0 +1,10 @@
+{
+  "controlPlane": {
+    "port": 8080,
+    "tailscale": { "enabled": false }
+  },
+  "worker": {
+    "port": 8081,
+    "tailscale": { "enabled": false }
+  }
+}

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package worker.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// SystemService exposes system-level information about the worker node.
+service SystemService {
+  // ListAgents returns the coding agents installed on this worker
+  // along with their version and whether they are enabled by config.
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse) {}
+  // Ping is a lightweight health-check that confirms the worker is reachable.
+  rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
+message ListAgentsRequest {
+  // When true, bypass the cache and re-discover agents.
+  // The fresh result is still stored in the cache.
+  bool disable_cache = 1;
+}
+
+message ListAgentsResponse {
+  repeated AgentInfo agents = 1;
+}
+
+message PingRequest {}
+
+message PingResponse {}
+
+message AgentInfo {
+  // Machine-readable identifier (e.g. "claude-code", "aider", "codex").
+  string id = 1;
+  // Human-readable display name.
+  string name = 2;
+  // Installed version string.
+  string version = 3;
+  // Whether this agent is enabled in the worker's configuration.
+  bool enabled = 4;
+}

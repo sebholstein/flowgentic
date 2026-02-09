@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package controlplane.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
+
+// ProjectManagementService provides CRUD operations for managing project
+// configurations on the control plane.
+service ProjectManagementService {
+  // ListProjects returns all configured projects.
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
+
+  // GetProject returns a single project by ID.
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {}
+
+  // CreateProject registers a new project.
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {}
+
+  // UpdateProject modifies an existing project configuration.
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {}
+
+  // DeleteProject removes a project by ID.
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {}
+
+  // ReorderProjects updates the sort_index for multiple projects at once.
+  rpc ReorderProjects(ReorderProjectsRequest) returns (ReorderProjectsResponse) {}
+}
+
+// ProjectConfig describes a project.
+message ProjectConfig {
+  string id = 1;
+  string name = 2;
+  string default_planner_agent = 3;
+  string default_planner_model = 4;
+  string embedded_worker_path = 5;
+  map<string, string> worker_paths = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  int32 sort_index = 9;
+}
+
+message ListProjectsRequest {}
+
+message ListProjectsResponse {
+  repeated ProjectConfig projects = 1;
+}
+
+message GetProjectRequest {
+  string id = 1;
+}
+
+message GetProjectResponse {
+  ProjectConfig project = 1;
+}
+
+message CreateProjectRequest {
+  string id = 1;
+  string name = 2;
+  string default_planner_agent = 3;
+  string default_planner_model = 4;
+  string embedded_worker_path = 5;
+  map<string, string> worker_paths = 6;
+  int32 sort_index = 7;
+}
+
+message CreateProjectResponse {
+  ProjectConfig project = 1;
+}
+
+message UpdateProjectRequest {
+  string id = 1;
+  string name = 2;
+  string default_planner_agent = 3;
+  string default_planner_model = 4;
+  string embedded_worker_path = 5;
+  map<string, string> worker_paths = 6;
+  int32 sort_index = 7;
+}
+
+message UpdateProjectResponse {
+  ProjectConfig project = 1;
+}
+
+message DeleteProjectRequest {
+  string id = 1;
+}
+
+message DeleteProjectResponse {}
+
+message ReorderProjectsRequest {
+  // Each entry maps a project ID to its new sort index.
+  repeated ProjectSortEntry entries = 1;
+}
+
+message ProjectSortEntry {
+  string id = 1;
+  int32 sort_index = 2;
+}
+
+message ReorderProjectsResponse {}

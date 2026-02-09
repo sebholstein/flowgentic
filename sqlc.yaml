@@ -1,0 +1,23 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/worker/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/worker/store"
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/project/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/project/store"
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/thread/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/thread/store"

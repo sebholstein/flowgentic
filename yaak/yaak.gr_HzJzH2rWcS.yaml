@@ -1,0 +1,23 @@
+type: grpc_request
+model: grpc_request
+id: gr_HzJzH2rWcS
+createdAt: 2026-02-09T22:47:28.789206
+updatedAt: 2026-02-09T22:48:01.196544
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_mYkJYjAwTC
+authenticationType: null
+authentication: {}
+description: ''
+message: |-
+  {
+    "id": "flowgentic",
+    "name": "Flowgetic",
+    "default_planner_agent": "codex",
+    "embedded_worker_path": "/Users/sebastian/projects/flowgentic"
+  }
+metadata: []
+method: CreateProject
+name: ProjectManagementService/CreateProject
+service: controlplane.v1.ProjectManagementService
+sortPriority: 0.002
+url: localhost:8420

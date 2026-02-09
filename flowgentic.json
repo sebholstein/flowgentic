@@ -1,0 +1,17 @@
+{
+  "controlPlane": {
+    "port": 8420,
+    "tailscale": {
+      "enabled": false
+    },
+    "embeddedWorker": {
+      "enabled": true
+    }
+  },
+  "worker": {
+    "port": 8081,
+    "tailscale": {
+      "enabled": false
+    }
+  }
+}

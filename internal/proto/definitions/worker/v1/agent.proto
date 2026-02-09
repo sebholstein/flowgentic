@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package worker.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// Agent identifies the agent driver to use for a workload.
+enum Agent {
+  AGENT_UNSPECIFIED = 0;
+  AGENT_CLAUDE_CODE = 1;
+  AGENT_CODEX = 2;
+  AGENT_OPENCODE = 3;
+  AGENT_AMP = 4;
+  AGENT_GEMINI = 5;
+}

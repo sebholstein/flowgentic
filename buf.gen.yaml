@@ -1,0 +1,16 @@
+version: v2
+plugins:
+  - local: protoc-gen-go
+    out: internal/proto/gen
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
+    out: internal/proto/gen
+    opt: paths=source_relative
+managed:
+  enabled: true
+  disable:
+    - file_option: go_package
+      module: buf.build/bufbuild/protovalidate
+  override:
+    - file_option: go_package_prefix
+      value: github.com/sebastianm/flowgentic/internal/proto/gen

@@ -1,0 +1,20 @@
+type: grpc_request
+model: grpc_request
+id: gr_7yQxY4xoqB
+createdAt: 2026-02-09T22:31:13.541706
+updatedAt: 2026-02-09T22:47:20.631536
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_mYkJYjAwTC
+authenticationType: null
+authentication: {}
+description: ''
+message: |-
+  {
+    "id": "flowgentic"
+  }
+metadata: []
+method: DeleteProject
+name: ''
+service: controlplane.v1.ProjectManagementService
+sortPriority: 0.001
+url: localhost:8420

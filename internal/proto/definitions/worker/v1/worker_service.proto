@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package worker.v1;
+
+import "buf/validate/validate.proto";
+import "worker/v1/agent.proto";
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// WorkerService is the API exposed by each worker node.
+// The control plane calls these RPCs to schedule and manage workloads.
+service WorkerService {
+  // ScheduleWorkload asks the worker to run an agent workload.
+  rpc ScheduleWorkload(ScheduleWorkloadRequest) returns (ScheduleWorkloadResponse) {}
+}
+
+message ScheduleWorkloadRequest {
+  // Unique identifier for this workload, assigned by the control plane.
+  string workload_id = 1 [(buf.validate.field).string.min_len = 1];
+  // Agent driver to use.
+  Agent agent = 2;
+  // Session mode: "headless" or "interactive".
+  string mode = 3;
+  // The prompt to send to the agent.
+  string prompt = 4;
+  // Optional system prompt override.
+  string system_prompt = 5;
+  // Optional model override (e.g. "opus", "sonnet").
+  string model = 6;
+  // Working directory for the agent session.
+  string cwd = 7;
+  // Optional: resume an existing session by ID.
+  string session_id = 8;
+  // Whether to run in yolo/auto-approve mode.
+  bool yolo = 9;
+  // Optional list of allowed tools.
+  repeated string allowed_tools = 10;
+}
+
+message ScheduleWorkloadResponse {
+  // Whether the worker accepted the workload.
+  bool accepted = 1;
+  // Human-readable message (e.g. reason for rejection).
+  string message = 2;
+  // The session ID for the launched workload.
+  string session_id = 3;
+  // The agent driver used.
+  Agent agent = 4;
+  // Current status of the session.
+  string status = 5;
+  // Session mode (headless or interactive).
+  string mode = 6;
+  // The agent-side session ID (assigned by or passed to the CLI).
+  string agent_session_id = 11;
+}

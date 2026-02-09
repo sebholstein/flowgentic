@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package controlplane.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
+
+// WorkerManagementService provides CRUD operations for managing worker
+// configurations on the control plane.
+service WorkerManagementService {
+  // ListWorkers returns all configured workers.
+  rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse) {}
+
+  // CreateWorker registers a new worker.
+  rpc CreateWorker(CreateWorkerRequest) returns (CreateWorkerResponse) {}
+
+  // UpdateWorker modifies an existing worker configuration.
+  rpc UpdateWorker(UpdateWorkerRequest) returns (UpdateWorkerResponse) {}
+
+  // DeleteWorker removes a worker by ID.
+  rpc DeleteWorker(DeleteWorkerRequest) returns (DeleteWorkerResponse) {}
+
+  // PingWorker pings a specific worker through the relay and returns the
+  // round-trip time as a human-readable duration string.
+  rpc PingWorker(PingWorkerRequest) returns (PingWorkerResponse) {}
+}
+
+// WorkerConfig describes a worker endpoint.
+message WorkerConfig {
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string secret = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message ListWorkersRequest {}
+
+message ListWorkersResponse {
+  repeated WorkerConfig workers = 1;
+}
+
+message CreateWorkerRequest {
+  string name = 1;
+  string url = 2;
+  string secret = 3;
+  string id = 4;
+}
+
+message CreateWorkerResponse {
+  WorkerConfig worker = 1;
+}
+
+message UpdateWorkerRequest {
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string secret = 4;
+}
+
+message UpdateWorkerResponse {
+  WorkerConfig worker = 1;
+}
+
+message DeleteWorkerRequest {
+  string id = 1;
+}
+
+message DeleteWorkerResponse {}
+
+message PingWorkerRequest {
+  string worker_id = 1;
+}
+
+message PingWorkerResponse {
+  string duration = 1;
+}

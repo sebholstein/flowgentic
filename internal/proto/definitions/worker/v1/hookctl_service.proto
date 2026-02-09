@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package worker.v1;
+
+import "buf/validate/validate.proto";
+import "worker/v1/agent.proto";
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// HookCtlService receives hook lifecycle events from agent processes via the hookctl binary.
+service HookCtlService {
+  // ReportHook receives a hook event from an agent process.
+  rpc ReportHook(ReportHookRequest) returns (ReportHookResponse) {}
+}
+
+message ReportHookRequest {
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
+  Agent agent = 2;
+  string hook_name = 3;
+  bytes payload = 4;
+}
+
+message ReportHookResponse {}

@@ -1,0 +1,26 @@
+type: grpc_request
+model: grpc_request
+id: gr_m3dsaL4oME
+createdAt: 2026-02-09T13:19:15.145483
+updatedAt: 2026-02-09T13:28:42.128331
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_pQ4pznSF9y
+authenticationType: bearer
+authentication:
+  disabled: false
+  key: Bearer
+  token: dev-secret
+description: ''
+message: |-
+  {
+    "session_id": "asdasd",
+    "workload_id": "adsadasd",
+    "mode": "headless",
+    "yolo": true,
+  }
+metadata: []
+method: ScheduleWorkload
+name: SystemService/Ping Copy
+service: worker.v1.WorkerService
+sortPriority: 0.002
+url: localhost:8081

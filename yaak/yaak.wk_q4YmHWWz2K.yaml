@@ -1,0 +1,14 @@
+type: workspace
+model: workspace
+id: wk_q4YmHWWz2K
+createdAt: 2026-02-06T09:48:43.484173
+updatedAt: 2026-02-06T09:48:43.484174
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Flowgetic
+encryptionKeyChallenge: null
+settingValidateCertificates: true
+settingFollowRedirects: true
+settingRequestTimeout: 0
