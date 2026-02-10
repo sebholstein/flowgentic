@@ -27,7 +27,7 @@ func setTopicCmd() *cobra.Command {
 				},
 			})
 			if err != nil {
-				fmt.Errorf("failed to set topic (please try again): %w", err)
+				return fmt.Errorf("failed to set topic (please try again): %w", err)
 			}
 			fmt.Println("Topic set successfully")
 			return nil
