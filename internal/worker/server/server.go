@@ -112,7 +112,7 @@ func (s *Server) Start() error {
 
 	ctlURL := fmt.Sprintf("http://%s", ctlLn.Addr().String())
 
-	// Create drivers and the WorkloadManager via workload.Start().
+	// Create drivers and the AgentRunManager via workload.Start().
 	mgr := workload.Start(workload.StartDeps{
 		Mux:          publicMux,
 		Log:          s.log,
@@ -127,7 +127,7 @@ func (s *Server) Start() error {
 		CtlSecret: ctlSecret,
 	})
 
-	// Wire agentctl RPC handlers, passing the WorkloadManager as EventHandler.
+	// Wire agentctl RPC handlers, passing the AgentRunManager as EventHandler.
 	agentctl.Start(agentctl.StartDeps{
 		Mux:          ctlMux,
 		Log:          s.log,

@@ -14,10 +14,10 @@ import (
 
 func TestHookCtlServiceHandler_ReportHook(t *testing.T) {
 	d := newFakeDriver("claude-code")
-	m := workload.NewWorkloadManager(testLogger(), "", "", d)
+	m := workload.NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-hook"
-	_, err := m.Launch(context.Background(), workloadID, "claude-code", driver.LaunchOpts{
+	agentRunID := "ar-hook"
+	_, err := m.Launch(context.Background(), agentRunID, "claude-code", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func TestHookCtlServiceHandler_ReportHook(t *testing.T) {
 
 	t.Run("successful hook report", func(t *testing.T) {
 		req := connect.NewRequest(&workerv1.ReportHookRequest{
-			SessionId: workloadID,
+			SessionId: agentRunID,
 			Agent:     workerv1.Agent_AGENT_CLAUDE_CODE,
 			HookName:  "Stop",
 			Payload:   []byte(`{"reason":"user_request"}`),

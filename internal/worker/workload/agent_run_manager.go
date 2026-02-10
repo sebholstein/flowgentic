@@ -9,8 +9,8 @@ import (
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
 )
 
-// WorkloadManager manages agent drivers and sessions.
-type WorkloadManager struct {
+// AgentRunManager manages agent drivers and sessions.
+type AgentRunManager struct {
 	log       *slog.Logger
 	drivers   map[string]driver.Driver
 	ctlURL    string
@@ -26,13 +26,13 @@ type sessionEntry struct {
 	driver  driver.Driver
 }
 
-// NewWorkloadManager creates a new WorkloadManager with the given drivers.
-func NewWorkloadManager(log *slog.Logger, ctlURL, ctlSecret string, drivers ...driver.Driver) *WorkloadManager {
+// NewAgentRunManager creates a new AgentRunManager with the given drivers.
+func NewAgentRunManager(log *slog.Logger, ctlURL, ctlSecret string, drivers ...driver.Driver) *AgentRunManager {
 	dm := make(map[string]driver.Driver, len(drivers))
 	for _, d := range drivers {
 		dm[d.Agent()] = d
 	}
-	return &WorkloadManager{
+	return &AgentRunManager{
 		log:       log,
 		drivers:   dm,
 		ctlURL:    ctlURL,
@@ -43,10 +43,10 @@ func NewWorkloadManager(log *slog.Logger, ctlURL, ctlSecret string, drivers ...d
 }
 
 // Launch starts a new session with the specified agent driver.
-// workloadID is the control-plane-provided key used for session tracking,
+// agentRunID is the control-plane-provided key used for session tracking,
 // event routing, and hook callbacks. opts.SessionID is only used by the
 // driver to resume an existing agent session.
-func (m *WorkloadManager) Launch(_ context.Context, workloadID, agentID string, opts driver.LaunchOpts, onEvent driver.EventCallback) (driver.Session, error) {
+func (m *AgentRunManager) Launch(_ context.Context, agentRunID, agentID string, opts driver.LaunchOpts, onEvent driver.EventCallback) (driver.Session, error) {
 	ctx := context.Background()
 	d, ok := m.drivers[agentID]
 	if !ok {
@@ -73,10 +73,9 @@ func (m *WorkloadManager) Launch(_ context.Context, workloadID, agentID string, 
 	}
 	opts.EnvVars["AGENTCTL_WORKER_URL"] = m.ctlURL
 	opts.EnvVars["AGENTCTL_WROKER_SECRET"] = m.ctlSecret
-	opts.EnvVars["FLOWGENTIC_AGENT_RUN_ID"] = workloadID
+	opts.EnvVars["AGENTCTL_AGENT_RUN_ID"] = agentRunID
 
 	wrappedOnEvent := func(e driver.Event) {
-		e.SessionID = workloadID
 		e.Agent = agentID
 		m.log.Info("event received",
 			"type", e.Type,
@@ -95,7 +94,7 @@ func (m *WorkloadManager) Launch(_ context.Context, workloadID, agentID string, 
 
 		// Auto-remove session when it stops.
 		if e.Type == driver.EventTypeTurnComplete {
-			m.removeSession(workloadID)
+			m.removeSession(agentRunID)
 		}
 	}
 
@@ -127,14 +126,14 @@ func (m *WorkloadManager) Launch(_ context.Context, workloadID, agentID string, 
 	}
 
 	m.mu.Lock()
-	m.sessions[workloadID] = sessionEntry{session: sess, driver: d}
+	m.sessions[agentRunID] = sessionEntry{session: sess, driver: d}
 	m.mu.Unlock()
 
-	m.log.Info("session launched", "agent", agentID, "workload_id", workloadID, "mode", opts.Mode, "agent_session_id", sess.Info().AgentSessionID)
+	m.log.Info("session launched", "agent", agentID, "agent_run_id", agentRunID, "mode", opts.Mode, "agent_session_id", sess.Info().AgentSessionID)
 	return sess, nil
 }
 
-func (m *WorkloadManager) getCwdLock(cwd string) *sync.Mutex {
+func (m *AgentRunManager) getCwdLock(cwd string) *sync.Mutex {
 	m.cwdMu.Lock()
 	defer m.cwdMu.Unlock()
 	lock, ok := m.cwdLocks[cwd]
@@ -146,7 +145,7 @@ func (m *WorkloadManager) getCwdLock(cwd string) *sync.Mutex {
 }
 
 // GetSession returns a session by ID.
-func (m *WorkloadManager) GetSession(id string) (driver.Session, bool) {
+func (m *AgentRunManager) GetSession(id string) (driver.Session, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	e, ok := m.sessions[id]
@@ -163,7 +162,7 @@ type SessionListEntry struct {
 }
 
 // ListSessions returns info for all active sessions, keyed by agent run ID.
-func (m *WorkloadManager) ListSessions() []SessionListEntry {
+func (m *AgentRunManager) ListSessions() []SessionListEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	entries := make([]SessionListEntry, 0, len(m.sessions))
@@ -177,7 +176,7 @@ func (m *WorkloadManager) ListSessions() []SessionListEntry {
 }
 
 // StopSession stops the session with the given ID.
-func (m *WorkloadManager) StopSession(ctx context.Context, id string) error {
+func (m *AgentRunManager) StopSession(ctx context.Context, id string) error {
 	m.mu.RLock()
 	e, ok := m.sessions[id]
 	m.mu.RUnlock()
@@ -192,7 +191,7 @@ func (m *WorkloadManager) StopSession(ctx context.Context, id string) error {
 }
 
 // ListDrivers returns capabilities for all registered drivers.
-func (m *WorkloadManager) ListDrivers() []driver.Capabilities {
+func (m *AgentRunManager) ListDrivers() []driver.Capabilities {
 	caps := make([]driver.Capabilities, 0, len(m.drivers))
 	for _, d := range m.drivers {
 		caps = append(caps, d.Capabilities())
@@ -201,7 +200,7 @@ func (m *WorkloadManager) ListDrivers() []driver.Capabilities {
 }
 
 // HandleHookEvent routes an incoming hook event to the appropriate session's driver.
-func (m *WorkloadManager) HandleHookEvent(ctx context.Context, event driver.HookEvent) error {
+func (m *AgentRunManager) HandleHookEvent(ctx context.Context, event driver.HookEvent) error {
 	entry := m.getSessionEntry(event.SessionID)
 	if entry == nil {
 		return fmt.Errorf("session not found: %s", event.SessionID)
@@ -209,7 +208,7 @@ func (m *WorkloadManager) HandleHookEvent(ctx context.Context, event driver.Hook
 	return entry.driver.HandleHookEvent(ctx, event.SessionID, event)
 }
 
-func (m *WorkloadManager) getSessionEntry(id string) *sessionEntry {
+func (m *AgentRunManager) getSessionEntry(id string) *sessionEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	e, ok := m.sessions[id]
@@ -220,7 +219,7 @@ func (m *WorkloadManager) getSessionEntry(id string) *sessionEntry {
 }
 
 // HandleStatusReport processes a status update from an agent.
-func (m *WorkloadManager) HandleStatusReport(_ context.Context, sessionID, agent, status string) error {
+func (m *AgentRunManager) HandleStatusReport(_ context.Context, sessionID, agent, status string) error {
 	entry := m.getSessionEntry(sessionID)
 	if entry == nil {
 		return fmt.Errorf("session not found: %s", sessionID)
@@ -230,7 +229,7 @@ func (m *WorkloadManager) HandleStatusReport(_ context.Context, sessionID, agent
 }
 
 // HandlePlanSubmission processes a plan submission from an agent.
-func (m *WorkloadManager) HandlePlanSubmission(_ context.Context, sessionID, agent string, plan []byte) error {
+func (m *AgentRunManager) HandlePlanSubmission(_ context.Context, sessionID, agent string, plan []byte) error {
 	entry := m.getSessionEntry(sessionID)
 	if entry == nil {
 		return fmt.Errorf("session not found: %s", sessionID)
@@ -239,7 +238,7 @@ func (m *WorkloadManager) HandlePlanSubmission(_ context.Context, sessionID, age
 	return nil
 }
 
-func (m *WorkloadManager) removeSession(id string) {
+func (m *AgentRunManager) removeSession(id string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.sessions, id)

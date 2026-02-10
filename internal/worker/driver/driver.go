@@ -37,7 +37,7 @@ type Driver interface {
 // SessionResolver discovers the agent session ID after launch.
 // Drivers that set the ID upfront (e.g. Claude, OpenCode) don't need this.
 // Drivers that cannot control the session ID (e.g. Codex, Gemini) implement
-// this so the WorkloadManager can resolve the ID post-launch.
+// this so the AgentRunManager can resolve the ID post-launch.
 type SessionResolver interface {
 	ResolveSessionID(ctx context.Context, cwd string) (string, error)
 }

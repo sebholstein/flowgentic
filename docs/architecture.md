@@ -56,8 +56,8 @@ graph LR
 ```
 
 - **`driver/`** — Unified interface for coding agents. Each sub-package (`claude`, `codex`, `gemini`, `opencode`) implements the same `Driver` interface, encapsulating agent-specific launch logic, event normalization, and session management. From the outside, all drivers speak the same language.
-- **`workload/`** — The heart of the worker. `WorkloadManager` is responsible for spinning up agent sessions, reconciling desired state from the control plane, and keeping sessions alive. It uses `Driver` to launch sessions but owns the lifecycle.
-- **`agentctl/`** — Agent-facing RPC service. Provides the Connect RPC endpoints that agent processes (via `cmd/agentctl` and `cmd/hookctl`) call into to report status, submit plans, and send hook events. Purely an inbound communication layer — delegates all logic to `WorkloadManager` via the `EventHandler` interface.
+- **`workload/`** — The heart of the worker. `AgentRunManager` is responsible for spinning up agent sessions, reconciling desired state from the control plane, and keeping sessions alive. It uses `Driver` to launch sessions but owns the lifecycle.
+- **`agentctl/`** — Agent-facing RPC service. Provides the Connect RPC endpoints that agent processes (via `cmd/agentctl` and `cmd/hookctl`) call into to report status, submit plans, and send hook events. Purely an inbound communication layer — delegates all logic to `AgentRunManager` via the `EventHandler` interface.
 - **`systeminfo/`** — Agent discovery. Detects which coding agents are available on the system.
 
-The internal flow is: **agentctl RPC → WorkloadManager → Driver**.
+The internal flow is: **agentctl RPC → AgentRunManager → Driver**.

@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewWorkloadManager(t *testing.T) {
+func TestNewAgentRunManager(t *testing.T) {
 	d := newFakeDriver("test-agent")
-	m := NewWorkloadManager(testLogger(), "", "", d)
+	m := NewAgentRunManager(testLogger(), "", "", d)
 
 	t.Run("lists drivers", func(t *testing.T) {
 		drivers := m.ListDrivers()
@@ -25,13 +25,13 @@ func TestNewWorkloadManager(t *testing.T) {
 	})
 }
 
-func TestWorkloadManager_Launch(t *testing.T) {
+func TestAgentRunManager_Launch(t *testing.T) {
 	t.Run("launches session successfully", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
+		m := NewAgentRunManager(testLogger(), "", "", d)
 
 		var events []driver.Event
-		sess, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		sess, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			Mode:   driver.SessionModeHeadless,
 			Prompt: "hello",
 		}, func(e driver.Event) {
@@ -47,15 +47,15 @@ func TestWorkloadManager_Launch(t *testing.T) {
 	})
 
 	t.Run("unknown driver returns error", func(t *testing.T) {
-		m := NewWorkloadManager(testLogger(), "", "")
-		_, err := m.Launch(context.Background(), "wl-1", "nonexistent", driver.LaunchOpts{}, nil)
+		m := NewAgentRunManager(testLogger(), "", "")
+		_, err := m.Launch(context.Background(), "ar-1", "nonexistent", driver.LaunchOpts{}, nil)
 		assert.ErrorContains(t, err, "unknown agent driver")
 	})
 
 	t.Run("rejects resume without capability", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		_, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		_, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			SessionID: "old-session",
 		}, nil)
 		assert.ErrorContains(t, err, "does not support session resume")
@@ -63,8 +63,8 @@ func TestWorkloadManager_Launch(t *testing.T) {
 
 	t.Run("rejects model without capability", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		_, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		_, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			Model: "gpt-4",
 		}, nil)
 		assert.ErrorContains(t, err, "does not support custom model")
@@ -72,8 +72,8 @@ func TestWorkloadManager_Launch(t *testing.T) {
 
 	t.Run("rejects system prompt without capability", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		_, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		_, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			SystemPrompt: "be helpful",
 		}, nil)
 		assert.ErrorContains(t, err, "does not support system prompts")
@@ -81,8 +81,8 @@ func TestWorkloadManager_Launch(t *testing.T) {
 
 	t.Run("rejects yolo without capability", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		_, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		_, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			Yolo: true,
 		}, nil)
 		assert.ErrorContains(t, err, "does not support yolo")
@@ -90,8 +90,8 @@ func TestWorkloadManager_Launch(t *testing.T) {
 
 	t.Run("accepts capabilities when supported", func(t *testing.T) {
 		d := newFakeDriver("test-agent", driver.CapCustomModel, driver.CapSystemPrompt, driver.CapYolo, driver.CapSessionResume)
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		sess, err := m.Launch(context.Background(), "wl-1", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		sess, err := m.Launch(context.Background(), "ar-1", "test-agent", driver.LaunchOpts{
 			Mode:         driver.SessionModeHeadless,
 			Model:        "gpt-4",
 			SystemPrompt: "be helpful",
@@ -104,15 +104,15 @@ func TestWorkloadManager_Launch(t *testing.T) {
 
 	t.Run("driver launch error propagated", func(t *testing.T) {
 		d := &errDriver{id: "broken"}
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		_, err := m.Launch(context.Background(), "wl-1", "broken", driver.LaunchOpts{}, nil)
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		_, err := m.Launch(context.Background(), "ar-1", "broken", driver.LaunchOpts{}, nil)
 		assert.ErrorContains(t, err, "launch failed")
 	})
 
 	t.Run("agent session ID populated from session info", func(t *testing.T) {
 		d := newFakeDriver("test-agent")
-		m := NewWorkloadManager(testLogger(), "", "", d)
-		sess, err := m.Launch(context.Background(), "wl-sid", "test-agent", driver.LaunchOpts{
+		m := NewAgentRunManager(testLogger(), "", "", d)
+		sess, err := m.Launch(context.Background(), "ar-sid", "test-agent", driver.LaunchOpts{
 			Mode: driver.SessionModeHeadless,
 		}, nil)
 		require.NoError(t, err)
@@ -120,18 +120,18 @@ func TestWorkloadManager_Launch(t *testing.T) {
 	})
 }
 
-func TestWorkloadManager_GetSession(t *testing.T) {
+func TestAgentRunManager_GetSession(t *testing.T) {
 	d := newFakeDriver("test-agent")
-	m := NewWorkloadManager(testLogger(), "", "", d)
+	m := NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-get"
-	_, err := m.Launch(context.Background(), workloadID, "test-agent", driver.LaunchOpts{
+	agentRunID := "ar-get"
+	_, err := m.Launch(context.Background(), agentRunID, "test-agent", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
 
 	t.Run("finds existing session", func(t *testing.T) {
-		found, ok := m.GetSession(workloadID)
+		found, ok := m.GetSession(agentRunID)
 		assert.True(t, ok)
 		assert.NotNil(t, found)
 	})
@@ -142,55 +142,55 @@ func TestWorkloadManager_GetSession(t *testing.T) {
 	})
 }
 
-func TestWorkloadManager_ListSessions(t *testing.T) {
+func TestAgentRunManager_ListSessions(t *testing.T) {
 	d := newFakeDriver("test-agent")
-	m := NewWorkloadManager(testLogger(), "", "", d)
+	m := NewAgentRunManager(testLogger(), "", "", d)
 
-	_, err := m.Launch(context.Background(), "wl-list-1", "test-agent", driver.LaunchOpts{Mode: driver.SessionModeHeadless}, nil)
+	_, err := m.Launch(context.Background(), "ar-list-1", "test-agent", driver.LaunchOpts{Mode: driver.SessionModeHeadless}, nil)
 	require.NoError(t, err)
-	_, err = m.Launch(context.Background(), "wl-list-2", "test-agent", driver.LaunchOpts{Mode: driver.SessionModeHeadless}, nil)
+	_, err = m.Launch(context.Background(), "ar-list-2", "test-agent", driver.LaunchOpts{Mode: driver.SessionModeHeadless}, nil)
 	require.NoError(t, err)
 
 	sessions := m.ListSessions()
 	assert.Len(t, sessions, 2)
 }
 
-func TestWorkloadManager_StopSession(t *testing.T) {
+func TestAgentRunManager_StopSession(t *testing.T) {
 	d := newFakeDriver("test-agent")
-	m := NewWorkloadManager(testLogger(), "", "", d)
+	m := NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-stop"
-	_, err := m.Launch(context.Background(), workloadID, "test-agent", driver.LaunchOpts{
+	agentRunID := "ar-stop"
+	_, err := m.Launch(context.Background(), agentRunID, "test-agent", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
 
-	err = m.StopSession(context.Background(), workloadID)
+	err = m.StopSession(context.Background(), agentRunID)
 	require.NoError(t, err)
 
-	_, ok := m.GetSession(workloadID)
+	_, ok := m.GetSession(agentRunID)
 	assert.False(t, ok)
 }
 
-func TestWorkloadManager_StopSession_NotFound(t *testing.T) {
-	m := NewWorkloadManager(testLogger(), "", "")
+func TestAgentRunManager_StopSession_NotFound(t *testing.T) {
+	m := NewAgentRunManager(testLogger(), "", "")
 	err := m.StopSession(context.Background(), "nonexistent")
 	assert.ErrorContains(t, err, "session not found")
 }
 
-func TestWorkloadManager_HandleHookEvent(t *testing.T) {
+func TestAgentRunManager_HandleHookEvent(t *testing.T) {
 	d := newFakeDriver("test-agent")
-	m := NewWorkloadManager(testLogger(), "", "", d)
+	m := NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-hook"
-	_, err := m.Launch(context.Background(), workloadID, "test-agent", driver.LaunchOpts{
+	agentRunID := "ar-hook"
+	_, err := m.Launch(context.Background(), agentRunID, "test-agent", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
 
 	t.Run("routes to driver", func(t *testing.T) {
 		hookEvt := driver.HookEvent{
-			SessionID: workloadID,
+			SessionID: agentRunID,
 			Agent:     "test-agent",
 			HookName:  "Stop",
 			Payload:   []byte(`{}`),

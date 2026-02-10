@@ -132,7 +132,7 @@ We generate an ID and pass it via `-s` / `--session` at launch. The ID is known 
 For reliable session tracking across concurrent workloads:
 
 1. **Claude & OpenCode:** Generate a UUID, pass at launch via `--session-id` / `-s`. ID is known immediately — stored in `SessionInfo.AgentSessionID`.
-2. **Codex & Gemini:** Cannot set ID upfront. These drivers implement `SessionResolver` for post-launch discovery. The `WorkloadManager` uses per-cwd mutexes to serialize launches and avoid races during discovery.
+2. **Codex & Gemini:** Cannot set ID upfront. These drivers implement `SessionResolver` for post-launch discovery. The `AgentRunManager` uses per-cwd mutexes to serialize launches and avoid races during discovery.
    - **Codex headless:** Parse `session_meta` event from the first JSONL line (contains `{"id":"<uuid>"}`).
    - **Codex interactive:** `SessionResolver` scans `~/.codex/sessions/YYYY/MM/DD/` for the newest `rollout-<timestamp>-<uuid>.jsonl` file.
    - **Gemini:** `SessionResolver` runs `gemini --list-sessions` and parses the most recent session UUID from the output.

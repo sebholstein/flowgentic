@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	workloadID := os.Getenv("FLOWGENTIC_AGENT_RUN_ID")
+	agentRunID := os.Getenv("FLOWGENTIC_AGENT_RUN_ID")
 	agentName := os.Getenv("AGENTCTL_AGENT")
 
 	protoAgent, err := driver.ParseProtoAgent(agentName)
@@ -56,7 +56,7 @@ func main() {
 
 	client := workerv1connect.NewHookCtlServiceClient(http.DefaultClient, workerURL, opts...)
 	_, err = client.ReportHook(context.Background(), connect.NewRequest(&workerv1.ReportHookRequest{
-		SessionId: workloadID,
+		SessionId: agentRunID,
 		Agent:     protoAgent,
 		HookName:  *hookName,
 		Payload:   payload,

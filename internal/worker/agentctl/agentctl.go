@@ -11,7 +11,7 @@ import (
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
 )
 
-// EventHandler defines the interface that the WorkloadManager satisfies,
+// EventHandler defines the interface that the AgentRunManager satisfies,
 // allowing agentctl RPC handlers to dispatch events without knowing the
 // concrete manager type.
 type EventHandler interface {

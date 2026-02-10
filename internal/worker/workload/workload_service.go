@@ -20,10 +20,10 @@ type LaunchResult struct {
 
 // WorkloadService orchestrates workload scheduling on the worker.
 type WorkloadService struct {
-	mgr *WorkloadManager
+	mgr *AgentRunManager
 }
 
-func NewWorkloadService(mgr *WorkloadManager) *WorkloadService {
+func NewWorkloadService(mgr *AgentRunManager) *WorkloadService {
 	return &WorkloadService{mgr: mgr}
 }
 
@@ -32,7 +32,7 @@ func (s *WorkloadService) ListAgentRuns(_ context.Context) []SessionListEntry {
 	return s.mgr.ListSessions()
 }
 
-// Schedule launches a workload via the WorkloadManager.
+// Schedule launches a workload via the AgentRunManager.
 func (s *WorkloadService) Schedule(ctx context.Context, agentRunID, agentID string, opts driver.LaunchOpts) (LaunchResult, error) {
 	sess, err := s.mgr.Launch(ctx, agentRunID, agentID, opts, nil)
 	if err != nil {

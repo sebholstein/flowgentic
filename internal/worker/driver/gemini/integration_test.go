@@ -68,7 +68,7 @@ func TestIntegration_LaunchHeadless(t *testing.T) {
 // testHookHandler implements workerv1connect.AgentHookServiceHandler for the e2e test.
 type testHookHandler struct {
 	log     *slog.Logger
-	manager *workload.WorkloadManager
+	manager *workload.AgentRunManager
 }
 
 func (h *testHookHandler) ReportHook(
@@ -97,8 +97,8 @@ func TestIntegration_EndToEnd(t *testing.T) {
 
 	d := NewDriver(DriverDeps{Log: log})
 
-	// Create a WorkloadManager just like the worker would.
-	mgr := workload.NewWorkloadManager(log, "", "", d)
+	// Create a AgentRunManager just like the worker would.
+	mgr := workload.NewAgentRunManager(log, "", "", d)
 
 	// Wire up the RPC handler on a test HTTP server.
 	mux := http.NewServeMux()
@@ -123,8 +123,8 @@ func TestIntegration_EndToEnd(t *testing.T) {
 	defer cancel()
 
 	// Launch via manager (like the worker would).
-	workloadID := "integration-test-gemini"
-	sess, err := mgr.Launch(context.Background(), workloadID, "gemini", driver.LaunchOpts{
+	agentRunID := "integration-test-gemini"
+	sess, err := mgr.Launch(context.Background(), agentRunID, "gemini", driver.LaunchOpts{
 		Mode:   driver.SessionModeHeadless,
 		Cwd:    "/tmp",
 		Prompt: "What is 2+2? Reply with just the number.",
@@ -140,7 +140,7 @@ func TestIntegration_EndToEnd(t *testing.T) {
 	require.NoError(t, err)
 
 	info := sess.Info()
-	fmt.Printf("  Workload ID: %s\n", workloadID)
+	fmt.Printf("  Agent Run ID: %s\n", agentRunID)
 	fmt.Printf("  Session ID: %s\n", info.ID)
 
 	// Wait for session to complete.

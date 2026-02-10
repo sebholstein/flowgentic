@@ -14,10 +14,10 @@ import (
 
 func TestAgentCtlServiceHandler_ReportStatus(t *testing.T) {
 	d := newFakeDriver("claude-code")
-	m := workload.NewWorkloadManager(testLogger(), "", "", d)
+	m := workload.NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-status"
-	_, err := m.Launch(context.Background(), workloadID, "claude-code", driver.LaunchOpts{
+	agentRunID := "ar-status"
+	_, err := m.Launch(context.Background(), agentRunID, "claude-code", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func TestAgentCtlServiceHandler_ReportStatus(t *testing.T) {
 
 	t.Run("successful status report", func(t *testing.T) {
 		req := connect.NewRequest(&workerv1.ReportStatusRequest{
-			SessionId: workloadID,
+			SessionId: agentRunID,
 			Agent:     workerv1.Agent_AGENT_CLAUDE_CODE,
 			Status:    "running",
 		})
@@ -48,10 +48,10 @@ func TestAgentCtlServiceHandler_ReportStatus(t *testing.T) {
 
 func TestAgentCtlServiceHandler_SubmitPlan(t *testing.T) {
 	d := newFakeDriver("claude-code")
-	m := workload.NewWorkloadManager(testLogger(), "", "", d)
+	m := workload.NewAgentRunManager(testLogger(), "", "", d)
 
-	workloadID := "wl-plan"
-	_, err := m.Launch(context.Background(), workloadID, "claude-code", driver.LaunchOpts{
+	agentRunID := "ar-plan"
+	_, err := m.Launch(context.Background(), agentRunID, "claude-code", driver.LaunchOpts{
 		Mode: driver.SessionModeHeadless,
 	}, nil)
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestAgentCtlServiceHandler_SubmitPlan(t *testing.T) {
 
 	t.Run("successful plan submission", func(t *testing.T) {
 		req := connect.NewRequest(&workerv1.SubmitPlanRequest{
-			SessionId: workloadID,
+			SessionId: agentRunID,
 			Agent:     workerv1.Agent_AGENT_CLAUDE_CODE,
 			Plan:      []byte("# My Plan\n\n1. Do stuff\n2. Do more stuff"),
 		})

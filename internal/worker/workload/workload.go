@@ -20,10 +20,10 @@ type StartDeps struct {
 }
 
 // Start registers the WorkerService RPC handler on the mux and creates
-// the WorkloadManager. It returns the manager so the caller can pass it
+// the AgentRunManager. It returns the manager so the caller can pass it
 // to agentctl as the EventHandler.
-func Start(d StartDeps) *WorkloadManager {
-	mgr := NewWorkloadManager(d.Log, d.CtlURL, d.CtlSecret, d.Drivers...)
+func Start(d StartDeps) *AgentRunManager {
+	mgr := NewAgentRunManager(d.Log, d.CtlURL, d.CtlSecret, d.Drivers...)
 	svc := NewWorkloadService(mgr)
 	h := &workerServiceHandler{log: d.Log, svc: svc}
 	d.Mux.Handle(workerv1connect.NewWorkerServiceHandler(h, d.Interceptors))
