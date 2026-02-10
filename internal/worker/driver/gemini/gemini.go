@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
+	"github.com/sebastianm/flowgentic/internal/worker/procutil"
 )
 
 const agent = "gemini"
@@ -46,6 +47,7 @@ func (d *Driver) Capabilities() driver.Capabilities {
 		Supported: []driver.Capability{
 			driver.CapCustomModel,
 			driver.CapYolo,
+			driver.CapSystemPrompt,
 		},
 	}
 }
@@ -150,12 +152,13 @@ func parseLatestSessionID(output string) (string, error) {
 
 // geminiSession represents a running Gemini session.
 type geminiSession struct {
-	info    driver.SessionInfo
-	driver  *Driver
-	onEvent driver.EventCallback
-	done    chan struct{}
-	cmd     *exec.Cmd
-	mu      sync.Mutex
+	info             driver.SessionInfo
+	driver           *Driver
+	onEvent          driver.EventCallback
+	done             chan struct{}
+	cmd              *exec.Cmd
+	systemPromptFile string // temp file for GEMINI_SYSTEM_MD; cleaned up on exit
+	mu               sync.Mutex
 }
 
 func (s *geminiSession) Info() driver.SessionInfo {
@@ -192,6 +195,16 @@ func (s *geminiSession) closeDone() {
 	case <-s.done:
 	default:
 		close(s.done)
+	}
+}
+
+func (s *geminiSession) cleanupSystemPromptFile() {
+	s.mu.Lock()
+	path := s.systemPromptFile
+	s.systemPromptFile = ""
+	s.mu.Unlock()
+	if path != "" {
+		os.Remove(path)
 	}
 }
 
@@ -234,12 +247,38 @@ func (s *geminiSession) launchHeadless(ctx context.Context, opts driver.LaunchOp
 	}
 	cmd.Stderr = os.Stderr
 
+	// System prompt support: create a temp file with the custom system prompt
+	// that preserves Gemini's default capabilities via template variables.
+	if opts.SystemPrompt != "" {
+		f, err := os.CreateTemp("", "gemini-system-*.md")
+		if err != nil {
+			return fmt.Errorf("create system prompt temp file: %w", err)
+		}
+		systemMD := "# System Instructions\n\n" +
+			opts.SystemPrompt + "\n\n" +
+			"${AgentSkills}\n\n" +
+			"${SubAgents}\n\n" +
+			"# Available Tools\n\n${AvailableTools}\n"
+		if _, err := f.WriteString(systemMD); err != nil {
+			f.Close()
+			os.Remove(f.Name())
+			return fmt.Errorf("write system prompt: %w", err)
+		}
+		f.Close()
+
+		cmd.Env = append(os.Environ(), "GEMINI_SYSTEM_MD="+f.Name())
+		s.driver.log.Info("using custom system prompt", "path", f.Name())
+		s.mu.Lock()
+		s.systemPromptFile = f.Name()
+		s.mu.Unlock()
+	}
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("stdout pipe: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartWithCleanup(cmd); err != nil {
 		return fmt.Errorf("start gemini: %w", err)
 	}
 
@@ -251,6 +290,7 @@ func (s *geminiSession) launchHeadless(ctx context.Context, opts driver.LaunchOp
 	go func() {
 		defer s.closeDone()
 		defer s.driver.removeSession(s.info.ID)
+		defer s.cleanupSystemPromptFile()
 
 		scanner := bufio.NewScanner(stdout)
 		scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)

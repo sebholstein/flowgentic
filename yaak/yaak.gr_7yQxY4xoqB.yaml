@@ -2,7 +2,7 @@ type: grpc_request
 model: grpc_request
 id: gr_7yQxY4xoqB
 createdAt: 2026-02-09T22:31:13.541706
-updatedAt: 2026-02-09T22:47:20.631536
+updatedAt: 2026-02-10T14:43:05.706884
 workspaceId: wk_q4YmHWWz2K
 folderId: fl_mYkJYjAwTC
 authenticationType: null
@@ -14,7 +14,7 @@ message: |-
   }
 metadata: []
 method: DeleteProject
-name: ''
-service: controlplane.v1.ProjectManagementService
+name: ProjectService/DeleteProject
+service: controlplane.v1.ProjectService
 sortPriority: 0.001
 url: localhost:8420

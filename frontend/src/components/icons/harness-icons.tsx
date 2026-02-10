@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import { Agent } from "@/proto/gen/worker/v1/agent_pb";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -85,8 +86,22 @@ export function GeminiIcon(props: IconProps) {
   );
 }
 
-/** Map harness ID to its icon component */
-export const harnessIcons: Record<string, React.ComponentType<IconProps>> = {
+/** Map Agent enum to its icon component */
+export const agentIcons: Partial<Record<Agent, React.ComponentType<IconProps>>> = {
+  [Agent.CLAUDE_CODE]: ClaudeIcon,
+  [Agent.CODEX]: CodexIcon,
+  [Agent.OPENCODE]: OpenCodeIcon,
+  [Agent.AMP]: AmpIcon,
+  [Agent.GEMINI]: GeminiIcon,
+};
+
+/** Get icon component for an agent enum value */
+export function getAgentIcon(agent: Agent): React.ComponentType<IconProps> | null {
+  return agentIcons[agent] ?? null;
+}
+
+/** String-keyed lookup for AgentInfo.id values from the system service */
+const agentIconsByStringId: Record<string, React.ComponentType<IconProps>> = {
   "claude-code": ClaudeIcon,
   codex: CodexIcon,
   opencode: OpenCodeIcon,
@@ -94,7 +109,7 @@ export const harnessIcons: Record<string, React.ComponentType<IconProps>> = {
   gemini: GeminiIcon,
 };
 
-/** Get icon component for a harness, with optional fallback */
-export function getHarnessIcon(harnessId: string): React.ComponentType<IconProps> | null {
-  return harnessIcons[harnessId] ?? null;
+/** Get icon component for a string agent ID (e.g. from AgentInfo) */
+export function getHarnessIcon(id: string): React.ComponentType<IconProps> | null {
+  return agentIconsByStringId[id] ?? null;
 }

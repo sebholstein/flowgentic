@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package controlplane.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
 
-// ProjectManagementService provides CRUD operations for managing project
+// ProjectService provides CRUD operations for managing project
 // configurations on the control plane.
-service ProjectManagementService {
+service ProjectService {
   // ListProjects returns all configured projects.
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
 
@@ -34,8 +36,8 @@ message ProjectConfig {
   string default_planner_model = 4;
   string embedded_worker_path = 5;
   map<string, string> worker_paths = 6;
-  string created_at = 7;
-  string updated_at = 8;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
   int32 sort_index = 9;
 }
 

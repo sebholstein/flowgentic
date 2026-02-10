@@ -11,13 +11,14 @@ import { useState, useCallback, useMemo, createContext, use, useRef } from "reac
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { GitBranch, Activity, Workflow, Inbox, Brain, User, Server } from "lucide-react";
+import { GitBranch, Activity, Workflow, Inbox, Brain, User, Server, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { threads } from "@/data/mockThreadsData";
-import { threadTasks } from "@/data/mockTasksData";
 import { inboxItems } from "@/data/mockInboxData";
 import { threadStatusConfig } from "@/constants/threadStatusConfig";
+import { useClient } from "@/lib/connect";
+import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
 import { ThreadGraphView } from "@/components/threads/ThreadGraphView";
 import { TaskDetailSidebar } from "@/components/threads/TaskDetailSidebar";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
@@ -86,17 +87,39 @@ function ThreadLayout() {
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const thread = threads.find((s) => s.id === threadId);
+  const threadClient = useClient(ThreadService);
+  const { data: threadData, isLoading } = useQuery({
+    queryKey: ["thread", threadId],
+    queryFn: () => threadClient.getThread({ id: threadId }),
+  });
+
+  const thread = useMemo<Thread | undefined>(() => {
+    const t = threadData?.thread;
+    if (!t) return undefined;
+    return {
+      id: t.id,
+      title: t.id.slice(0, 8),
+      description: "",
+      status: "pending",
+      taskCount: 0,
+      completedTasks: 0,
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      overseer: { id: "overseer", name: "Overseer" },
+      projectId: t.projectId,
+      mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
+      model: t.model,
+      harness: t.agent,
+    };
+  }, [threadData]);
+
   const controlPlane = useInfrastructureStore((s) =>
     thread?.controlPlaneId ? selectControlPlaneById(s, thread.controlPlaneId) : undefined,
   );
-  const [threadMode, setThreadMode] = useState<"single_agent" | "orchestrated">(
-    thread?.mode ?? "orchestrated",
-  );
-  const [threadModel, setThreadModel] = useState(thread?.model ?? "claude-opus-4");
-  const initialTasks = useMemo(() => threadTasks[threadId] ?? [], [threadId]);
-
-  const isSingleAgent = threadMode === "single_agent";
+  const [threadMode, setThreadMode] = useState<"plan" | "build">("plan");
+  const [threadModel, setThreadModel] = useState("claude-opus-4");
+  const initialTasks = useMemo<Task[]>(() => [], []);
+  const isBuildMode = threadMode === "build";
 
   // Find pending feedback for this thread
   const pendingFeedback = useMemo<InboxItem | null>(() => {
@@ -170,6 +193,14 @@ function ThreadLayout() {
     return tasks.filter((task) => task.checkIn).length;
   }, [tasks]);
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <Loader2 className="size-5 animate-spin" />
+      </div>
+    );
+  }
+
   if (!thread) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -213,7 +244,7 @@ function ThreadLayout() {
           {!isTaskDetailPage && (
             <div
               className="flex items-center gap-2 px-4 shrink-0"
-              style={isSingleAgent ? undefined : { width: `${leftPanelPercent}%` }}
+              style={isBuildMode ? undefined : { width: `${leftPanelPercent}%` }}
             >
               <Badge
                 variant="outline"
@@ -221,13 +252,13 @@ function ThreadLayout() {
               >
                 Thread
               </Badge>
-              {isSingleAgent && (
+              {isBuildMode && (
                 <Badge
                   variant="outline"
                   className="text-[10px] px-1.5 py-0 h-5 shrink-0 font-medium text-slate-400 border-slate-500/30 gap-0.5"
                 >
                   <User className="size-2.5" />
-                  Single Agent
+                  Build
                 </Badge>
               )}
               <StatusIcon
@@ -248,8 +279,8 @@ function ThreadLayout() {
             </div>
           )}
 
-          {/* Right section - tab navigation (hidden for single_agent mode) */}
-          {!isSingleAgent && (
+          {/* Right section - tab navigation (hidden for build mode) */}
+          {!isBuildMode && (
             <div className="flex-1 min-w-0 flex items-center px-4">
               {/* Tab Navigation */}
               <nav className="flex items-center gap-4 h-full" style={noDragStyle}>
@@ -317,7 +348,7 @@ function ThreadLayout() {
             </div>
           )}
           {/* Memory icon for single agent mode */}
-          {isSingleAgent && thread.memory && (
+          {isBuildMode && thread.memory && (
             <div className="flex-1 min-w-0 flex items-center justify-end px-4" style={noDragStyle}>
               <Link
                 to="/app/threads/$threadId/memory"
@@ -334,8 +365,8 @@ function ThreadLayout() {
         </div>
 
         <div className="flex flex-1 min-h-0" ref={containerRef}>
-          {/* Single Agent mode - full-width chat */}
-          {isSingleAgent && !isTaskDetailPage ? (
+          {/* Build mode - full-width chat */}
+          {isBuildMode && !isTaskDetailPage ? (
             <div className="flex-1 h-full overflow-hidden">
               <AgentChatPanel
                 target={{

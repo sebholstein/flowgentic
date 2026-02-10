@@ -16,13 +16,47 @@ type workerServiceHandler struct {
 	svc *WorkloadService
 }
 
-func (h *workerServiceHandler) ScheduleWorkload(
+var statusToProto = map[driver.SessionStatus]workerv1.AgentRunStatus{
+	driver.SessionStatusStarting: workerv1.AgentRunStatus_AGENT_RUN_STATUS_STARTING,
+	driver.SessionStatusRunning:  workerv1.AgentRunStatus_AGENT_RUN_STATUS_RUNNING,
+	driver.SessionStatusIdle:     workerv1.AgentRunStatus_AGENT_RUN_STATUS_IDLE,
+	driver.SessionStatusStopping: workerv1.AgentRunStatus_AGENT_RUN_STATUS_STOPPING,
+	driver.SessionStatusStopped:  workerv1.AgentRunStatus_AGENT_RUN_STATUS_STOPPED,
+	driver.SessionStatusErrored:  workerv1.AgentRunStatus_AGENT_RUN_STATUS_ERRORED,
+}
+
+var modeToProto = map[driver.SessionMode]workerv1.AgentRunMode{
+	driver.SessionModeHeadless: workerv1.AgentRunMode_AGENT_RUN_MODE_HEADLESS,
+}
+
+func (h *workerServiceHandler) ListAgentRuns(
 	ctx context.Context,
-	req *connect.Request[workerv1.ScheduleWorkloadRequest],
-) (*connect.Response[workerv1.ScheduleWorkloadResponse], error) {
+	_ *connect.Request[workerv1.ListAgentRunsRequest],
+) (*connect.Response[workerv1.ListAgentRunsResponse], error) {
+	entries := h.svc.ListAgentRuns(ctx)
+	runs := make([]*workerv1.AgentRunInfo, 0, len(entries))
+	for _, e := range entries {
+		runs = append(runs, &workerv1.AgentRunInfo{
+			AgentRunId:     e.AgentRunID,
+			Agent:          driver.AgentType(e.Info.AgentID).ProtoAgent(),
+			Status:         statusToProto[e.Info.Status],
+			Mode:           modeToProto[e.Info.Mode],
+			SessionId:      e.AgentRunID,
+			AgentSessionId: e.Info.AgentSessionID,
+		})
+	}
+	return connect.NewResponse(&workerv1.ListAgentRunsResponse{
+		AgentRuns: runs,
+	}), nil
+}
+
+func (h *workerServiceHandler) NewAgentRun(
+	ctx context.Context,
+	req *connect.Request[workerv1.NewAgentRunRequest],
+) (*connect.Response[workerv1.NewAgentRunResponse], error) {
 	msg := req.Msg
-	h.log.Info("ScheduleWorkload called",
-		"workload_id", msg.WorkloadId,
+	h.log.Info("NewAgentRun called",
+		"agent_run_id", msg.AgentRunId,
 		"agent", msg.Agent,
 		"mode", msg.Mode,
 	)
@@ -48,15 +82,15 @@ func (h *workerServiceHandler) ScheduleWorkload(
 		AllowedTools: msg.AllowedTools,
 	}
 
-	result, err := h.svc.Schedule(ctx, msg.WorkloadId, string(agentType), opts)
+	result, err := h.svc.Schedule(ctx, msg.AgentRunId, string(agentType), opts)
 	if err != nil {
-		h.log.Error("ScheduleWorkload internal error", "error", err)
+		h.log.Error("NewAgentRun internal error", "error", err)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	h.log.Info("ScheduleWorkload result",
+	h.log.Info("NewAgentRun result",
 		"accepted", result.Accepted,
-		"workload_id", result.WorkloadID,
+		"agent_run_id", result.AgentRunID,
 		"agent_id", result.AgentID,
 		"agent_session_id", result.AgentSessionID,
 		"status", result.Status,
@@ -64,10 +98,10 @@ func (h *workerServiceHandler) ScheduleWorkload(
 		"message", result.Message,
 	)
 
-	return connect.NewResponse(&workerv1.ScheduleWorkloadResponse{
+	return connect.NewResponse(&workerv1.NewAgentRunResponse{
 		Accepted:       result.Accepted,
 		Message:        result.Message,
-		SessionId:      result.WorkloadID,
+		SessionId:      result.AgentRunID,
 		Agent:          driver.AgentType(result.AgentID).ProtoAgent(),
 		Status:         result.Status,
 		Mode:           result.Mode,

@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
+	"github.com/sebastianm/flowgentic/internal/worker/procutil"
 )
 
 const agent = "opencode"
@@ -124,13 +127,14 @@ func (d *Driver) removeSession(id string) {
 
 // openCodeSession represents a running OpenCode session.
 type openCodeSession struct {
-	info      driver.SessionInfo
-	driver    *Driver
-	onEvent   driver.EventCallback
-	done      chan struct{}
-	serverCmd *exec.Cmd
-	serverURL string
-	mu        sync.Mutex
+	info               driver.SessionInfo
+	driver             *Driver
+	onEvent            driver.EventCallback
+	done               chan struct{}
+	serverCmd          *exec.Cmd
+	serverURL          string
+	openCodeSessionID  string
+	mu                 sync.Mutex
 }
 
 func (s *openCodeSession) Info() driver.SessionInfo {
@@ -139,14 +143,36 @@ func (s *openCodeSession) Info() driver.SessionInfo {
 	return s.info
 }
 
-func (s *openCodeSession) Stop(_ context.Context) error {
+func (s *openCodeSession) Stop(ctx context.Context) error {
 	s.mu.Lock()
 	s.info.Status = driver.SessionStatusStopping
 	serverCmd := s.serverCmd
+	sessionID := s.openCodeSessionID
+	serverURL := s.serverURL
 	s.mu.Unlock()
 
+	// Try to abort the running session gracefully.
+	if sessionID != "" && serverURL != "" {
+		abortCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		_ = s.abortSession(abortCtx, serverURL, sessionID)
+	}
+
 	if serverCmd != nil && serverCmd.Process != nil {
-		_ = serverCmd.Process.Kill()
+		// Try SIGTERM first.
+		_ = serverCmd.Process.Signal(syscall.SIGTERM)
+
+		// Wait up to 3 seconds for graceful exit, then kill.
+		done := make(chan error, 1)
+		go func() { done <- serverCmd.Wait() }()
+
+		select {
+		case <-done:
+			// Process exited gracefully.
+		case <-time.After(3 * time.Second):
+			_ = serverCmd.Process.Kill()
+			<-done
+		}
 	}
 
 	s.mu.Lock()
@@ -185,60 +211,143 @@ func (s *openCodeSession) emit(events ...driver.Event) {
 	}
 }
 
-// launchHeadless starts `opencode serve` and connects to its SSE stream.
-func (s *openCodeSession) launchHeadless(ctx context.Context, opts driver.LaunchOpts) error {
-	// Start the opencode server.
-	args := []string{"serve"}
-	if s.info.AgentSessionID != "" {
-		args = append(args, "-s", s.info.AgentSessionID)
+// findFreePort finds an available TCP port on localhost.
+func findFreePort() (int, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
 	}
+	port := l.Addr().(*net.TCPAddr).Port
+	l.Close()
+	return port, nil
+}
+
+// waitForHealthy polls the health endpoint until the server is ready.
+func waitForHealthy(ctx context.Context, serverURL string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for {
+		if time.Now().After(deadline) {
+			return fmt.Errorf("opencode server not healthy after %v", timeout)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/global/health", nil)
+		if err != nil {
+			return err
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				return nil
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(200 * time.Millisecond):
+		}
+	}
+}
+
+// parseModel splits a "provider/model" string into providerID and modelID.
+func parseModel(model string) (providerID, modelID string) {
+	idx := strings.Index(model, "/")
+	if idx < 0 {
+		return "", model
+	}
+	return model[:idx], model[idx+1:]
+}
+
+// launchHeadless starts `opencode serve` with a deterministic port and connects to its API.
+func (s *openCodeSession) launchHeadless(ctx context.Context, opts driver.LaunchOpts) error {
+	port, err := findFreePort()
+	if err != nil {
+		return fmt.Errorf("find free port: %w", err)
+	}
+
+	serverURL := fmt.Sprintf("http://127.0.0.1:%d", port)
+
+	args := []string{"serve", "--port", fmt.Sprintf("%d", port)}
 	cmd := exec.CommandContext(ctx, "opencode", args...)
 	if opts.Cwd != "" {
 		cmd.Dir = opts.Cwd
 	}
 
-	stdout, err := cmd.StdoutPipe()
+	// Capture stderr so we can surface opencode server errors.
+	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("stdout pipe: %w", err)
+		return fmt.Errorf("stderr pipe: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartWithCleanup(cmd); err != nil {
 		return fmt.Errorf("start opencode serve: %w", err)
 	}
 
+	// Log stderr lines from the opencode server in the background.
+	go func() {
+		scanner := bufio.NewScanner(stderrPipe)
+		for scanner.Scan() {
+			s.driver.log.Warn("opencode stderr", "line", scanner.Text())
+		}
+	}()
+
 	s.mu.Lock()
 	s.serverCmd = cmd
+	s.serverURL = serverURL
 	s.info.Status = driver.SessionStatusRunning
 	s.mu.Unlock()
 
-	// Read server output to find the URL, then start SSE.
 	go func() {
 		defer s.closeDone()
 		defer s.driver.removeSession(s.info.ID)
 
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			line := scanner.Text()
-			// Look for the server URL in the output.
-			if strings.Contains(line, "http://") || strings.Contains(line, "https://") {
-				url := extractURL(line)
-				if url != "" {
-					s.mu.Lock()
-					s.serverURL = url
-					s.mu.Unlock()
-					s.driver.log.Info("opencode server started", "url", url)
+		// Wait for the server to become healthy.
+		if err := waitForHealthy(ctx, serverURL, 30*time.Second); err != nil {
+			s.driver.log.Warn("opencode health check failed", "error", err)
+			s.setStatus(driver.SessionStatusErrored)
+			s.emit(driver.Event{
+				Type:      driver.EventTypeError,
+				Timestamp: time.Now(),
+				Agent:     agent,
+				Error:     fmt.Sprintf("health check failed: %v", err),
+			})
+			return
+		}
 
-					// Send the initial prompt if provided.
-					if opts.Prompt != "" {
-						if err := s.sendViaAPI(ctx, url, opts.Prompt); err != nil {
-							s.driver.log.Warn("send initial prompt", "error", err)
-						}
-					}
+		s.driver.log.Info("opencode server started", "url", serverURL)
 
-					// Start SSE event stream.
-					go s.consumeSSE(ctx, url)
-					break
-				}
+		// Create a session and send the initial prompt.
+		if opts.Prompt == "" {
+			s.driver.log.Warn("no prompt provided, opencode session will idle")
+		} else {
+			ocSessionID, err := s.createSession(ctx, serverURL, opts.Cwd)
+			if err != nil {
+				s.driver.log.Warn("create opencode session failed", "error", err)
+				s.setStatus(driver.SessionStatusErrored)
+				s.emit(driver.Event{
+					Type:      driver.EventTypeError,
+					Timestamp: time.Now(),
+					Agent:     agent,
+					Error:     fmt.Sprintf("create session: %v", err),
+				})
+				return
+			}
+
+			s.driver.log.Info("opencode session created", "opencode_session_id", ocSessionID)
+
+			s.mu.Lock()
+			s.openCodeSessionID = ocSessionID
+			s.mu.Unlock()
+
+			// Start SSE event stream before sending the prompt so we don't miss events.
+			go s.consumeSSE(ctx, serverURL)
+
+			if err := s.sendMessage(ctx, serverURL, ocSessionID, opts); err != nil {
+				s.driver.log.Warn("send initial prompt failed", "error", err)
+			} else {
+				s.driver.log.Info("initial prompt sent", "opencode_session_id", ocSessionID)
 			}
 		}
 
@@ -258,38 +367,82 @@ func (s *openCodeSession) launchHeadless(ctx context.Context, opts driver.Launch
 	return nil
 }
 
-// consumeSSE reads SSE events from the opencode server.
-func (s *openCodeSession) consumeSSE(ctx context.Context, serverURL string) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/events", nil)
-	if err != nil {
-		s.driver.log.Warn("create SSE request", "error", err)
-		return
+// createSession creates a new session via POST /session.
+func (s *openCodeSession) createSession(ctx context.Context, serverURL string, cwd string) (string, error) {
+	url := serverURL + "/session"
+	if cwd != "" {
+		url += "?directory=" + cwd
 	}
-	req.Header.Set("Accept", "text/event-stream")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return "", err
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		s.driver.log.Warn("SSE connect", "error", err)
-		return
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
-			continue
-		}
-		data := strings.TrimPrefix(line, "data: ")
-		events := normalizeSSEEvent([]byte(data))
-		s.emit(events...)
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("create session: HTTP %d: %s", resp.StatusCode, string(body))
 	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("decode session response: %w", err)
+	}
+
+	return result.ID, nil
 }
 
-// sendViaAPI sends a prompt to the opencode HTTP API.
-func (s *openCodeSession) sendViaAPI(ctx context.Context, serverURL string, message string) error {
-	payload, _ := json.Marshal(map[string]string{"prompt": message})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/session/prompt", strings.NewReader(string(payload)))
+// messageRequest is the body for POST /session/{id}/message.
+type messageRequest struct {
+	Model  *messageModel  `json:"model,omitempty"`
+	System string         `json:"system,omitempty"`
+	Parts  []messagePart  `json:"parts"`
+}
+
+type messageModel struct {
+	ProviderID string `json:"providerID"`
+	ModelID    string `json:"modelID"`
+}
+
+type messagePart struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// sendMessage sends a prompt via POST /session/{id}/prompt_async (non-blocking).
+func (s *openCodeSession) sendMessage(ctx context.Context, serverURL string, sessionID string, opts driver.LaunchOpts) error {
+	url := serverURL + "/session/" + sessionID + "/prompt_async"
+
+	body := messageRequest{
+		Parts: []messagePart{{Type: "text", Text: opts.Prompt}},
+	}
+
+	if opts.Model != "" {
+		providerID, modelID := parseModel(opts.Model)
+		body.Model = &messageModel{
+			ProviderID: providerID,
+			ModelID:    modelID,
+		}
+	}
+
+	if opts.SystemPrompt != "" {
+		body.System = opts.SystemPrompt
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(string(payload)))
 	if err != nil {
 		return err
 	}
@@ -301,32 +454,133 @@ func (s *openCodeSession) sendViaAPI(ctx context.Context, serverURL string, mess
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("opencode API error %d: %s", resp.StatusCode, string(body))
+	// prompt_async returns 204 No Content on success.
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("opencode prompt_async API error %d: %s", resp.StatusCode, string(respBody))
 	}
 	return nil
 }
 
-// extractURL finds the first http(s) URL in a string.
-func extractURL(s string) string {
-	for _, prefix := range []string{"https://", "http://"} {
-		idx := strings.Index(s, prefix)
-		if idx >= 0 {
-			end := strings.IndexAny(s[idx:], " \t\n\r\"'")
-			if end < 0 {
-				return s[idx:]
-			}
-			return s[idx : idx+end]
-		}
+// abortSession sends POST /session/{id}/abort to gracefully stop processing.
+func (s *openCodeSession) abortSession(ctx context.Context, serverURL string, sessionID string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL+"/session/"+sessionID+"/abort", nil)
+	if err != nil {
+		return err
 	}
-	return ""
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
 }
 
-// sseEvent represents an SSE event from opencode.
+// consumeSSE reads SSE events from the global event stream.
+func (s *openCodeSession) consumeSSE(ctx context.Context, serverURL string) {
+	sseURL := serverURL + "/event"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sseURL, nil)
+	if err != nil {
+		s.driver.log.Warn("create SSE request", "error", err)
+		return
+	}
+	req.Header.Set("Accept", "text/event-stream")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		s.driver.log.Warn("SSE connect failed", "error", err, "url", sseURL)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		s.driver.log.Warn("SSE endpoint returned error", "status", resp.StatusCode, "url", sseURL)
+		return
+	}
+
+	s.driver.log.Info("SSE stream connected", "url", sseURL)
+
+	scanner := bufio.NewScanner(resp.Body)
+	// Increase scanner buffer for large SSE payloads.
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		events := normalizeSSEEvent([]byte(data))
+		s.emit(events...)
+	}
+	if err := scanner.Err(); err != nil {
+		s.driver.log.Warn("SSE stream error", "error", err)
+	} else {
+		s.driver.log.Info("SSE stream closed")
+	}
+}
+
+// sseEvent represents an SSE event from the OpenCode server.
+// Events use "properties" as the payload field.
 type sseEvent struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data,omitempty"`
+	Type       string          `json:"type"`
+	Properties json.RawMessage `json:"properties,omitempty"`
+}
+
+// ssePartProperties wraps a part in message.part.updated events.
+type ssePartProperties struct {
+	Part ssePart `json:"part"`
+}
+
+// ssePart represents a message part in SSE events.
+type ssePart struct {
+	Type   string       `json:"type"`
+	Text   string       `json:"text,omitempty"`
+	CallID string       `json:"callID,omitempty"`
+	Tool   string       `json:"tool,omitempty"`
+	State  sseToolState `json:"state,omitempty"`
+	// step-finish fields
+	Cost   float64      `json:"cost,omitempty"`
+	Tokens *sseTokens   `json:"tokens,omitempty"`
+}
+
+// sseToolState represents the state of a tool call.
+type sseToolState struct {
+	Status string          `json:"status,omitempty"`
+	Input  json.RawMessage `json:"input,omitempty"`
+}
+
+// sseTokens represents token usage in step-finish events.
+type sseTokens struct {
+	Input  int `json:"input"`
+	Output int `json:"output"`
+}
+
+// sseMessageProperties wraps message info in message.updated events.
+type sseMessageProperties struct {
+	Info struct {
+		Cost struct {
+			InputTokens  int     `json:"inputTokens"`
+			OutputTokens int     `json:"outputTokens"`
+			TotalCostUSD float64 `json:"totalCost"`
+		} `json:"cost"`
+	} `json:"info"`
+}
+
+// sseSessionUpdatedProperties wraps session info in session.updated events.
+type sseSessionUpdatedProperties struct {
+	Info struct {
+		Error string `json:"error,omitempty"`
+	} `json:"info"`
+}
+
+// sseSessionStatusProperties represents session.status events.
+type sseSessionStatusProperties struct {
+	SessionID string `json:"sessionID"`
+	Status    struct {
+		Type string `json:"type"`
+	} `json:"status"`
 }
 
 // normalizeSSEEvent converts an opencode SSE event JSON to normalized Events.
@@ -339,63 +593,120 @@ func normalizeSSEEvent(raw []byte) []driver.Event {
 	now := time.Now()
 
 	switch evt.Type {
-	case "message":
-		var data struct {
-			Content string `json:"content"`
-		}
-		_ = json.Unmarshal(evt.Data, &data)
-		return []driver.Event{{
-			Type:      driver.EventTypeMessage,
-			Timestamp: now,
-			Agent:     agent,
-			Text:      data.Content,
-			Delta:     true,
-		}}
+	case "message.part.updated":
+		var props ssePartProperties
+		_ = json.Unmarshal(evt.Properties, &props)
+		return normalizePartEvent(props.Part, now)
 
-	case "tool.start":
-		var data struct {
-			Name  string          `json:"name"`
-			ID    string          `json:"id"`
-			Input json.RawMessage `json:"input"`
+	case "message.updated":
+		var props sseMessageProperties
+		_ = json.Unmarshal(evt.Properties, &props)
+		cost := props.Info.Cost
+		if cost.InputTokens > 0 || cost.OutputTokens > 0 || cost.TotalCostUSD > 0 {
+			return []driver.Event{{
+				Type:      driver.EventTypeCostUpdate,
+				Timestamp: now,
+				Agent:     agent,
+				Cost: &driver.CostInfo{
+					InputTokens:  cost.InputTokens,
+					OutputTokens: cost.OutputTokens,
+					TotalCostUSD: cost.TotalCostUSD,
+				},
+			}}
 		}
-		_ = json.Unmarshal(evt.Data, &data)
-		return []driver.Event{{
-			Type:      driver.EventTypeToolStart,
-			Timestamp: now,
-			Agent:     agent,
-			ToolName:  data.Name,
-			ToolID:    data.ID,
-			ToolInput: data.Input,
-		}}
+		return nil
 
-	case "tool.result":
-		var data struct {
-			ID      string `json:"id"`
-			IsError bool   `json:"is_error"`
+	case "session.status":
+		var props sseSessionStatusProperties
+		_ = json.Unmarshal(evt.Properties, &props)
+		if props.Status.Type == "idle" {
+			return []driver.Event{{
+				Type:      driver.EventTypeTurnComplete,
+				Timestamp: now,
+				Agent:     agent,
+			}}
 		}
-		_ = json.Unmarshal(evt.Data, &data)
-		return []driver.Event{{
-			Type:      driver.EventTypeToolResult,
-			Timestamp: now,
-			Agent:     agent,
-			ToolID:    data.ID,
-			ToolError: data.IsError,
-		}}
+		return nil
 
-	case "turn.complete":
+	case "session.idle":
 		return []driver.Event{{
 			Type:      driver.EventTypeTurnComplete,
 			Timestamp: now,
 			Agent:     agent,
 		}}
 
-	case "error":
+	case "session.updated":
+		var props sseSessionUpdatedProperties
+		_ = json.Unmarshal(evt.Properties, &props)
+		if props.Info.Error != "" {
+			return []driver.Event{{
+				Type:      driver.EventTypeError,
+				Timestamp: now,
+				Agent:     agent,
+				Error:     props.Info.Error,
+			}}
+		}
+		return nil
+	}
+
+	return nil
+}
+
+// normalizePartEvent converts a message.part.updated part to driver events.
+func normalizePartEvent(part ssePart, now time.Time) []driver.Event {
+	switch part.Type {
+	case "text":
 		return []driver.Event{{
-			Type:      driver.EventTypeError,
+			Type:      driver.EventTypeMessage,
 			Timestamp: now,
 			Agent:     agent,
-			Error:     string(evt.Data),
+			Text:      part.Text,
+			Delta:     true,
 		}}
+
+	case "tool":
+		switch part.State.Status {
+		case "running":
+			return []driver.Event{{
+				Type:      driver.EventTypeToolStart,
+				Timestamp: now,
+				Agent:     agent,
+				ToolName:  part.Tool,
+				ToolID:    part.CallID,
+				ToolInput: part.State.Input,
+			}}
+		case "completed", "error":
+			return []driver.Event{{
+				Type:      driver.EventTypeToolResult,
+				Timestamp: now,
+				Agent:     agent,
+				ToolID:    part.CallID,
+				ToolError: part.State.Status == "error",
+			}}
+		}
+
+	case "reasoning":
+		return []driver.Event{{
+			Type:      driver.EventTypeThinking,
+			Timestamp: now,
+			Agent:     agent,
+			Text:      part.Text,
+		}}
+
+	case "step-finish":
+		if part.Cost > 0 || part.Tokens != nil {
+			evt := driver.Event{
+				Type:      driver.EventTypeCostUpdate,
+				Timestamp: now,
+				Agent:     agent,
+				Cost:      &driver.CostInfo{TotalCostUSD: part.Cost},
+			}
+			if part.Tokens != nil {
+				evt.Cost.InputTokens = part.Tokens.Input
+				evt.Cost.OutputTokens = part.Tokens.Output
+			}
+			return []driver.Event{evt}
+		}
 	}
 
 	return nil

@@ -24,6 +24,7 @@ func TestDriver_Capabilities(t *testing.T) {
 	caps := d.Capabilities()
 	assert.True(t, caps.Has(driver.CapCustomModel))
 	assert.True(t, caps.Has(driver.CapYolo))
+	assert.True(t, caps.Has(driver.CapSystemPrompt))
 	assert.False(t, caps.Has(driver.CapStreaming))
 	assert.False(t, caps.Has(driver.CapSessionResume))
 }

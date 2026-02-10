@@ -41,6 +41,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import type { InboxItem } from "@/types/inbox";
+import { Agent } from "@/proto/gen/worker/v1/agent_pb";
 import type { Project } from "@/types/project";
 import type { Worker } from "@/types/server";
 
@@ -98,9 +99,9 @@ interface AgentChatPanelProps {
   /** Callback when feedback is submitted */
   onFeedbackSubmit?: (itemId: string, data: unknown) => void;
   /** Thread mode */
-  threadMode?: "single_agent" | "orchestrated";
+  threadMode?: "plan" | "build";
   /** Callback when mode changes */
-  onModeChange?: (mode: "single_agent" | "orchestrated") => void;
+  onModeChange?: (mode: "plan" | "build") => void;
   /** Selected model */
   threadModel?: string;
   /** Callback when model changes */
@@ -117,10 +118,12 @@ interface AgentChatPanelProps {
   workers?: Worker[];
   /** Callback when worker changes */
   onWorkerChange?: (workerId: string) => void;
-  /** Selected harness */
-  harness?: string;
-  /** Callback when harness changes */
-  onHarnessChange?: (harness: string) => void;
+  /** Selected agent */
+  agent?: Agent;
+  /** Callback when agent changes */
+  onAgentChange?: (agent: Agent) => void;
+  /** Callback when user sends a message — if provided, replaces mock response logic */
+  onSend?: (message: string) => void;
 }
 
 const availableModels = [
@@ -132,12 +135,12 @@ const availableModels = [
   { id: "gemini-pro", name: "Gemini Pro" },
 ];
 
-const availableHarnesses = [
-  { id: "claude-code", name: "Claude Code", icon: ClaudeIcon },
-  { id: "codex", name: "Codex", icon: CodexIcon },
-  { id: "opencode", name: "OpenCode", icon: OpenCodeIcon },
-  { id: "amp", name: "Amp", icon: AmpIcon },
-  { id: "gemini", name: "Gemini", icon: GeminiIcon },
+const availableAgents: { id: Agent; name: string; icon: typeof ClaudeIcon }[] = [
+  { id: Agent.CLAUDE_CODE, name: "Claude Code", icon: ClaudeIcon },
+  { id: Agent.CODEX, name: "Codex", icon: CodexIcon },
+  { id: Agent.OPENCODE, name: "OpenCode", icon: OpenCodeIcon },
+  { id: Agent.AMP, name: "Amp", icon: AmpIcon },
+  { id: Agent.GEMINI, name: "Gemini", icon: GeminiIcon },
 ];
 
 // Simulated agent workflow steps
@@ -329,8 +332,9 @@ export function AgentChatPanel({
   workerId,
   workers,
   onWorkerChange,
-  harness,
-  onHarnessChange,
+  agent,
+  onAgentChange,
+  onSend,
 }: AgentChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -525,15 +529,22 @@ export function AgentChatPanel({
   const handleSend = async () => {
     if (!inputValue.trim() || isSimulating) return;
 
+    const text = inputValue.trim();
     const userMessage: UserMessage = {
       id: `msg-${Date.now()}`,
       type: "user",
-      content: inputValue.trim(),
+      content: text,
       timestamp: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+
+    if (onSend) {
+      onSend(text);
+      return;
+    }
+
     setIsTyping(true);
 
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 1000));
@@ -675,7 +686,7 @@ export function AgentChatPanel({
               {(onProjectChange ||
                 onWorkerChange ||
                 onModeChange ||
-                onHarnessChange ||
+                onAgentChange ||
                 onModelChange) && (
                 <div className="w-full max-w-[480px] grid grid-cols-2 gap-x-3 gap-y-3 mb-5 text-left">
                   {onProjectChange && project && projects && (
@@ -699,23 +710,23 @@ export function AgentChatPanel({
                       <SearchableSelect
                         items={[
                           {
-                            id: "single_agent",
-                            name: "Single Agent",
-                            icon: <User className="size-3" />,
+                            id: "plan",
+                            name: "Plan",
+                            icon: <Users className="size-3" />,
                           },
                           {
-                            id: "orchestrated",
-                            name: "Orchestrated",
-                            icon: <Users className="size-3" />,
+                            id: "build",
+                            name: "Build",
+                            icon: <User className="size-3" />,
                           },
                         ]}
                         selectedId={threadMode}
-                        onSelect={(id) => onModeChange(id as "single_agent" | "orchestrated")}
+                        onSelect={(id) => onModeChange(id as "plan" | "build")}
                         placeholder="Search modes…"
                       />
                     </ConfigField>
                   )}
-                  {onWorkerChange && workerId && workers && workers.length > 1 && (
+                  {onWorkerChange && workerId && workers && workers.length > 0 && (
                     <ConfigField label="Worker">
                       <SearchableSelect
                         items={workers.map((w) => ({
@@ -730,23 +741,23 @@ export function AgentChatPanel({
                       />
                     </ConfigField>
                   )}
-                  {onHarnessChange && harness && (
-                    <ConfigField label="Harness">
+                  {onAgentChange && agent != null && (
+                    <ConfigField label="Agent">
                       <SearchableSelect
-                        items={availableHarnesses.map((h) => ({
-                          id: h.id,
-                          name: h.name,
-                          icon: <h.icon className="size-3" />,
+                        items={availableAgents.map((a) => ({
+                          id: String(a.id),
+                          name: a.name,
+                          icon: <a.icon className="size-3" />,
                         }))}
-                        selectedId={harness}
-                        onSelect={onHarnessChange}
-                        placeholder="Search harnesses…"
+                        selectedId={String(agent)}
+                        onSelect={(id) => onAgentChange(Number(id) as Agent)}
+                        placeholder="Search agents…"
                       />
                     </ConfigField>
                   )}
                   {onModelChange && threadModel && (
                     <ConfigField label="Model">
-                      {harness === "claude-code" ? (
+                      {agent === Agent.CLAUDE_CODE ? (
                         <input
                           type="text"
                           value={threadModel}

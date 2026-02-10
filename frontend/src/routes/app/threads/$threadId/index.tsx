@@ -71,17 +71,17 @@ function ThreadOverviewTab() {
               variant="outline"
               className={cn(
                 "text-xs gap-1",
-                thread.mode === "single_agent"
+                thread.mode === "build"
                   ? "text-slate-400 border-slate-500/30"
                   : "text-violet-400 border-violet-500/30",
               )}
             >
-              {thread.mode === "single_agent" ? (
+              {thread.mode === "build" ? (
                 <User className="size-3" />
               ) : (
                 <Users className="size-3" />
               )}
-              {thread.mode === "single_agent" ? "Single Agent" : "Orchestrated"}
+              {thread.mode === "build" ? "Build" : "Plan"}
             </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-3">{thread.title}</h1>

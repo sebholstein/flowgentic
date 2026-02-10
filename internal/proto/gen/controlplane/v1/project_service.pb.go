@@ -2,13 +2,14 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: controlplane/v1/project_management_service.proto
+// source: controlplane/v1/project_service.proto
 
 package controlplanev1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -30,8 +31,8 @@ type ProjectConfig struct {
 	DefaultPlannerModel string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
 	EmbeddedWorkerPath  string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
 	WorkerPaths         map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	CreatedAt           string                 `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt           string                 `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CreatedAt           *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	SortIndex           int32                  `protobuf:"varint,9,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
@@ -39,7 +40,7 @@ type ProjectConfig struct {
 
 func (x *ProjectConfig) Reset() {
 	*x = ProjectConfig{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[0]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +52,7 @@ func (x *ProjectConfig) String() string {
 func (*ProjectConfig) ProtoMessage() {}
 
 func (x *ProjectConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[0]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +65,7 @@ func (x *ProjectConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectConfig.ProtoReflect.Descriptor instead.
 func (*ProjectConfig) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{0}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ProjectConfig) GetId() string {
@@ -109,18 +110,18 @@ func (x *ProjectConfig) GetWorkerPaths() map[string]string {
 	return nil
 }
 
-func (x *ProjectConfig) GetCreatedAt() string {
+func (x *ProjectConfig) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return ""
+	return nil
 }
 
-func (x *ProjectConfig) GetUpdatedAt() string {
+func (x *ProjectConfig) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return ""
+	return nil
 }
 
 func (x *ProjectConfig) GetSortIndex() int32 {
@@ -138,7 +139,7 @@ type ListProjectsRequest struct {
 
 func (x *ListProjectsRequest) Reset() {
 	*x = ListProjectsRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[1]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +151,7 @@ func (x *ListProjectsRequest) String() string {
 func (*ListProjectsRequest) ProtoMessage() {}
 
 func (x *ListProjectsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[1]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +164,7 @@ func (x *ListProjectsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProjectsRequest.ProtoReflect.Descriptor instead.
 func (*ListProjectsRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{1}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{1}
 }
 
 type ListProjectsResponse struct {
@@ -175,7 +176,7 @@ type ListProjectsResponse struct {
 
 func (x *ListProjectsResponse) Reset() {
 	*x = ListProjectsResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[2]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -187,7 +188,7 @@ func (x *ListProjectsResponse) String() string {
 func (*ListProjectsResponse) ProtoMessage() {}
 
 func (x *ListProjectsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[2]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +201,7 @@ func (x *ListProjectsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProjectsResponse.ProtoReflect.Descriptor instead.
 func (*ListProjectsResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{2}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListProjectsResponse) GetProjects() []*ProjectConfig {
@@ -219,7 +220,7 @@ type GetProjectRequest struct {
 
 func (x *GetProjectRequest) Reset() {
 	*x = GetProjectRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[3]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -231,7 +232,7 @@ func (x *GetProjectRequest) String() string {
 func (*GetProjectRequest) ProtoMessage() {}
 
 func (x *GetProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[3]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -244,7 +245,7 @@ func (x *GetProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProjectRequest.ProtoReflect.Descriptor instead.
 func (*GetProjectRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{3}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetProjectRequest) GetId() string {
@@ -263,7 +264,7 @@ type GetProjectResponse struct {
 
 func (x *GetProjectResponse) Reset() {
 	*x = GetProjectResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[4]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +276,7 @@ func (x *GetProjectResponse) String() string {
 func (*GetProjectResponse) ProtoMessage() {}
 
 func (x *GetProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[4]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +289,7 @@ func (x *GetProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProjectResponse.ProtoReflect.Descriptor instead.
 func (*GetProjectResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{4}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetProjectResponse) GetProject() *ProjectConfig {
@@ -313,7 +314,7 @@ type CreateProjectRequest struct {
 
 func (x *CreateProjectRequest) Reset() {
 	*x = CreateProjectRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[5]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +326,7 @@ func (x *CreateProjectRequest) String() string {
 func (*CreateProjectRequest) ProtoMessage() {}
 
 func (x *CreateProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[5]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +339,7 @@ func (x *CreateProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProjectRequest.ProtoReflect.Descriptor instead.
 func (*CreateProjectRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{5}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateProjectRequest) GetId() string {
@@ -399,7 +400,7 @@ type CreateProjectResponse struct {
 
 func (x *CreateProjectResponse) Reset() {
 	*x = CreateProjectResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[6]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +412,7 @@ func (x *CreateProjectResponse) String() string {
 func (*CreateProjectResponse) ProtoMessage() {}
 
 func (x *CreateProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[6]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +425,7 @@ func (x *CreateProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProjectResponse.ProtoReflect.Descriptor instead.
 func (*CreateProjectResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{6}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateProjectResponse) GetProject() *ProjectConfig {
@@ -449,7 +450,7 @@ type UpdateProjectRequest struct {
 
 func (x *UpdateProjectRequest) Reset() {
 	*x = UpdateProjectRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[7]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +462,7 @@ func (x *UpdateProjectRequest) String() string {
 func (*UpdateProjectRequest) ProtoMessage() {}
 
 func (x *UpdateProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[7]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +475,7 @@ func (x *UpdateProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProjectRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProjectRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{7}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateProjectRequest) GetId() string {
@@ -535,7 +536,7 @@ type UpdateProjectResponse struct {
 
 func (x *UpdateProjectResponse) Reset() {
 	*x = UpdateProjectResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[8]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -547,7 +548,7 @@ func (x *UpdateProjectResponse) String() string {
 func (*UpdateProjectResponse) ProtoMessage() {}
 
 func (x *UpdateProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[8]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -560,7 +561,7 @@ func (x *UpdateProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProjectResponse.ProtoReflect.Descriptor instead.
 func (*UpdateProjectResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{8}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateProjectResponse) GetProject() *ProjectConfig {
@@ -579,7 +580,7 @@ type DeleteProjectRequest struct {
 
 func (x *DeleteProjectRequest) Reset() {
 	*x = DeleteProjectRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -591,7 +592,7 @@ func (x *DeleteProjectRequest) String() string {
 func (*DeleteProjectRequest) ProtoMessage() {}
 
 func (x *DeleteProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -604,7 +605,7 @@ func (x *DeleteProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProjectRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProjectRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{9}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteProjectRequest) GetId() string {
@@ -622,7 +623,7 @@ type DeleteProjectResponse struct {
 
 func (x *DeleteProjectResponse) Reset() {
 	*x = DeleteProjectResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +635,7 @@ func (x *DeleteProjectResponse) String() string {
 func (*DeleteProjectResponse) ProtoMessage() {}
 
 func (x *DeleteProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +648,7 @@ func (x *DeleteProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProjectResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProjectResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{10}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{10}
 }
 
 type ReorderProjectsRequest struct {
@@ -660,7 +661,7 @@ type ReorderProjectsRequest struct {
 
 func (x *ReorderProjectsRequest) Reset() {
 	*x = ReorderProjectsRequest{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[11]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -672,7 +673,7 @@ func (x *ReorderProjectsRequest) String() string {
 func (*ReorderProjectsRequest) ProtoMessage() {}
 
 func (x *ReorderProjectsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[11]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -685,7 +686,7 @@ func (x *ReorderProjectsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderProjectsRequest.ProtoReflect.Descriptor instead.
 func (*ReorderProjectsRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{11}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ReorderProjectsRequest) GetEntries() []*ProjectSortEntry {
@@ -705,7 +706,7 @@ type ProjectSortEntry struct {
 
 func (x *ProjectSortEntry) Reset() {
 	*x = ProjectSortEntry{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[12]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -717,7 +718,7 @@ func (x *ProjectSortEntry) String() string {
 func (*ProjectSortEntry) ProtoMessage() {}
 
 func (x *ProjectSortEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[12]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -730,7 +731,7 @@ func (x *ProjectSortEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectSortEntry.ProtoReflect.Descriptor instead.
 func (*ProjectSortEntry) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{12}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ProjectSortEntry) GetId() string {
@@ -755,7 +756,7 @@ type ReorderProjectsResponse struct {
 
 func (x *ReorderProjectsResponse) Reset() {
 	*x = ReorderProjectsResponse{}
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -767,7 +768,7 @@ func (x *ReorderProjectsResponse) String() string {
 func (*ReorderProjectsResponse) ProtoMessage() {}
 
 func (x *ReorderProjectsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_project_management_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_project_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -780,25 +781,25 @@ func (x *ReorderProjectsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderProjectsResponse.ProtoReflect.Descriptor instead.
 func (*ReorderProjectsResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_project_management_service_proto_rawDescGZIP(), []int{13}
+	return file_controlplane_v1_project_service_proto_rawDescGZIP(), []int{13}
 }
 
-var File_controlplane_v1_project_management_service_proto protoreflect.FileDescriptor
+var File_controlplane_v1_project_service_proto protoreflect.FileDescriptor
 
-const file_controlplane_v1_project_management_service_proto_rawDesc = "" +
+const file_controlplane_v1_project_service_proto_rawDesc = "" +
 	"\n" +
-	"0controlplane/v1/project_management_service.proto\x12\x0fcontrolplane.v1\"\xbe\x03\n" +
+	"%controlplane/v1/project_service.proto\x12\x0fcontrolplane.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\x03\n" +
 	"\rProjectConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x122\n" +
 	"\x15default_planner_agent\x18\x03 \x01(\tR\x13defaultPlannerAgent\x122\n" +
 	"\x15default_planner_model\x18\x04 \x01(\tR\x13defaultPlannerModel\x120\n" +
 	"\x14embedded_worker_path\x18\x05 \x01(\tR\x12embeddedWorkerPath\x12R\n" +
-	"\fworker_paths\x18\x06 \x03(\v2/.controlplane.v1.ProjectConfig.WorkerPathsEntryR\vworkerPaths\x12\x1d\n" +
+	"\fworker_paths\x18\x06 \x03(\v2/.controlplane.v1.ProjectConfig.WorkerPathsEntryR\vworkerPaths\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\tR\tupdatedAt\x12\x1d\n" +
+	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1d\n" +
 	"\n" +
 	"sort_index\x18\t \x01(\x05R\tsortIndex\x1a>\n" +
 	"\x10WorkerPathsEntry\x12\x10\n" +
@@ -848,31 +849,31 @@ const file_controlplane_v1_project_management_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"sort_index\x18\x02 \x01(\x05R\tsortIndex\"\x19\n" +
-	"\x17ReorderProjectsResponse2\xe0\x04\n" +
-	"\x18ProjectManagementService\x12]\n" +
+	"\x17ReorderProjectsResponse2\xd6\x04\n" +
+	"\x0eProjectService\x12]\n" +
 	"\fListProjects\x12$.controlplane.v1.ListProjectsRequest\x1a%.controlplane.v1.ListProjectsResponse\"\x00\x12W\n" +
 	"\n" +
 	"GetProject\x12\".controlplane.v1.GetProjectRequest\x1a#.controlplane.v1.GetProjectResponse\"\x00\x12`\n" +
 	"\rCreateProject\x12%.controlplane.v1.CreateProjectRequest\x1a&.controlplane.v1.CreateProjectResponse\"\x00\x12`\n" +
 	"\rUpdateProject\x12%.controlplane.v1.UpdateProjectRequest\x1a&.controlplane.v1.UpdateProjectResponse\"\x00\x12`\n" +
 	"\rDeleteProject\x12%.controlplane.v1.DeleteProjectRequest\x1a&.controlplane.v1.DeleteProjectResponse\"\x00\x12f\n" +
-	"\x0fReorderProjects\x12'.controlplane.v1.ReorderProjectsRequest\x1a(.controlplane.v1.ReorderProjectsResponse\"\x00B\xe5\x01\n" +
-	"\x13com.controlplane.v1B\x1dProjectManagementServiceProtoP\x01ZRgithub.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1\xa2\x02\x03CXX\xaa\x02\x0fControlplane.V1\xca\x02\x0fControlplane\\V1\xe2\x02\x1bControlplane\\V1\\GPBMetadata\xea\x02\x10Controlplane::V1b\x06proto3"
+	"\x0fReorderProjects\x12'.controlplane.v1.ReorderProjectsRequest\x1a(.controlplane.v1.ReorderProjectsResponse\"\x00B\xdb\x01\n" +
+	"\x13com.controlplane.v1B\x13ProjectServiceProtoP\x01ZRgithub.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1\xa2\x02\x03CXX\xaa\x02\x0fControlplane.V1\xca\x02\x0fControlplane\\V1\xe2\x02\x1bControlplane\\V1\\GPBMetadata\xea\x02\x10Controlplane::V1b\x06proto3"
 
 var (
-	file_controlplane_v1_project_management_service_proto_rawDescOnce sync.Once
-	file_controlplane_v1_project_management_service_proto_rawDescData []byte
+	file_controlplane_v1_project_service_proto_rawDescOnce sync.Once
+	file_controlplane_v1_project_service_proto_rawDescData []byte
 )
 
-func file_controlplane_v1_project_management_service_proto_rawDescGZIP() []byte {
-	file_controlplane_v1_project_management_service_proto_rawDescOnce.Do(func() {
-		file_controlplane_v1_project_management_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_controlplane_v1_project_management_service_proto_rawDesc), len(file_controlplane_v1_project_management_service_proto_rawDesc)))
+func file_controlplane_v1_project_service_proto_rawDescGZIP() []byte {
+	file_controlplane_v1_project_service_proto_rawDescOnce.Do(func() {
+		file_controlplane_v1_project_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_controlplane_v1_project_service_proto_rawDesc), len(file_controlplane_v1_project_service_proto_rawDesc)))
 	})
-	return file_controlplane_v1_project_management_service_proto_rawDescData
+	return file_controlplane_v1_project_service_proto_rawDescData
 }
 
-var file_controlplane_v1_project_management_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
-var file_controlplane_v1_project_management_service_proto_goTypes = []any{
+var file_controlplane_v1_project_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_controlplane_v1_project_service_proto_goTypes = []any{
 	(*ProjectConfig)(nil),           // 0: controlplane.v1.ProjectConfig
 	(*ListProjectsRequest)(nil),     // 1: controlplane.v1.ListProjectsRequest
 	(*ListProjectsResponse)(nil),    // 2: controlplane.v1.ListProjectsResponse
@@ -890,55 +891,58 @@ var file_controlplane_v1_project_management_service_proto_goTypes = []any{
 	nil,                             // 14: controlplane.v1.ProjectConfig.WorkerPathsEntry
 	nil,                             // 15: controlplane.v1.CreateProjectRequest.WorkerPathsEntry
 	nil,                             // 16: controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
+	(*timestamppb.Timestamp)(nil),   // 17: google.protobuf.Timestamp
 }
-var file_controlplane_v1_project_management_service_proto_depIdxs = []int32{
+var file_controlplane_v1_project_service_proto_depIdxs = []int32{
 	14, // 0: controlplane.v1.ProjectConfig.worker_paths:type_name -> controlplane.v1.ProjectConfig.WorkerPathsEntry
-	0,  // 1: controlplane.v1.ListProjectsResponse.projects:type_name -> controlplane.v1.ProjectConfig
-	0,  // 2: controlplane.v1.GetProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	15, // 3: controlplane.v1.CreateProjectRequest.worker_paths:type_name -> controlplane.v1.CreateProjectRequest.WorkerPathsEntry
-	0,  // 4: controlplane.v1.CreateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	16, // 5: controlplane.v1.UpdateProjectRequest.worker_paths:type_name -> controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
-	0,  // 6: controlplane.v1.UpdateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	12, // 7: controlplane.v1.ReorderProjectsRequest.entries:type_name -> controlplane.v1.ProjectSortEntry
-	1,  // 8: controlplane.v1.ProjectManagementService.ListProjects:input_type -> controlplane.v1.ListProjectsRequest
-	3,  // 9: controlplane.v1.ProjectManagementService.GetProject:input_type -> controlplane.v1.GetProjectRequest
-	5,  // 10: controlplane.v1.ProjectManagementService.CreateProject:input_type -> controlplane.v1.CreateProjectRequest
-	7,  // 11: controlplane.v1.ProjectManagementService.UpdateProject:input_type -> controlplane.v1.UpdateProjectRequest
-	9,  // 12: controlplane.v1.ProjectManagementService.DeleteProject:input_type -> controlplane.v1.DeleteProjectRequest
-	11, // 13: controlplane.v1.ProjectManagementService.ReorderProjects:input_type -> controlplane.v1.ReorderProjectsRequest
-	2,  // 14: controlplane.v1.ProjectManagementService.ListProjects:output_type -> controlplane.v1.ListProjectsResponse
-	4,  // 15: controlplane.v1.ProjectManagementService.GetProject:output_type -> controlplane.v1.GetProjectResponse
-	6,  // 16: controlplane.v1.ProjectManagementService.CreateProject:output_type -> controlplane.v1.CreateProjectResponse
-	8,  // 17: controlplane.v1.ProjectManagementService.UpdateProject:output_type -> controlplane.v1.UpdateProjectResponse
-	10, // 18: controlplane.v1.ProjectManagementService.DeleteProject:output_type -> controlplane.v1.DeleteProjectResponse
-	13, // 19: controlplane.v1.ProjectManagementService.ReorderProjects:output_type -> controlplane.v1.ReorderProjectsResponse
-	14, // [14:20] is the sub-list for method output_type
-	8,  // [8:14] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	17, // 1: controlplane.v1.ProjectConfig.created_at:type_name -> google.protobuf.Timestamp
+	17, // 2: controlplane.v1.ProjectConfig.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: controlplane.v1.ListProjectsResponse.projects:type_name -> controlplane.v1.ProjectConfig
+	0,  // 4: controlplane.v1.GetProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	15, // 5: controlplane.v1.CreateProjectRequest.worker_paths:type_name -> controlplane.v1.CreateProjectRequest.WorkerPathsEntry
+	0,  // 6: controlplane.v1.CreateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	16, // 7: controlplane.v1.UpdateProjectRequest.worker_paths:type_name -> controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
+	0,  // 8: controlplane.v1.UpdateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	12, // 9: controlplane.v1.ReorderProjectsRequest.entries:type_name -> controlplane.v1.ProjectSortEntry
+	1,  // 10: controlplane.v1.ProjectService.ListProjects:input_type -> controlplane.v1.ListProjectsRequest
+	3,  // 11: controlplane.v1.ProjectService.GetProject:input_type -> controlplane.v1.GetProjectRequest
+	5,  // 12: controlplane.v1.ProjectService.CreateProject:input_type -> controlplane.v1.CreateProjectRequest
+	7,  // 13: controlplane.v1.ProjectService.UpdateProject:input_type -> controlplane.v1.UpdateProjectRequest
+	9,  // 14: controlplane.v1.ProjectService.DeleteProject:input_type -> controlplane.v1.DeleteProjectRequest
+	11, // 15: controlplane.v1.ProjectService.ReorderProjects:input_type -> controlplane.v1.ReorderProjectsRequest
+	2,  // 16: controlplane.v1.ProjectService.ListProjects:output_type -> controlplane.v1.ListProjectsResponse
+	4,  // 17: controlplane.v1.ProjectService.GetProject:output_type -> controlplane.v1.GetProjectResponse
+	6,  // 18: controlplane.v1.ProjectService.CreateProject:output_type -> controlplane.v1.CreateProjectResponse
+	8,  // 19: controlplane.v1.ProjectService.UpdateProject:output_type -> controlplane.v1.UpdateProjectResponse
+	10, // 20: controlplane.v1.ProjectService.DeleteProject:output_type -> controlplane.v1.DeleteProjectResponse
+	13, // 21: controlplane.v1.ProjectService.ReorderProjects:output_type -> controlplane.v1.ReorderProjectsResponse
+	16, // [16:22] is the sub-list for method output_type
+	10, // [10:16] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
-func init() { file_controlplane_v1_project_management_service_proto_init() }
-func file_controlplane_v1_project_management_service_proto_init() {
-	if File_controlplane_v1_project_management_service_proto != nil {
+func init() { file_controlplane_v1_project_service_proto_init() }
+func file_controlplane_v1_project_service_proto_init() {
+	if File_controlplane_v1_project_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_project_management_service_proto_rawDesc), len(file_controlplane_v1_project_management_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_project_service_proto_rawDesc), len(file_controlplane_v1_project_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_controlplane_v1_project_management_service_proto_goTypes,
-		DependencyIndexes: file_controlplane_v1_project_management_service_proto_depIdxs,
-		MessageInfos:      file_controlplane_v1_project_management_service_proto_msgTypes,
+		GoTypes:           file_controlplane_v1_project_service_proto_goTypes,
+		DependencyIndexes: file_controlplane_v1_project_service_proto_depIdxs,
+		MessageInfos:      file_controlplane_v1_project_service_proto_msgTypes,
 	}.Build()
-	File_controlplane_v1_project_management_service_proto = out.File
-	file_controlplane_v1_project_management_service_proto_goTypes = nil
-	file_controlplane_v1_project_management_service_proto_depIdxs = nil
+	File_controlplane_v1_project_service_proto = out.File
+	file_controlplane_v1_project_service_proto_goTypes = nil
+	file_controlplane_v1_project_service_proto_depIdxs = nil
 }

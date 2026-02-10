@@ -22,7 +22,7 @@ export interface Thread {
   resources?: ThreadResource[];
   vcs?: ThreadVCSContext;
   projectId: string;
-  mode: "single_agent" | "orchestrated";
+  mode: "plan" | "build";
   model?: string;
   harness?: string;
   controlPlaneId?: string;

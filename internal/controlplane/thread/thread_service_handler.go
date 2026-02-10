@@ -6,15 +6,22 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// threadManagementServiceHandler implements controlplanev1connect.ThreadManagementServiceHandler.
-type threadManagementServiceHandler struct {
-	log *slog.Logger
-	svc *ThreadService
+// AgentRunCreator creates agent runs as a side effect of thread creation.
+type AgentRunCreator interface {
+	CreateAgentRunForThread(ctx context.Context, threadID, workerID, prompt, agent, model, mode string, yolo bool) (string, error)
 }
 
-func (h *threadManagementServiceHandler) ListThreads(
+// threadServiceHandler implements controlplanev1connect.ThreadServiceHandler.
+type threadServiceHandler struct {
+	log             *slog.Logger
+	svc             *ThreadService
+	agentRunCreator AgentRunCreator
+}
+
+func (h *threadServiceHandler) ListThreads(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.ListThreadsRequest],
 ) (*connect.Response[controlplanev1.ListThreadsResponse], error) {
@@ -33,7 +40,7 @@ func (h *threadManagementServiceHandler) ListThreads(
 	}), nil
 }
 
-func (h *threadManagementServiceHandler) GetThread(
+func (h *threadServiceHandler) GetThread(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.GetThreadRequest],
 ) (*connect.Response[controlplanev1.GetThreadResponse], error) {
@@ -51,15 +58,15 @@ func (h *threadManagementServiceHandler) GetThread(
 	}), nil
 }
 
-func (h *threadManagementServiceHandler) CreateThread(
+func (h *threadServiceHandler) CreateThread(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.CreateThreadRequest],
 ) (*connect.Response[controlplanev1.CreateThreadResponse], error) {
 	t := Thread{
-		ID:        req.Msg.Id,
 		ProjectID: req.Msg.ProjectId,
 		Agent:     req.Msg.Agent,
 		Model:     req.Msg.Model,
+		Mode:      req.Msg.Mode,
 	}
 
 	created, err := h.svc.CreateThread(ctx, t)
@@ -67,12 +74,20 @@ func (h *threadManagementServiceHandler) CreateThread(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	// If a prompt was provided, create an agent run for this thread.
+	if req.Msg.Prompt != "" && h.agentRunCreator != nil {
+		if _, err := h.agentRunCreator.CreateAgentRunForThread(ctx, created.ID, req.Msg.WorkerId, req.Msg.Prompt, req.Msg.Agent, req.Msg.Model, req.Msg.Mode, req.Msg.Yolo); err != nil {
+			h.log.Error("failed to create agent run for thread", "thread_id", created.ID, "error", err)
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+	}
+
 	return connect.NewResponse(&controlplanev1.CreateThreadResponse{
 		Thread: threadToProto(created),
 	}), nil
 }
 
-func (h *threadManagementServiceHandler) UpdateThread(
+func (h *threadServiceHandler) UpdateThread(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.UpdateThreadRequest],
 ) (*connect.Response[controlplanev1.UpdateThreadResponse], error) {
@@ -96,7 +111,7 @@ func (h *threadManagementServiceHandler) UpdateThread(
 	}), nil
 }
 
-func (h *threadManagementServiceHandler) DeleteThread(
+func (h *threadServiceHandler) DeleteThread(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.DeleteThreadRequest],
 ) (*connect.Response[controlplanev1.DeleteThreadResponse], error) {
@@ -117,7 +132,8 @@ func threadToProto(t Thread) *controlplanev1.ThreadConfig {
 		ProjectId: t.ProjectID,
 		Agent:     t.Agent,
 		Model:     t.Model,
-		CreatedAt: t.CreatedAt,
-		UpdatedAt: t.UpdatedAt,
+		Mode:      t.Mode,
+		CreatedAt: timestamppb.New(t.CreatedAt),
+		UpdatedAt: timestamppb.New(t.UpdatedAt),
 	}
 }

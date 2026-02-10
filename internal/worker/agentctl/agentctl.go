@@ -7,8 +7,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/sebastianm/flowgentic/internal/worker/driver"
 	workerv1connect "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1/workerv1connect"
+	"github.com/sebastianm/flowgentic/internal/worker/driver"
 )
 
 // EventHandler defines the interface that the WorkloadManager satisfies,

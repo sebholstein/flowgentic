@@ -6,16 +6,17 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// workerManagementServiceHandler implements controlplanev1connect.WorkerManagementServiceHandler.
-type workerManagementServiceHandler struct {
+// workerServiceHandler implements controlplanev1connect.WorkerServiceHandler.
+type workerServiceHandler struct {
 	log     *slog.Logger
 	svc     *WorkerService
 	pingSvc *PingService
 }
 
-func (h *workerManagementServiceHandler) ListWorkers(
+func (h *workerServiceHandler) ListWorkers(
 	ctx context.Context,
 	_ *connect.Request[controlplanev1.ListWorkersRequest],
 ) (*connect.Response[controlplanev1.ListWorkersResponse], error) {
@@ -34,7 +35,7 @@ func (h *workerManagementServiceHandler) ListWorkers(
 	}), nil
 }
 
-func (h *workerManagementServiceHandler) CreateWorker(
+func (h *workerServiceHandler) CreateWorker(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.CreateWorkerRequest],
 ) (*connect.Response[controlplanev1.CreateWorkerResponse], error) {
@@ -48,7 +49,7 @@ func (h *workerManagementServiceHandler) CreateWorker(
 	}), nil
 }
 
-func (h *workerManagementServiceHandler) UpdateWorker(
+func (h *workerServiceHandler) UpdateWorker(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.UpdateWorkerRequest],
 ) (*connect.Response[controlplanev1.UpdateWorkerResponse], error) {
@@ -66,7 +67,7 @@ func (h *workerManagementServiceHandler) UpdateWorker(
 	}), nil
 }
 
-func (h *workerManagementServiceHandler) DeleteWorker(
+func (h *workerServiceHandler) DeleteWorker(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.DeleteWorkerRequest],
 ) (*connect.Response[controlplanev1.DeleteWorkerResponse], error) {
@@ -81,7 +82,7 @@ func (h *workerManagementServiceHandler) DeleteWorker(
 	return connect.NewResponse(&controlplanev1.DeleteWorkerResponse{}), nil
 }
 
-func (h *workerManagementServiceHandler) PingWorker(
+func (h *workerServiceHandler) PingWorker(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.PingWorkerRequest],
 ) (*connect.Response[controlplanev1.PingWorkerResponse], error) {
@@ -102,7 +103,7 @@ func workerToProto(w Worker) *controlplanev1.WorkerConfig {
 		Name:      w.Name,
 		Url:       w.URL,
 		Secret:    w.Secret,
-		CreatedAt: w.CreatedAt,
-		UpdatedAt: w.UpdatedAt,
+		CreatedAt: timestamppb.New(w.CreatedAt),
+		UpdatedAt: timestamppb.New(w.UpdatedAt),
 	}
 }

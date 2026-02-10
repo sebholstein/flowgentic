@@ -13,8 +13,7 @@ func main() {
 		Short: "CLI for reporting status and submitting plans",
 	}
 
-	rootCmd.AddCommand(statusCmd())
-	rootCmd.AddCommand(submitPlanCmd())
+	rootCmd.AddCommand(setTopicCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -1,5 +1,8 @@
 # flowgentic
 
+# General
+- This project is not released yet. No backward compatibility is needed — freely remove or change old code, APIs, and formats instead of keeping legacy fallbacks.
+
 ## Technologies
 
 - Go 1.25, Connect RPC, Protobuf + Buf, SQLite (modernc) + goose migrations, Tailscale/tsnet.

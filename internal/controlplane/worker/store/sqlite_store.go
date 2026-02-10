@@ -9,6 +9,8 @@ import (
 	"github.com/sebastianm/flowgentic/internal/controlplane/worker"
 )
 
+const timeFormat = "2006-01-02T15:04:05.000Z"
+
 // SQLiteStore implements worker.Store using sqlc-generated queries.
 type SQLiteStore struct {
 	q *Queries
@@ -33,17 +35,18 @@ func (s *SQLiteStore) ListWorkers(ctx context.Context) ([]worker.Worker, error) 
 }
 
 func (s *SQLiteStore) CreateWorker(ctx context.Context, w worker.Worker) (worker.Worker, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	w.CreatedAt = now
 	w.UpdatedAt = now
 
+	nowStr := now.Format(timeFormat)
 	err := s.q.CreateWorker(ctx, CreateWorkerParams{
 		ID:        w.ID,
 		Name:      w.Name,
 		Url:       w.URL,
 		Secret:    w.Secret,
-		CreatedAt: w.CreatedAt,
-		UpdatedAt: w.UpdatedAt,
+		CreatedAt: nowStr,
+		UpdatedAt: nowStr,
 	})
 	if err != nil {
 		return worker.Worker{}, fmt.Errorf("inserting worker: %w", err)
@@ -52,14 +55,14 @@ func (s *SQLiteStore) CreateWorker(ctx context.Context, w worker.Worker) (worker
 }
 
 func (s *SQLiteStore) UpdateWorker(ctx context.Context, w worker.Worker) (worker.Worker, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	w.UpdatedAt = now
 
 	res, err := s.q.UpdateWorker(ctx, UpdateWorkerParams{
 		Name:      w.Name,
 		Url:       w.URL,
 		Secret:    w.Secret,
-		UpdatedAt: w.UpdatedAt,
+		UpdatedAt: now.Format(timeFormat),
 		ID:        w.ID,
 	})
 	if err != nil {
@@ -102,12 +105,14 @@ func (s *SQLiteStore) GetWorker(ctx context.Context, id string) (worker.Worker, 
 }
 
 func workerFromRow(r Worker) worker.Worker {
+	createdAt, _ := time.Parse(timeFormat, r.CreatedAt)
+	updatedAt, _ := time.Parse(timeFormat, r.UpdatedAt)
 	return worker.Worker{
 		ID:        r.ID,
 		Name:      r.Name,
 		URL:       r.Url,
 		Secret:    r.Secret,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}
 }

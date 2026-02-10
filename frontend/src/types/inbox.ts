@@ -295,7 +295,7 @@ export interface Thread {
   vcs?: ThreadVCSContext;
 
   // Thread mode
-  mode: "single_agent" | "orchestrated";
+  mode: "plan" | "build";
   model?: string;
 }
 

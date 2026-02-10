@@ -4,6 +4,21 @@
 
 package store
 
+type AgentRun struct {
+	ID        string
+	ThreadID  string
+	WorkerID  string
+	Prompt    string
+	Status    string
+	Agent     string
+	Model     string
+	Mode      string
+	Yolo      int64
+	SessionID string
+	CreatedAt string
+	UpdatedAt string
+}
+
 type Project struct {
 	ID                  string
 	Name                string
@@ -23,6 +38,7 @@ type Thread struct {
 	Model     string
 	CreatedAt string
 	UpdatedAt string
+	Mode      string
 }
 
 type Worker struct {

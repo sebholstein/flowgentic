@@ -1,16 +1,10 @@
 package codex
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,12 +16,15 @@ type DriverDeps struct {
 	Log *slog.Logger
 }
 
-// Driver implements driver.Driver for Codex.
+// Driver implements driver.Driver for Codex using a shared app-server process.
 type Driver struct {
 	log *slog.Logger
 
 	mu       sync.Mutex
-	sessions map[string]*codexSession
+	sessions map[string]*codexSession // keyed by threadID
+	server   *appServer              // shared, lazily initialized
+	serverCtx    context.Context
+	serverCancel context.CancelFunc
 }
 
 // NewDriver creates a new Codex driver.
@@ -45,49 +42,166 @@ func (d *Driver) Capabilities() driver.Capabilities {
 		Agent: agent,
 		Supported: []driver.Capability{
 			driver.CapStreaming,
-			driver.CapSessionResume,
 			driver.CapCustomModel,
 			driver.CapYolo,
+			driver.CapSystemPrompt,
 		},
 	}
 }
 
-func (d *Driver) Launch(ctx context.Context, opts driver.LaunchOpts, onEvent driver.EventCallback) (driver.Session, error) {
-	sess := &codexSession{
-		info: driver.SessionInfo{
-			ID:        opts.SessionID,
-			AgentID:   agent,
-			Status:    driver.SessionStatusStarting,
-			Mode:      opts.Mode,
-			Cwd:       opts.Cwd,
-			StartedAt: time.Now(),
-		},
-		driver:  d,
-		onEvent: onEvent,
-		done:    make(chan struct{}),
+// ensureServer lazily starts the shared app-server process.
+func (d *Driver) ensureServer(ctx context.Context) error {
+	if d.server != nil {
+		select {
+		case <-d.server.done:
+			// Server died, need to restart.
+			d.server = nil
+		default:
+			return nil
+		}
+	}
+
+	d.serverCtx, d.serverCancel = context.WithCancel(ctx)
+
+	srv := newAppServer(d.log, d.dispatchNotification)
+	if err := srv.start(d.serverCtx); err != nil {
+		d.serverCancel()
+		return err
+	}
+
+	d.server = srv
+
+	// Monitor server lifetime — clear sessions if server dies.
+	go func() {
+		<-srv.done
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		// Notify all sessions that the server died.
+		for threadID, sess := range d.sessions {
+			sess.emit(driver.Event{
+				Type:      driver.EventTypeError,
+				Timestamp: currentTime(),
+				Agent:     agent,
+				Error:     "codex app-server process exited",
+			})
+			sess.setStatus(driver.SessionStatusErrored)
+			sess.closeDone()
+			delete(d.sessions, threadID)
+		}
+	}()
+
+	return nil
+}
+
+// dispatchNotification routes app-server notifications to the correct session.
+func (d *Driver) dispatchNotification(threadID string, method string, params json.RawMessage, serverRequestID *int64) {
+	// Handle approval requests — auto-accept.
+	if method == "item/commandExecution/requestApproval" && serverRequestID != nil {
+		d.log.Debug("auto-accepting approval request", "threadID", threadID)
+		d.mu.Lock()
+		srv := d.server
+		d.mu.Unlock()
+		if srv != nil {
+			srv.respondToServerRequest(*serverRequestID, map[string]string{"decision": "accept"})
+		}
+		return
 	}
 
 	d.mu.Lock()
-	d.sessions[opts.SessionID] = sess
+	sess, ok := d.sessions[threadID]
 	d.mu.Unlock()
 
-	if err := sess.launchHeadless(ctx, opts); err != nil {
-		d.removeSession(opts.SessionID)
-		return nil, err
+	if !ok {
+		d.log.Debug("notification for unknown thread", "threadID", threadID, "method", method)
+		return
 	}
+
+	events := normalizeNotification(method, params)
+	sess.emit(events...)
+
+	// If turn completed, mark session idle.
+	if method == "turn/completed" {
+		sess.setStatus(driver.SessionStatusIdle)
+	}
+}
+
+func (d *Driver) Launch(ctx context.Context, opts driver.LaunchOpts, onEvent driver.EventCallback) (driver.Session, error) {
+	// Grab server ref under lock, but release before RPC calls to avoid
+	// deadlock: readLoop dispatches notifications via dispatchNotification
+	// which also acquires d.mu.
+	d.mu.Lock()
+	if err := d.ensureServer(ctx); err != nil {
+		d.mu.Unlock()
+		return nil, fmt.Errorf("ensure app-server: %w", err)
+	}
+	srv := d.server
+	d.mu.Unlock()
+
+	// Create a thread (RPC call — must not hold d.mu).
+	threadID, err := srv.threadStart(opts.Model, opts.Cwd, opts.SystemPrompt, opts.Yolo)
+	if err != nil {
+		return nil, fmt.Errorf("thread/start: %w", err)
+	}
+
+	sess := &codexSession{
+		info: driver.SessionInfo{
+			ID:             opts.SessionID,
+			AgentID:        agent,
+			AgentSessionID: threadID,
+			Status:         driver.SessionStatusRunning,
+			Mode:           opts.Mode,
+			Cwd:            opts.Cwd,
+			StartedAt:      time.Now(),
+		},
+		driver:   d,
+		threadID: threadID,
+		onEvent:  onEvent,
+		done:     make(chan struct{}),
+	}
+
+	// Register session so notifications can be routed to it.
+	d.mu.Lock()
+	d.sessions[threadID] = sess
+	d.mu.Unlock()
+
+	// Emit session start event.
+	sess.emit(driver.Event{
+		Type:      driver.EventTypeSessionStart,
+		Timestamp: currentTime(),
+		Agent:     agent,
+		Text:      threadID,
+	})
+
+	// Start the turn (RPC call — must not hold d.mu).
+	turnID, err := srv.turnStart(threadID, opts.Prompt)
+	if err != nil {
+		d.removeSession(threadID)
+		return nil, fmt.Errorf("turn/start: %w", err)
+	}
+	sess.mu.Lock()
+	sess.turnID = turnID
+	sess.mu.Unlock()
 
 	return sess, nil
 }
 
 func (d *Driver) HandleHookEvent(_ context.Context, sessionID string, event driver.HookEvent) error {
 	d.mu.Lock()
-	sess, ok := d.sessions[sessionID]
+	// Find session by sessionID (not threadID).
+	var sess *codexSession
+	for _, s := range d.sessions {
+		if s.info.ID == sessionID {
+			sess = s
+			break
+		}
+	}
 	d.mu.Unlock()
-	if !ok {
+
+	if sess == nil {
 		return fmt.Errorf("codex session not found: %s", sessionID)
 	}
 
-	now := time.Now()
+	now := currentTime()
 
 	switch event.HookName {
 	case "Stop", "TurnComplete":
@@ -105,20 +219,21 @@ func (d *Driver) HandleHookEvent(_ context.Context, sessionID string, event driv
 	return nil
 }
 
-func (d *Driver) removeSession(id string) {
+func (d *Driver) removeSession(threadID string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	delete(d.sessions, id)
+	delete(d.sessions, threadID)
 }
 
-// codexSession represents a running Codex session.
+// codexSession represents a Codex session backed by a thread on the shared app-server.
 type codexSession struct {
-	info    driver.SessionInfo
-	driver  *Driver
-	onEvent driver.EventCallback
-	done    chan struct{}
-	cmd     *exec.Cmd
-	mu      sync.Mutex
+	info     driver.SessionInfo
+	driver   *Driver
+	threadID string
+	turnID   string
+	onEvent  driver.EventCallback
+	done     chan struct{}
+	mu       sync.Mutex
 }
 
 func (s *codexSession) Info() driver.SessionInfo {
@@ -130,12 +245,23 @@ func (s *codexSession) Info() driver.SessionInfo {
 func (s *codexSession) Stop(_ context.Context) error {
 	s.mu.Lock()
 	s.info.Status = driver.SessionStatusStopping
-	cmd := s.cmd
 	s.mu.Unlock()
 
-	if cmd != nil && cmd.Process != nil {
-		_ = cmd.Process.Kill()
+	// Try to interrupt the turn, but don't fail if the server is gone.
+	s.driver.mu.Lock()
+	srv := s.driver.server
+	s.driver.mu.Unlock()
+
+	if srv != nil {
+		s.mu.Lock()
+		turnID := s.turnID
+		s.mu.Unlock()
+		if turnID != "" {
+			_ = srv.turnInterrupt(s.threadID, turnID)
+		}
 	}
+
+	s.driver.removeSession(s.threadID)
 
 	s.mu.Lock()
 	s.info.Status = driver.SessionStatusStopped
@@ -164,12 +290,6 @@ func (s *codexSession) setStatus(status driver.SessionStatus) {
 	s.info.Status = status
 }
 
-func (s *codexSession) SetAgentSessionID(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.info.AgentSessionID = id
-}
-
 func (s *codexSession) emit(events ...driver.Event) {
 	if s.onEvent == nil {
 		return
@@ -177,143 +297,4 @@ func (s *codexSession) emit(events ...driver.Event) {
 	for _, e := range events {
 		s.onEvent(e)
 	}
-}
-
-func (s *codexSession) launchHeadless(ctx context.Context, opts driver.LaunchOpts) error {
-	args := []string{"exec", "--json"}
-
-	if opts.Model != "" {
-		args = append(args, "--model", opts.Model)
-	}
-	if opts.Yolo {
-		args = append(args, "--full-auto")
-	}
-
-	if opts.SessionID != "" {
-		args = append(args, "resume", opts.SessionID)
-	}
-	if opts.Prompt != "" {
-		args = append(args, opts.Prompt)
-	}
-
-	cmd := exec.CommandContext(ctx, "codex", args...)
-	if opts.Cwd != "" {
-		cmd.Dir = opts.Cwd
-	}
-	cmd.Stderr = os.Stderr
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("stdout pipe: %w", err)
-	}
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start codex: %w", err)
-	}
-
-	s.mu.Lock()
-	s.cmd = cmd
-	s.info.Status = driver.SessionStatusRunning
-	s.mu.Unlock()
-
-	scanner := bufio.NewScanner(stdout)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-
-	// Read lines synchronously until we get the thread.started event
-	// so the agent session ID is available before Launch returns.
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		var evt codexEvent
-		if json.Unmarshal([]byte(line), &evt) == nil && evt.Type == "thread.started" && evt.ThreadID != "" {
-			s.SetAgentSessionID(evt.ThreadID)
-		}
-
-		events := normalizeCodexEvent([]byte(line))
-		s.emit(events...)
-
-		// Once we've seen thread.started, hand off to the background goroutine.
-		if evt.Type == "thread.started" {
-			break
-		}
-	}
-
-	go func() {
-		defer s.closeDone()
-		defer s.driver.removeSession(s.info.ID)
-
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			if line == "" {
-				continue
-			}
-
-			events := normalizeCodexEvent([]byte(line))
-			s.emit(events...)
-		}
-
-		if err := cmd.Wait(); err != nil {
-			s.setStatus(driver.SessionStatusErrored)
-			s.emit(driver.Event{
-				Type:      driver.EventTypeError,
-				Timestamp: time.Now(),
-				Agent:     agent,
-				Error:     err.Error(),
-			})
-		} else {
-			s.setStatus(driver.SessionStatusStopped)
-		}
-	}()
-
-	return nil
-}
-
-// ResolveSessionID discovers the Codex session ID by scanning the
-// sessions directory for the newest file.
-func (d *Driver) ResolveSessionID(_ context.Context, cwd string) (string, error) {
-	_ = cwd // Codex sessions dir is global, not per-cwd.
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("get home dir: %w", err)
-	}
-
-	now := time.Now()
-	sessDir := filepath.Join(homeDir, ".codex", "sessions",
-		fmt.Sprintf("%d", now.Year()),
-		fmt.Sprintf("%02d", now.Month()),
-		fmt.Sprintf("%02d", now.Day()),
-	)
-
-	entries, err := os.ReadDir(sessDir)
-	if err != nil {
-		return "", fmt.Errorf("read sessions dir %s: %w", sessDir, err)
-	}
-	if len(entries) == 0 {
-		return "", fmt.Errorf("no session files found in %s", sessDir)
-	}
-
-	// Sort by name descending to find the newest rollout file.
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Name() > entries[j].Name()
-	})
-
-	// File pattern: rollout-<ISO-timestamp>-<uuid>.jsonl
-	// Example: rollout-2026-02-09T13-08-42-019c424d-d3da-7903-8b5f-32b3d4a3a436.jsonl
-	// The UUID is always the last 36 characters before .jsonl (8-4-4-4-12 format).
-	name := entries[0].Name()
-	name = strings.TrimSuffix(name, ".jsonl")
-	if !strings.HasPrefix(name, "rollout-") {
-		return "", fmt.Errorf("unexpected session filename: %s", entries[0].Name())
-	}
-
-	const uuidLen = 36 // 8-4-4-4-12
-	if len(name) < uuidLen {
-		return "", fmt.Errorf("filename too short to contain UUID: %s", entries[0].Name())
-	}
-
-	return name[len(name)-uuidLen:], nil
 }

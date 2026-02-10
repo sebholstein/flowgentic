@@ -21,3 +21,10 @@ sql:
       go:
         package: "store"
         out: "internal/controlplane/thread/store"
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/agentrun/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/agentrun/store"

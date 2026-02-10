@@ -3,8 +3,9 @@ package thread
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/sebastianm/flowgentic/internal/controlplane/project"
+	"github.com/google/uuid"
 )
 
 // Thread is the domain representation of a thread.
@@ -13,8 +14,9 @@ type Thread struct {
 	ProjectID string
 	Agent     string
 	Model     string
-	CreatedAt string
-	UpdatedAt string
+	Mode      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Store persists thread configurations.
@@ -49,11 +51,9 @@ func (s *ThreadService) GetThread(ctx context.Context, id string) (Thread, error
 	return s.store.GetThread(ctx, id)
 }
 
-// CreateThread validates and persists a new thread.
+// CreateThread generates an ID, validates, and persists a new thread.
 func (s *ThreadService) CreateThread(ctx context.Context, t Thread) (Thread, error) {
-	if err := project.ValidateResourceName(t.ID); err != nil {
-		return Thread{}, fmt.Errorf("invalid thread id: %w", err)
-	}
+	t.ID = uuid.NewString()
 	if t.ProjectID == "" {
 		return Thread{}, fmt.Errorf("project_id is required")
 	}

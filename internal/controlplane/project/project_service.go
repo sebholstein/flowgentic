@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 )
 
 // k8sNameRe matches a valid k8s-style resource name.
@@ -19,8 +20,8 @@ type Project struct {
 	DefaultPlannerModel string
 	EmbeddedWorkerPath  string
 	WorkerPaths         map[string]string
-	CreatedAt           string
-	UpdatedAt           string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 	SortIndex           int32
 }
 

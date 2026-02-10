@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AgentCtlServiceSetTopicProcedure is the fully-qualified name of the AgentCtlService's SetTopic
+	// RPC.
+	AgentCtlServiceSetTopicProcedure = "/worker.v1.AgentCtlService/SetTopic"
 	// AgentCtlServiceReportStatusProcedure is the fully-qualified name of the AgentCtlService's
 	// ReportStatus RPC.
 	AgentCtlServiceReportStatusProcedure = "/worker.v1.AgentCtlService/ReportStatus"
@@ -43,6 +46,7 @@ const (
 
 // AgentCtlServiceClient is a client for the worker.v1.AgentCtlService service.
 type AgentCtlServiceClient interface {
+	SetTopic(context.Context, *connect.Request[v1.SetTopicRequest]) (*connect.Response[v1.SetTopicResponse], error)
 	// ReportStatus receives a status update from an agent process.
 	ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error)
 	// SubmitPlan receives a plan submission from an agent process for human review.
@@ -60,6 +64,12 @@ func NewAgentCtlServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 	baseURL = strings.TrimRight(baseURL, "/")
 	agentCtlServiceMethods := v1.File_worker_v1_agentctl_service_proto.Services().ByName("AgentCtlService").Methods()
 	return &agentCtlServiceClient{
+		setTopic: connect.NewClient[v1.SetTopicRequest, v1.SetTopicResponse](
+			httpClient,
+			baseURL+AgentCtlServiceSetTopicProcedure,
+			connect.WithSchema(agentCtlServiceMethods.ByName("SetTopic")),
+			connect.WithClientOptions(opts...),
+		),
 		reportStatus: connect.NewClient[v1.ReportStatusRequest, v1.ReportStatusResponse](
 			httpClient,
 			baseURL+AgentCtlServiceReportStatusProcedure,
@@ -77,8 +87,14 @@ func NewAgentCtlServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 
 // agentCtlServiceClient implements AgentCtlServiceClient.
 type agentCtlServiceClient struct {
+	setTopic     *connect.Client[v1.SetTopicRequest, v1.SetTopicResponse]
 	reportStatus *connect.Client[v1.ReportStatusRequest, v1.ReportStatusResponse]
 	submitPlan   *connect.Client[v1.SubmitPlanRequest, v1.SubmitPlanResponse]
+}
+
+// SetTopic calls worker.v1.AgentCtlService.SetTopic.
+func (c *agentCtlServiceClient) SetTopic(ctx context.Context, req *connect.Request[v1.SetTopicRequest]) (*connect.Response[v1.SetTopicResponse], error) {
+	return c.setTopic.CallUnary(ctx, req)
 }
 
 // ReportStatus calls worker.v1.AgentCtlService.ReportStatus.
@@ -93,6 +109,7 @@ func (c *agentCtlServiceClient) SubmitPlan(ctx context.Context, req *connect.Req
 
 // AgentCtlServiceHandler is an implementation of the worker.v1.AgentCtlService service.
 type AgentCtlServiceHandler interface {
+	SetTopic(context.Context, *connect.Request[v1.SetTopicRequest]) (*connect.Response[v1.SetTopicResponse], error)
 	// ReportStatus receives a status update from an agent process.
 	ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error)
 	// SubmitPlan receives a plan submission from an agent process for human review.
@@ -106,6 +123,12 @@ type AgentCtlServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAgentCtlServiceHandler(svc AgentCtlServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	agentCtlServiceMethods := v1.File_worker_v1_agentctl_service_proto.Services().ByName("AgentCtlService").Methods()
+	agentCtlServiceSetTopicHandler := connect.NewUnaryHandler(
+		AgentCtlServiceSetTopicProcedure,
+		svc.SetTopic,
+		connect.WithSchema(agentCtlServiceMethods.ByName("SetTopic")),
+		connect.WithHandlerOptions(opts...),
+	)
 	agentCtlServiceReportStatusHandler := connect.NewUnaryHandler(
 		AgentCtlServiceReportStatusProcedure,
 		svc.ReportStatus,
@@ -120,6 +143,8 @@ func NewAgentCtlServiceHandler(svc AgentCtlServiceHandler, opts ...connect.Handl
 	)
 	return "/worker.v1.AgentCtlService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AgentCtlServiceSetTopicProcedure:
+			agentCtlServiceSetTopicHandler.ServeHTTP(w, r)
 		case AgentCtlServiceReportStatusProcedure:
 			agentCtlServiceReportStatusHandler.ServeHTTP(w, r)
 		case AgentCtlServiceSubmitPlanProcedure:
@@ -132,6 +157,10 @@ func NewAgentCtlServiceHandler(svc AgentCtlServiceHandler, opts ...connect.Handl
 
 // UnimplementedAgentCtlServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAgentCtlServiceHandler struct{}
+
+func (UnimplementedAgentCtlServiceHandler) SetTopic(context.Context, *connect.Request[v1.SetTopicRequest]) (*connect.Response[v1.SetTopicResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.AgentCtlService.SetTopic is not implemented"))
+}
 
 func (UnimplementedAgentCtlServiceHandler) ReportStatus(context.Context, *connect.Request[v1.ReportStatusRequest]) (*connect.Response[v1.ReportStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.AgentCtlService.ReportStatus is not implemented"))

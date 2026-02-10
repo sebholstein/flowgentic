@@ -44,7 +44,7 @@ export function FlowgenticLogo() {
     <div className="flex items-center gap-8">
 
       <div className="flex flex-col">
-        <span className="text-4xl font-semibold tracking-tight text-white">
+        <span className="text-4xl font-semibold tracking-tight text-foreground">
           Flowgentic
         </span>
       </div>

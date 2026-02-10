@@ -1,8 +1,16 @@
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
+import { useForm, useFormContext, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { WorkerConfig } from "@/proto/gen/controlplane/v1/worker_service_pb";
+import type { CreateProjectRequest } from "@/proto/gen/controlplane/v1/project_service_pb";
 
 const K8S_NAME_RE = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
 const MAX_NAME_LEN = 63;
@@ -25,104 +35,167 @@ function slugify(value: string): string {
     .slice(0, MAX_NAME_LEN);
 }
 
-function isValidResourceName(name: string): boolean {
-  return name.length > 0 && name.length <= MAX_NAME_LEN && K8S_NAME_RE.test(name);
+function validateResourceName(value: string) {
+  if (!value) return "Required";
+  if (value.length > MAX_NAME_LEN) return `Max ${MAX_NAME_LEN} characters`;
+  if (!K8S_NAME_RE.test(value))
+    return "Must be lowercase alphanumeric with hyphens, starting with a letter.";
+  return true;
 }
 
-interface WorkerPathEntry {
-  key: string;
-  workerName: string;
-  path: string;
+type ProjectFormValues = Pick<
+  CreateProjectRequest,
+  "id" | "name" | "defaultPlannerAgent" | "defaultPlannerModel" | "embeddedWorkerPath" | "workerPaths"
+> & {
+  defaultWorkerId: string;
+};
+
+function NameAndIdFields() {
+  const { register, setValue, formState: { errors } } = useFormContext<ProjectFormValues>();
+  const idManuallyEdited = useRef(false);
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="project-name">Name</Label>
+        <Input
+          id="project-name"
+          {...register("name", { required: "Required" })}
+          onChange={(e) => {
+            const value = e.target.value;
+            setValue("name", value, { shouldValidate: true });
+            if (!idManuallyEdited.current) {
+              setValue("id", slugify(value), { shouldValidate: true });
+            }
+          }}
+          placeholder="e.g. My Project"
+          autoFocus
+        />
+        {errors.name && (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        )}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="project-id">ID</Label>
+        <Input
+          id="project-id"
+          {...register("id", { validate: validateResourceName })}
+          onChange={(e) => {
+            idManuallyEdited.current = true;
+            setValue("id", e.target.value, { shouldValidate: true });
+          }}
+          placeholder="e.g. my-project"
+          className={errors.id ? "border-destructive" : undefined}
+        />
+        {errors.id && (
+          <p className="text-xs text-destructive">{errors.id.message}</p>
+        )}
+      </div>
+    </>
+  );
+}
+
+function WorkerSelectField({ workers }: { workers: WorkerConfig[] }) {
+  const { control } = useFormContext<ProjectFormValues>();
+
+  if (workers.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <Label>Default Worker</Label>
+      <Controller
+        control={control}
+        name="defaultWorkerId"
+        render={({ field }) => (
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a worker…" />
+            </SelectTrigger>
+            <SelectContent>
+              {workers.map((worker) => (
+                <SelectItem key={worker.id} value={worker.id}>
+                  {worker.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      />
+    </div>
+  );
+}
+
+function WorkerPathFields({ workers }: { workers: WorkerConfig[] }) {
+  const { register } = useFormContext<ProjectFormValues>();
+
+  if (workers.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <Label>Worker Paths</Label>
+      {workers.map((worker) => (
+        <div key={worker.id} className="space-y-1">
+          <Label htmlFor={`worker-path-${worker.id}`} className="text-xs text-muted-foreground">
+            {worker.name}
+          </Label>
+          <Input
+            id={`worker-path-${worker.id}`}
+            {...register(`workerPaths.${worker.id}`)}
+            placeholder="/path/to/worker"
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function NewProjectDialog({
   open,
   onOpenChange,
   onSave,
+  workers,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: {
-    id: string;
-    name: string;
-    defaultPlannerAgent: string;
-    defaultPlannerModel: string;
-    embeddedWorkerPath: string;
-    workerPaths: Record<string, string>;
-  }) => void;
+  onSave: (data: ProjectFormValues) => void;
+  workers: WorkerConfig[];
 }) {
-  const [name, setName] = useState("");
-  const [id, setId] = useState("");
-  const [idManuallyEdited, setIdManuallyEdited] = useState(false);
-  const [defaultPlannerAgent, setDefaultPlannerAgent] = useState("");
-  const [defaultPlannerModel, setDefaultPlannerModel] = useState("");
-  const [embeddedWorkerPath, setEmbeddedWorkerPath] = useState("");
-  const [workerPaths, setWorkerPaths] = useState<WorkerPathEntry[]>([]);
-  let nextKey = 0;
+  const form = useForm<ProjectFormValues>({
+    defaultValues: {
+      id: "",
+      name: "",
+      defaultPlannerAgent: "",
+      defaultPlannerModel: "",
+      embeddedWorkerPath: "",
+      workerPaths: {},
+      defaultWorkerId: "",
+    },
+  });
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      setName("");
-      setId("");
-      setIdManuallyEdited(false);
-      setDefaultPlannerAgent("");
-      setDefaultPlannerModel("");
-      setEmbeddedWorkerPath("");
-      setWorkerPaths([]);
+      form.reset();
     }
     onOpenChange(nextOpen);
   };
 
-  const handleNameChange = (value: string) => {
-    setName(value);
-    if (!idManuallyEdited) {
-      setId(slugify(value));
-    }
-  };
-
-  const handleIdChange = (value: string) => {
-    setIdManuallyEdited(true);
-    setId(value);
-  };
-
-  const addWorkerPath = () => {
-    setWorkerPaths((prev) => [...prev, { key: `wp-${Date.now()}-${nextKey++}`, workerName: "", path: "" }]);
-  };
-
-  const removeWorkerPath = (key: string) => {
-    setWorkerPaths((prev) => prev.filter((wp) => wp.key !== key));
-  };
-
-  const updateWorkerPath = (key: string, field: "workerName" | "path", value: string) => {
-    setWorkerPaths((prev) =>
-      prev.map((wp) => (wp.key === key ? { ...wp, [field]: value } : wp)),
-    );
-  };
-
-  const idValid = id === "" || isValidResourceName(id);
-  const workerNamesValid = workerPaths.every(
-    (wp) => wp.workerName === "" || isValidResourceName(wp.workerName),
-  );
-  const canSubmit = name.trim() !== "" && id !== "" && isValidResourceName(id) && workerNamesValid;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSubmit) return;
-
-    const wp: Record<string, string> = {};
-    for (const entry of workerPaths) {
-      if (entry.workerName && entry.path) {
-        wp[entry.workerName] = entry.path;
+  const handleSubmit = (data: ProjectFormValues) => {
+    // Strip empty worker paths
+    const workerPaths: Record<string, string> = {};
+    for (const [key, value] of Object.entries(data.workerPaths)) {
+      const trimmed = value.trim();
+      if (trimmed) {
+        workerPaths[key] = trimmed;
       }
     }
 
     onSave({
-      id,
-      name: name.trim(),
-      defaultPlannerAgent: defaultPlannerAgent.trim(),
-      defaultPlannerModel: defaultPlannerModel.trim(),
-      embeddedWorkerPath: embeddedWorkerPath.trim(),
-      workerPaths: wp,
+      ...data,
+      name: data.name.trim(),
+      defaultPlannerAgent: data.defaultPlannerAgent.trim(),
+      defaultPlannerModel: data.defaultPlannerModel.trim(),
+      embeddedWorkerPath: data.embeddedWorkerPath.trim(),
+      workerPaths,
     });
   };
 
@@ -133,38 +206,13 @@ export function NewProjectDialog({
           <DialogTitle>New Project</DialogTitle>
           <DialogDescription>Create a new project for organizing threads and tasks.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="project-name">Name</Label>
-            <Input
-              id="project-name"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="e.g. My Project"
-              autoFocus
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-id">ID</Label>
-            <Input
-              id="project-id"
-              value={id}
-              onChange={(e) => handleIdChange(e.target.value)}
-              placeholder="e.g. my-project"
-              className={!idValid ? "border-destructive" : undefined}
-            />
-            {!idValid && (
-              <p className="text-xs text-destructive">
-                Must be lowercase alphanumeric with hyphens, starting with a letter (max 63 chars).
-              </p>
-            )}
-          </div>
+        <Form form={form} onSubmit={handleSubmit} className="space-y-4">
+          <NameAndIdFields />
           <div className="space-y-2">
             <Label htmlFor="project-planner-agent">Default Planner Agent</Label>
             <Input
               id="project-planner-agent"
-              value={defaultPlannerAgent}
-              onChange={(e) => setDefaultPlannerAgent(e.target.value)}
+              {...form.register("defaultPlannerAgent")}
               placeholder="Optional"
             />
           </div>
@@ -172,8 +220,7 @@ export function NewProjectDialog({
             <Label htmlFor="project-planner-model">Default Planner Model</Label>
             <Input
               id="project-planner-model"
-              value={defaultPlannerModel}
-              onChange={(e) => setDefaultPlannerModel(e.target.value)}
+              {...form.register("defaultPlannerModel")}
               placeholder="Optional"
             />
           </div>
@@ -181,65 +228,23 @@ export function NewProjectDialog({
             <Label htmlFor="project-embedded-worker-path">Embedded Worker Path</Label>
             <Input
               id="project-embedded-worker-path"
-              value={embeddedWorkerPath}
-              onChange={(e) => setEmbeddedWorkerPath(e.target.value)}
+              {...form.register("embeddedWorkerPath")}
               placeholder="Optional — absolute file path"
             />
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Worker Paths</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addWorkerPath}>
-                <Plus className="size-3.5" />
-                Add
-              </Button>
-            </div>
-            {workerPaths.map((wp) => {
-              const nameValid = wp.workerName === "" || isValidResourceName(wp.workerName);
-              return (
-                <div key={wp.key} className="flex items-start gap-2">
-                  <div className="flex-1 space-y-1">
-                    <Input
-                      value={wp.workerName}
-                      onChange={(e) => updateWorkerPath(wp.key, "workerName", e.target.value)}
-                      placeholder="worker-name"
-                      className={!nameValid ? "border-destructive" : undefined}
-                    />
-                    {!nameValid && (
-                      <p className="text-xs text-destructive">Invalid resource name.</p>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      value={wp.path}
-                      onChange={(e) => updateWorkerPath(wp.key, "path", e.target.value)}
-                      placeholder="/path/to/worker"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => removeWorkerPath(wp.key)}
-                    className="mt-1.5"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+          <WorkerSelectField workers={workers} />
+          <WorkerPathFields workers={workers} />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!canSubmit}>
+            <Button type="submit">
               Create Project
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

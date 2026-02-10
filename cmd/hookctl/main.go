@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	workloadID := os.Getenv("FLOWGENTIC_WORKLOAD_ID")
+	workloadID := os.Getenv("FLOWGENTIC_AGENT_RUN_ID")
 	agentName := os.Getenv("AGENTCTL_AGENT")
 
 	protoAgent, err := driver.ParseProtoAgent(agentName)

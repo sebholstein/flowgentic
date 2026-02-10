@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package controlplane.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
 
-// ThreadManagementService provides CRUD operations for managing thread
+// ThreadService provides CRUD operations for managing thread
 // configurations on the control plane.
-service ThreadManagementService {
+service ThreadService {
   // ListThreads returns all threads for a given project.
   rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse) {}
 
@@ -29,8 +31,9 @@ message ThreadConfig {
   string project_id = 2;
   string agent = 3;
   string model = 4;
-  string created_at = 5;
-  string updated_at = 6;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  string mode = 7;
 }
 
 message ListThreadsRequest {
@@ -54,6 +57,14 @@ message CreateThreadRequest {
   string project_id = 2;
   string agent = 3;
   string model = 4;
+  // Optional prompt to kick off an agent run immediately.
+  string prompt = 5;
+  // Thread mode (e.g. "single_agent", "orchestrated").
+  string mode = 6;
+  // Worker to dispatch the initial agent run to.
+  string worker_id = 7;
+  // Whether to run in yolo/auto-approve mode.
+  bool yolo = 8;
 }
 
 message CreateThreadResponse {

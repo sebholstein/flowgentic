@@ -2,13 +2,14 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: controlplane/v1/worker_management_service.proto
+// source: controlplane/v1/worker_service.proto
 
 package controlplanev1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -28,15 +29,15 @@ type WorkerConfig struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
 	Secret        string                 `protobuf:"bytes,4,opt,name=secret,proto3" json:"secret,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkerConfig) Reset() {
 	*x = WorkerConfig{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[0]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +49,7 @@ func (x *WorkerConfig) String() string {
 func (*WorkerConfig) ProtoMessage() {}
 
 func (x *WorkerConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[0]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +62,7 @@ func (x *WorkerConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerConfig.ProtoReflect.Descriptor instead.
 func (*WorkerConfig) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{0}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *WorkerConfig) GetId() string {
@@ -92,18 +93,18 @@ func (x *WorkerConfig) GetSecret() string {
 	return ""
 }
 
-func (x *WorkerConfig) GetCreatedAt() string {
+func (x *WorkerConfig) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return ""
+	return nil
 }
 
-func (x *WorkerConfig) GetUpdatedAt() string {
+func (x *WorkerConfig) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return ""
+	return nil
 }
 
 type ListWorkersRequest struct {
@@ -114,7 +115,7 @@ type ListWorkersRequest struct {
 
 func (x *ListWorkersRequest) Reset() {
 	*x = ListWorkersRequest{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[1]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -126,7 +127,7 @@ func (x *ListWorkersRequest) String() string {
 func (*ListWorkersRequest) ProtoMessage() {}
 
 func (x *ListWorkersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[1]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -139,7 +140,7 @@ func (x *ListWorkersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkersRequest.ProtoReflect.Descriptor instead.
 func (*ListWorkersRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{1}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{1}
 }
 
 type ListWorkersResponse struct {
@@ -151,7 +152,7 @@ type ListWorkersResponse struct {
 
 func (x *ListWorkersResponse) Reset() {
 	*x = ListWorkersResponse{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[2]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +164,7 @@ func (x *ListWorkersResponse) String() string {
 func (*ListWorkersResponse) ProtoMessage() {}
 
 func (x *ListWorkersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[2]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +177,7 @@ func (x *ListWorkersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkersResponse.ProtoReflect.Descriptor instead.
 func (*ListWorkersResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{2}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListWorkersResponse) GetWorkers() []*WorkerConfig {
@@ -198,7 +199,7 @@ type CreateWorkerRequest struct {
 
 func (x *CreateWorkerRequest) Reset() {
 	*x = CreateWorkerRequest{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[3]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +211,7 @@ func (x *CreateWorkerRequest) String() string {
 func (*CreateWorkerRequest) ProtoMessage() {}
 
 func (x *CreateWorkerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[3]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +224,7 @@ func (x *CreateWorkerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkerRequest.ProtoReflect.Descriptor instead.
 func (*CreateWorkerRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{3}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateWorkerRequest) GetName() string {
@@ -263,7 +264,7 @@ type CreateWorkerResponse struct {
 
 func (x *CreateWorkerResponse) Reset() {
 	*x = CreateWorkerResponse{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[4]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +276,7 @@ func (x *CreateWorkerResponse) String() string {
 func (*CreateWorkerResponse) ProtoMessage() {}
 
 func (x *CreateWorkerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[4]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +289,7 @@ func (x *CreateWorkerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkerResponse.ProtoReflect.Descriptor instead.
 func (*CreateWorkerResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{4}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateWorkerResponse) GetWorker() *WorkerConfig {
@@ -310,7 +311,7 @@ type UpdateWorkerRequest struct {
 
 func (x *UpdateWorkerRequest) Reset() {
 	*x = UpdateWorkerRequest{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[5]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +323,7 @@ func (x *UpdateWorkerRequest) String() string {
 func (*UpdateWorkerRequest) ProtoMessage() {}
 
 func (x *UpdateWorkerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[5]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +336,7 @@ func (x *UpdateWorkerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkerRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWorkerRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{5}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateWorkerRequest) GetId() string {
@@ -375,7 +376,7 @@ type UpdateWorkerResponse struct {
 
 func (x *UpdateWorkerResponse) Reset() {
 	*x = UpdateWorkerResponse{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[6]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -387,7 +388,7 @@ func (x *UpdateWorkerResponse) String() string {
 func (*UpdateWorkerResponse) ProtoMessage() {}
 
 func (x *UpdateWorkerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[6]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -400,7 +401,7 @@ func (x *UpdateWorkerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkerResponse.ProtoReflect.Descriptor instead.
 func (*UpdateWorkerResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{6}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateWorkerResponse) GetWorker() *WorkerConfig {
@@ -419,7 +420,7 @@ type DeleteWorkerRequest struct {
 
 func (x *DeleteWorkerRequest) Reset() {
 	*x = DeleteWorkerRequest{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[7]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -431,7 +432,7 @@ func (x *DeleteWorkerRequest) String() string {
 func (*DeleteWorkerRequest) ProtoMessage() {}
 
 func (x *DeleteWorkerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[7]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -444,7 +445,7 @@ func (x *DeleteWorkerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkerRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWorkerRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{7}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteWorkerRequest) GetId() string {
@@ -462,7 +463,7 @@ type DeleteWorkerResponse struct {
 
 func (x *DeleteWorkerResponse) Reset() {
 	*x = DeleteWorkerResponse{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[8]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +475,7 @@ func (x *DeleteWorkerResponse) String() string {
 func (*DeleteWorkerResponse) ProtoMessage() {}
 
 func (x *DeleteWorkerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[8]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +488,7 @@ func (x *DeleteWorkerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkerResponse.ProtoReflect.Descriptor instead.
 func (*DeleteWorkerResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{8}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{8}
 }
 
 type PingWorkerRequest struct {
@@ -499,7 +500,7 @@ type PingWorkerRequest struct {
 
 func (x *PingWorkerRequest) Reset() {
 	*x = PingWorkerRequest{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -511,7 +512,7 @@ func (x *PingWorkerRequest) String() string {
 func (*PingWorkerRequest) ProtoMessage() {}
 
 func (x *PingWorkerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -524,7 +525,7 @@ func (x *PingWorkerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingWorkerRequest.ProtoReflect.Descriptor instead.
 func (*PingWorkerRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{9}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PingWorkerRequest) GetWorkerId() string {
@@ -543,7 +544,7 @@ type PingWorkerResponse struct {
 
 func (x *PingWorkerResponse) Reset() {
 	*x = PingWorkerResponse{}
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -555,7 +556,7 @@ func (x *PingWorkerResponse) String() string {
 func (*PingWorkerResponse) ProtoMessage() {}
 
 func (x *PingWorkerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_worker_management_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_worker_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -568,7 +569,7 @@ func (x *PingWorkerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingWorkerResponse.ProtoReflect.Descriptor instead.
 func (*PingWorkerResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_worker_management_service_proto_rawDescGZIP(), []int{10}
+	return file_controlplane_v1_worker_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PingWorkerResponse) GetDuration() string {
@@ -578,20 +579,20 @@ func (x *PingWorkerResponse) GetDuration() string {
 	return ""
 }
 
-var File_controlplane_v1_worker_management_service_proto protoreflect.FileDescriptor
+var File_controlplane_v1_worker_service_proto protoreflect.FileDescriptor
 
-const file_controlplane_v1_worker_management_service_proto_rawDesc = "" +
+const file_controlplane_v1_worker_service_proto_rawDesc = "" +
 	"\n" +
-	"/controlplane/v1/worker_management_service.proto\x12\x0fcontrolplane.v1\"\x9a\x01\n" +
+	"$controlplane/v1/worker_service.proto\x12\x0fcontrolplane.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd2\x01\n" +
 	"\fWorkerConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x16\n" +
-	"\x06secret\x18\x04 \x01(\tR\x06secret\x12\x1d\n" +
+	"\x06secret\x18\x04 \x01(\tR\x06secret\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\tR\tupdatedAt\"\x14\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x14\n" +
 	"\x12ListWorkersRequest\"N\n" +
 	"\x13ListWorkersResponse\x127\n" +
 	"\aworkers\x18\x01 \x03(\v2\x1d.controlplane.v1.WorkerConfigR\aworkers\"c\n" +
@@ -615,83 +616,86 @@ const file_controlplane_v1_worker_management_service_proto_rawDesc = "" +
 	"\x11PingWorkerRequest\x12\x1b\n" +
 	"\tworker_id\x18\x01 \x01(\tR\bworkerId\"0\n" +
 	"\x12PingWorkerResponse\x12\x1a\n" +
-	"\bduration\x18\x01 \x01(\tR\bduration2\xeb\x03\n" +
-	"\x17WorkerManagementService\x12Z\n" +
+	"\bduration\x18\x01 \x01(\tR\bduration2\xe1\x03\n" +
+	"\rWorkerService\x12Z\n" +
 	"\vListWorkers\x12#.controlplane.v1.ListWorkersRequest\x1a$.controlplane.v1.ListWorkersResponse\"\x00\x12]\n" +
 	"\fCreateWorker\x12$.controlplane.v1.CreateWorkerRequest\x1a%.controlplane.v1.CreateWorkerResponse\"\x00\x12]\n" +
 	"\fUpdateWorker\x12$.controlplane.v1.UpdateWorkerRequest\x1a%.controlplane.v1.UpdateWorkerResponse\"\x00\x12]\n" +
 	"\fDeleteWorker\x12$.controlplane.v1.DeleteWorkerRequest\x1a%.controlplane.v1.DeleteWorkerResponse\"\x00\x12W\n" +
 	"\n" +
-	"PingWorker\x12\".controlplane.v1.PingWorkerRequest\x1a#.controlplane.v1.PingWorkerResponse\"\x00B\xe4\x01\n" +
-	"\x13com.controlplane.v1B\x1cWorkerManagementServiceProtoP\x01ZRgithub.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1\xa2\x02\x03CXX\xaa\x02\x0fControlplane.V1\xca\x02\x0fControlplane\\V1\xe2\x02\x1bControlplane\\V1\\GPBMetadata\xea\x02\x10Controlplane::V1b\x06proto3"
+	"PingWorker\x12\".controlplane.v1.PingWorkerRequest\x1a#.controlplane.v1.PingWorkerResponse\"\x00B\xda\x01\n" +
+	"\x13com.controlplane.v1B\x12WorkerServiceProtoP\x01ZRgithub.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1\xa2\x02\x03CXX\xaa\x02\x0fControlplane.V1\xca\x02\x0fControlplane\\V1\xe2\x02\x1bControlplane\\V1\\GPBMetadata\xea\x02\x10Controlplane::V1b\x06proto3"
 
 var (
-	file_controlplane_v1_worker_management_service_proto_rawDescOnce sync.Once
-	file_controlplane_v1_worker_management_service_proto_rawDescData []byte
+	file_controlplane_v1_worker_service_proto_rawDescOnce sync.Once
+	file_controlplane_v1_worker_service_proto_rawDescData []byte
 )
 
-func file_controlplane_v1_worker_management_service_proto_rawDescGZIP() []byte {
-	file_controlplane_v1_worker_management_service_proto_rawDescOnce.Do(func() {
-		file_controlplane_v1_worker_management_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_controlplane_v1_worker_management_service_proto_rawDesc), len(file_controlplane_v1_worker_management_service_proto_rawDesc)))
+func file_controlplane_v1_worker_service_proto_rawDescGZIP() []byte {
+	file_controlplane_v1_worker_service_proto_rawDescOnce.Do(func() {
+		file_controlplane_v1_worker_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_controlplane_v1_worker_service_proto_rawDesc), len(file_controlplane_v1_worker_service_proto_rawDesc)))
 	})
-	return file_controlplane_v1_worker_management_service_proto_rawDescData
+	return file_controlplane_v1_worker_service_proto_rawDescData
 }
 
-var file_controlplane_v1_worker_management_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
-var file_controlplane_v1_worker_management_service_proto_goTypes = []any{
-	(*WorkerConfig)(nil),         // 0: controlplane.v1.WorkerConfig
-	(*ListWorkersRequest)(nil),   // 1: controlplane.v1.ListWorkersRequest
-	(*ListWorkersResponse)(nil),  // 2: controlplane.v1.ListWorkersResponse
-	(*CreateWorkerRequest)(nil),  // 3: controlplane.v1.CreateWorkerRequest
-	(*CreateWorkerResponse)(nil), // 4: controlplane.v1.CreateWorkerResponse
-	(*UpdateWorkerRequest)(nil),  // 5: controlplane.v1.UpdateWorkerRequest
-	(*UpdateWorkerResponse)(nil), // 6: controlplane.v1.UpdateWorkerResponse
-	(*DeleteWorkerRequest)(nil),  // 7: controlplane.v1.DeleteWorkerRequest
-	(*DeleteWorkerResponse)(nil), // 8: controlplane.v1.DeleteWorkerResponse
-	(*PingWorkerRequest)(nil),    // 9: controlplane.v1.PingWorkerRequest
-	(*PingWorkerResponse)(nil),   // 10: controlplane.v1.PingWorkerResponse
+var file_controlplane_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_controlplane_v1_worker_service_proto_goTypes = []any{
+	(*WorkerConfig)(nil),          // 0: controlplane.v1.WorkerConfig
+	(*ListWorkersRequest)(nil),    // 1: controlplane.v1.ListWorkersRequest
+	(*ListWorkersResponse)(nil),   // 2: controlplane.v1.ListWorkersResponse
+	(*CreateWorkerRequest)(nil),   // 3: controlplane.v1.CreateWorkerRequest
+	(*CreateWorkerResponse)(nil),  // 4: controlplane.v1.CreateWorkerResponse
+	(*UpdateWorkerRequest)(nil),   // 5: controlplane.v1.UpdateWorkerRequest
+	(*UpdateWorkerResponse)(nil),  // 6: controlplane.v1.UpdateWorkerResponse
+	(*DeleteWorkerRequest)(nil),   // 7: controlplane.v1.DeleteWorkerRequest
+	(*DeleteWorkerResponse)(nil),  // 8: controlplane.v1.DeleteWorkerResponse
+	(*PingWorkerRequest)(nil),     // 9: controlplane.v1.PingWorkerRequest
+	(*PingWorkerResponse)(nil),    // 10: controlplane.v1.PingWorkerResponse
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
-var file_controlplane_v1_worker_management_service_proto_depIdxs = []int32{
-	0,  // 0: controlplane.v1.ListWorkersResponse.workers:type_name -> controlplane.v1.WorkerConfig
-	0,  // 1: controlplane.v1.CreateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
-	0,  // 2: controlplane.v1.UpdateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
-	1,  // 3: controlplane.v1.WorkerManagementService.ListWorkers:input_type -> controlplane.v1.ListWorkersRequest
-	3,  // 4: controlplane.v1.WorkerManagementService.CreateWorker:input_type -> controlplane.v1.CreateWorkerRequest
-	5,  // 5: controlplane.v1.WorkerManagementService.UpdateWorker:input_type -> controlplane.v1.UpdateWorkerRequest
-	7,  // 6: controlplane.v1.WorkerManagementService.DeleteWorker:input_type -> controlplane.v1.DeleteWorkerRequest
-	9,  // 7: controlplane.v1.WorkerManagementService.PingWorker:input_type -> controlplane.v1.PingWorkerRequest
-	2,  // 8: controlplane.v1.WorkerManagementService.ListWorkers:output_type -> controlplane.v1.ListWorkersResponse
-	4,  // 9: controlplane.v1.WorkerManagementService.CreateWorker:output_type -> controlplane.v1.CreateWorkerResponse
-	6,  // 10: controlplane.v1.WorkerManagementService.UpdateWorker:output_type -> controlplane.v1.UpdateWorkerResponse
-	8,  // 11: controlplane.v1.WorkerManagementService.DeleteWorker:output_type -> controlplane.v1.DeleteWorkerResponse
-	10, // 12: controlplane.v1.WorkerManagementService.PingWorker:output_type -> controlplane.v1.PingWorkerResponse
-	8,  // [8:13] is the sub-list for method output_type
-	3,  // [3:8] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+var file_controlplane_v1_worker_service_proto_depIdxs = []int32{
+	11, // 0: controlplane.v1.WorkerConfig.created_at:type_name -> google.protobuf.Timestamp
+	11, // 1: controlplane.v1.WorkerConfig.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: controlplane.v1.ListWorkersResponse.workers:type_name -> controlplane.v1.WorkerConfig
+	0,  // 3: controlplane.v1.CreateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
+	0,  // 4: controlplane.v1.UpdateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
+	1,  // 5: controlplane.v1.WorkerService.ListWorkers:input_type -> controlplane.v1.ListWorkersRequest
+	3,  // 6: controlplane.v1.WorkerService.CreateWorker:input_type -> controlplane.v1.CreateWorkerRequest
+	5,  // 7: controlplane.v1.WorkerService.UpdateWorker:input_type -> controlplane.v1.UpdateWorkerRequest
+	7,  // 8: controlplane.v1.WorkerService.DeleteWorker:input_type -> controlplane.v1.DeleteWorkerRequest
+	9,  // 9: controlplane.v1.WorkerService.PingWorker:input_type -> controlplane.v1.PingWorkerRequest
+	2,  // 10: controlplane.v1.WorkerService.ListWorkers:output_type -> controlplane.v1.ListWorkersResponse
+	4,  // 11: controlplane.v1.WorkerService.CreateWorker:output_type -> controlplane.v1.CreateWorkerResponse
+	6,  // 12: controlplane.v1.WorkerService.UpdateWorker:output_type -> controlplane.v1.UpdateWorkerResponse
+	8,  // 13: controlplane.v1.WorkerService.DeleteWorker:output_type -> controlplane.v1.DeleteWorkerResponse
+	10, // 14: controlplane.v1.WorkerService.PingWorker:output_type -> controlplane.v1.PingWorkerResponse
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_controlplane_v1_worker_management_service_proto_init() }
-func file_controlplane_v1_worker_management_service_proto_init() {
-	if File_controlplane_v1_worker_management_service_proto != nil {
+func init() { file_controlplane_v1_worker_service_proto_init() }
+func file_controlplane_v1_worker_service_proto_init() {
+	if File_controlplane_v1_worker_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_worker_management_service_proto_rawDesc), len(file_controlplane_v1_worker_management_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_worker_service_proto_rawDesc), len(file_controlplane_v1_worker_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_controlplane_v1_worker_management_service_proto_goTypes,
-		DependencyIndexes: file_controlplane_v1_worker_management_service_proto_depIdxs,
-		MessageInfos:      file_controlplane_v1_worker_management_service_proto_msgTypes,
+		GoTypes:           file_controlplane_v1_worker_service_proto_goTypes,
+		DependencyIndexes: file_controlplane_v1_worker_service_proto_depIdxs,
+		MessageInfos:      file_controlplane_v1_worker_service_proto_msgTypes,
 	}.Build()
-	File_controlplane_v1_worker_management_service_proto = out.File
-	file_controlplane_v1_worker_management_service_proto_goTypes = nil
-	file_controlplane_v1_worker_management_service_proto_depIdxs = nil
+	File_controlplane_v1_worker_service_proto = out.File
+	file_controlplane_v1_worker_service_proto_goTypes = nil
+	file_controlplane_v1_worker_service_proto_depIdxs = nil
 }

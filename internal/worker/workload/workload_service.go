@@ -11,7 +11,7 @@ import (
 type LaunchResult struct {
 	Accepted       bool
 	Message        string
-	WorkloadID     string
+	AgentRunID     string
 	AgentID        string
 	AgentSessionID string
 	Status         string
@@ -27,9 +27,14 @@ func NewWorkloadService(mgr *WorkloadManager) *WorkloadService {
 	return &WorkloadService{mgr: mgr}
 }
 
+// ListAgentRuns returns info for all active agent runs.
+func (s *WorkloadService) ListAgentRuns(_ context.Context) []SessionListEntry {
+	return s.mgr.ListSessions()
+}
+
 // Schedule launches a workload via the WorkloadManager.
-func (s *WorkloadService) Schedule(ctx context.Context, workloadID, agentID string, opts driver.LaunchOpts) (LaunchResult, error) {
-	sess, err := s.mgr.Launch(ctx, workloadID, agentID, opts, nil)
+func (s *WorkloadService) Schedule(ctx context.Context, agentRunID, agentID string, opts driver.LaunchOpts) (LaunchResult, error) {
+	sess, err := s.mgr.Launch(ctx, agentRunID, agentID, opts, nil)
 	if err != nil {
 		return LaunchResult{
 			Accepted: false,
@@ -40,8 +45,8 @@ func (s *WorkloadService) Schedule(ctx context.Context, workloadID, agentID stri
 	info := sess.Info()
 	return LaunchResult{
 		Accepted:       true,
-		Message:        fmt.Sprintf("workload launched on agent %s", agentID),
-		WorkloadID:     workloadID,
+		Message:        fmt.Sprintf("agent run launched on agent %s", agentID),
+		AgentRunID:     agentRunID,
 		AgentID:        info.AgentID,
 		AgentSessionID: info.AgentSessionID,
 		Status:         string(info.Status),

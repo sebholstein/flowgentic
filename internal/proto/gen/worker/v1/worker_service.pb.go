@@ -22,10 +22,117 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ScheduleWorkloadRequest struct {
+type AgentRunStatus int32
+
+const (
+	AgentRunStatus_AGENT_RUN_STATUS_UNSPECIFIED AgentRunStatus = 0
+	AgentRunStatus_AGENT_RUN_STATUS_STARTING    AgentRunStatus = 1
+	AgentRunStatus_AGENT_RUN_STATUS_RUNNING     AgentRunStatus = 2
+	AgentRunStatus_AGENT_RUN_STATUS_IDLE        AgentRunStatus = 3
+	AgentRunStatus_AGENT_RUN_STATUS_STOPPING    AgentRunStatus = 4
+	AgentRunStatus_AGENT_RUN_STATUS_STOPPED     AgentRunStatus = 5
+	AgentRunStatus_AGENT_RUN_STATUS_ERRORED     AgentRunStatus = 6
+)
+
+// Enum value maps for AgentRunStatus.
+var (
+	AgentRunStatus_name = map[int32]string{
+		0: "AGENT_RUN_STATUS_UNSPECIFIED",
+		1: "AGENT_RUN_STATUS_STARTING",
+		2: "AGENT_RUN_STATUS_RUNNING",
+		3: "AGENT_RUN_STATUS_IDLE",
+		4: "AGENT_RUN_STATUS_STOPPING",
+		5: "AGENT_RUN_STATUS_STOPPED",
+		6: "AGENT_RUN_STATUS_ERRORED",
+	}
+	AgentRunStatus_value = map[string]int32{
+		"AGENT_RUN_STATUS_UNSPECIFIED": 0,
+		"AGENT_RUN_STATUS_STARTING":    1,
+		"AGENT_RUN_STATUS_RUNNING":     2,
+		"AGENT_RUN_STATUS_IDLE":        3,
+		"AGENT_RUN_STATUS_STOPPING":    4,
+		"AGENT_RUN_STATUS_STOPPED":     5,
+		"AGENT_RUN_STATUS_ERRORED":     6,
+	}
+)
+
+func (x AgentRunStatus) Enum() *AgentRunStatus {
+	p := new(AgentRunStatus)
+	*p = x
+	return p
+}
+
+func (x AgentRunStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AgentRunStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_worker_v1_worker_service_proto_enumTypes[0].Descriptor()
+}
+
+func (AgentRunStatus) Type() protoreflect.EnumType {
+	return &file_worker_v1_worker_service_proto_enumTypes[0]
+}
+
+func (x AgentRunStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AgentRunStatus.Descriptor instead.
+func (AgentRunStatus) EnumDescriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
+}
+
+type AgentRunMode int32
+
+const (
+	AgentRunMode_AGENT_RUN_MODE_UNSPECIFIED AgentRunMode = 0
+	AgentRunMode_AGENT_RUN_MODE_HEADLESS    AgentRunMode = 1
+)
+
+// Enum value maps for AgentRunMode.
+var (
+	AgentRunMode_name = map[int32]string{
+		0: "AGENT_RUN_MODE_UNSPECIFIED",
+		1: "AGENT_RUN_MODE_HEADLESS",
+	}
+	AgentRunMode_value = map[string]int32{
+		"AGENT_RUN_MODE_UNSPECIFIED": 0,
+		"AGENT_RUN_MODE_HEADLESS":    1,
+	}
+)
+
+func (x AgentRunMode) Enum() *AgentRunMode {
+	p := new(AgentRunMode)
+	*p = x
+	return p
+}
+
+func (x AgentRunMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AgentRunMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_worker_v1_worker_service_proto_enumTypes[1].Descriptor()
+}
+
+func (AgentRunMode) Type() protoreflect.EnumType {
+	return &file_worker_v1_worker_service_proto_enumTypes[1]
+}
+
+func (x AgentRunMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AgentRunMode.Descriptor instead.
+func (AgentRunMode) EnumDescriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{1}
+}
+
+type NewAgentRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for this workload, assigned by the control plane.
-	WorkloadId string `protobuf:"bytes,1,opt,name=workload_id,json=workloadId,proto3" json:"workload_id,omitempty"`
+	// Unique identifier for this agent run, assigned by the control plane.
+	AgentRunId string `protobuf:"bytes,1,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
 	// Agent driver to use.
 	Agent Agent `protobuf:"varint,2,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
 	// Session mode: "headless" or "interactive".
@@ -48,20 +155,20 @@ type ScheduleWorkloadRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ScheduleWorkloadRequest) Reset() {
-	*x = ScheduleWorkloadRequest{}
+func (x *NewAgentRunRequest) Reset() {
+	*x = NewAgentRunRequest{}
 	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScheduleWorkloadRequest) String() string {
+func (x *NewAgentRunRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScheduleWorkloadRequest) ProtoMessage() {}
+func (*NewAgentRunRequest) ProtoMessage() {}
 
-func (x *ScheduleWorkloadRequest) ProtoReflect() protoreflect.Message {
+func (x *NewAgentRunRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -73,88 +180,88 @@ func (x *ScheduleWorkloadRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScheduleWorkloadRequest.ProtoReflect.Descriptor instead.
-func (*ScheduleWorkloadRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use NewAgentRunRequest.ProtoReflect.Descriptor instead.
+func (*NewAgentRunRequest) Descriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ScheduleWorkloadRequest) GetWorkloadId() string {
+func (x *NewAgentRunRequest) GetAgentRunId() string {
 	if x != nil {
-		return x.WorkloadId
+		return x.AgentRunId
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetAgent() Agent {
+func (x *NewAgentRunRequest) GetAgent() Agent {
 	if x != nil {
 		return x.Agent
 	}
 	return Agent_AGENT_UNSPECIFIED
 }
 
-func (x *ScheduleWorkloadRequest) GetMode() string {
+func (x *NewAgentRunRequest) GetMode() string {
 	if x != nil {
 		return x.Mode
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetPrompt() string {
+func (x *NewAgentRunRequest) GetPrompt() string {
 	if x != nil {
 		return x.Prompt
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetSystemPrompt() string {
+func (x *NewAgentRunRequest) GetSystemPrompt() string {
 	if x != nil {
 		return x.SystemPrompt
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetModel() string {
+func (x *NewAgentRunRequest) GetModel() string {
 	if x != nil {
 		return x.Model
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetCwd() string {
+func (x *NewAgentRunRequest) GetCwd() string {
 	if x != nil {
 		return x.Cwd
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetSessionId() string {
+func (x *NewAgentRunRequest) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadRequest) GetYolo() bool {
+func (x *NewAgentRunRequest) GetYolo() bool {
 	if x != nil {
 		return x.Yolo
 	}
 	return false
 }
 
-func (x *ScheduleWorkloadRequest) GetAllowedTools() []string {
+func (x *NewAgentRunRequest) GetAllowedTools() []string {
 	if x != nil {
 		return x.AllowedTools
 	}
 	return nil
 }
 
-type ScheduleWorkloadResponse struct {
+type NewAgentRunResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Whether the worker accepted the workload.
+	// Whether the worker accepted the agent run.
 	Accepted bool `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
 	// Human-readable message (e.g. reason for rejection).
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// The session ID for the launched workload.
+	// The session ID for the launched agent run.
 	SessionId string `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// The agent driver used.
 	Agent Agent `protobuf:"varint,4,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
@@ -168,20 +275,20 @@ type ScheduleWorkloadResponse struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *ScheduleWorkloadResponse) Reset() {
-	*x = ScheduleWorkloadResponse{}
+func (x *NewAgentRunResponse) Reset() {
+	*x = NewAgentRunResponse{}
 	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScheduleWorkloadResponse) String() string {
+func (x *NewAgentRunResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScheduleWorkloadResponse) ProtoMessage() {}
+func (*NewAgentRunResponse) ProtoMessage() {}
 
-func (x *ScheduleWorkloadResponse) ProtoReflect() protoreflect.Message {
+func (x *NewAgentRunResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -193,68 +300,232 @@ func (x *ScheduleWorkloadResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScheduleWorkloadResponse.ProtoReflect.Descriptor instead.
-func (*ScheduleWorkloadResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use NewAgentRunResponse.ProtoReflect.Descriptor instead.
+func (*NewAgentRunResponse) Descriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ScheduleWorkloadResponse) GetAccepted() bool {
+func (x *NewAgentRunResponse) GetAccepted() bool {
 	if x != nil {
 		return x.Accepted
 	}
 	return false
 }
 
-func (x *ScheduleWorkloadResponse) GetMessage() string {
+func (x *NewAgentRunResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadResponse) GetSessionId() string {
+func (x *NewAgentRunResponse) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadResponse) GetAgent() Agent {
+func (x *NewAgentRunResponse) GetAgent() Agent {
 	if x != nil {
 		return x.Agent
 	}
 	return Agent_AGENT_UNSPECIFIED
 }
 
-func (x *ScheduleWorkloadResponse) GetStatus() string {
+func (x *NewAgentRunResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadResponse) GetMode() string {
+func (x *NewAgentRunResponse) GetMode() string {
 	if x != nil {
 		return x.Mode
 	}
 	return ""
 }
 
-func (x *ScheduleWorkloadResponse) GetAgentSessionId() string {
+func (x *NewAgentRunResponse) GetAgentSessionId() string {
 	if x != nil {
 		return x.AgentSessionId
 	}
 	return ""
 }
 
+type AgentRunInfo struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AgentRunId     string                 `protobuf:"bytes,1,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	Agent          Agent                  `protobuf:"varint,2,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
+	Status         AgentRunStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=worker.v1.AgentRunStatus" json:"status,omitempty"`
+	Mode           AgentRunMode           `protobuf:"varint,4,opt,name=mode,proto3,enum=worker.v1.AgentRunMode" json:"mode,omitempty"`
+	SessionId      string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	AgentSessionId string                 `protobuf:"bytes,6,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AgentRunInfo) Reset() {
+	*x = AgentRunInfo{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentRunInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentRunInfo) ProtoMessage() {}
+
+func (x *AgentRunInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentRunInfo.ProtoReflect.Descriptor instead.
+func (*AgentRunInfo) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AgentRunInfo) GetAgentRunId() string {
+	if x != nil {
+		return x.AgentRunId
+	}
+	return ""
+}
+
+func (x *AgentRunInfo) GetAgent() Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return Agent_AGENT_UNSPECIFIED
+}
+
+func (x *AgentRunInfo) GetStatus() AgentRunStatus {
+	if x != nil {
+		return x.Status
+	}
+	return AgentRunStatus_AGENT_RUN_STATUS_UNSPECIFIED
+}
+
+func (x *AgentRunInfo) GetMode() AgentRunMode {
+	if x != nil {
+		return x.Mode
+	}
+	return AgentRunMode_AGENT_RUN_MODE_UNSPECIFIED
+}
+
+func (x *AgentRunInfo) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *AgentRunInfo) GetAgentSessionId() string {
+	if x != nil {
+		return x.AgentSessionId
+	}
+	return ""
+}
+
+type ListAgentRunsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentRunsRequest) Reset() {
+	*x = ListAgentRunsRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentRunsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentRunsRequest) ProtoMessage() {}
+
+func (x *ListAgentRunsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentRunsRequest.ProtoReflect.Descriptor instead.
+func (*ListAgentRunsRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{3}
+}
+
+type ListAgentRunsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentRuns     []*AgentRunInfo        `protobuf:"bytes,1,rep,name=agent_runs,json=agentRuns,proto3" json:"agent_runs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentRunsResponse) Reset() {
+	*x = ListAgentRunsResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentRunsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentRunsResponse) ProtoMessage() {}
+
+func (x *ListAgentRunsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentRunsResponse.ProtoReflect.Descriptor instead.
+func (*ListAgentRunsResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListAgentRunsResponse) GetAgentRuns() []*AgentRunInfo {
+	if x != nil {
+		return x.AgentRuns
+	}
+	return nil
+}
+
 var File_worker_v1_worker_service_proto protoreflect.FileDescriptor
 
 const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"\xbc\x02\n" +
-	"\x17ScheduleWorkloadRequest\x12(\n" +
-	"\vworkload_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
-	"workloadId\x12&\n" +
+	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"\xb8\x02\n" +
+	"\x12NewAgentRunRequest\x12)\n" +
+	"\fagent_run_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"agentRunId\x12&\n" +
 	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x12\n" +
 	"\x04mode\x18\x03 \x01(\tR\x04mode\x12\x16\n" +
 	"\x06prompt\x18\x04 \x01(\tR\x06prompt\x12#\n" +
@@ -265,8 +536,8 @@ const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"session_id\x18\b \x01(\tR\tsessionId\x12\x12\n" +
 	"\x04yolo\x18\t \x01(\bR\x04yolo\x12#\n" +
 	"\rallowed_tools\x18\n" +
-	" \x03(\tR\fallowedTools\"\xed\x01\n" +
-	"\x18ScheduleWorkloadResponse\x12\x1a\n" +
+	" \x03(\tR\fallowedTools\"\xe8\x01\n" +
+	"\x13NewAgentRunResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1d\n" +
 	"\n" +
@@ -274,9 +545,34 @@ const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\x05agent\x18\x04 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x12\x12\n" +
 	"\x04mode\x18\x06 \x01(\tR\x04mode\x12(\n" +
-	"\x10agent_session_id\x18\v \x01(\tR\x0eagentSessionId2n\n" +
-	"\rWorkerService\x12]\n" +
-	"\x10ScheduleWorkload\x12\".worker.v1.ScheduleWorkloadRequest\x1a#.worker.v1.ScheduleWorkloadResponse\"\x00B\xb0\x01\n" +
+	"\x10agent_session_id\x18\v \x01(\tR\x0eagentSessionId\"\x81\x02\n" +
+	"\fAgentRunInfo\x12 \n" +
+	"\fagent_run_id\x18\x01 \x01(\tR\n" +
+	"agentRunId\x12&\n" +
+	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x121\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.worker.v1.AgentRunStatusR\x06status\x12+\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x17.worker.v1.AgentRunModeR\x04mode\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x05 \x01(\tR\tsessionId\x12(\n" +
+	"\x10agent_session_id\x18\x06 \x01(\tR\x0eagentSessionId\"\x16\n" +
+	"\x14ListAgentRunsRequest\"O\n" +
+	"\x15ListAgentRunsResponse\x126\n" +
+	"\n" +
+	"agent_runs\x18\x01 \x03(\v2\x17.worker.v1.AgentRunInfoR\tagentRuns*\xe5\x01\n" +
+	"\x0eAgentRunStatus\x12 \n" +
+	"\x1cAGENT_RUN_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19AGENT_RUN_STATUS_STARTING\x10\x01\x12\x1c\n" +
+	"\x18AGENT_RUN_STATUS_RUNNING\x10\x02\x12\x19\n" +
+	"\x15AGENT_RUN_STATUS_IDLE\x10\x03\x12\x1d\n" +
+	"\x19AGENT_RUN_STATUS_STOPPING\x10\x04\x12\x1c\n" +
+	"\x18AGENT_RUN_STATUS_STOPPED\x10\x05\x12\x1c\n" +
+	"\x18AGENT_RUN_STATUS_ERRORED\x10\x06*K\n" +
+	"\fAgentRunMode\x12\x1e\n" +
+	"\x1aAGENT_RUN_MODE_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17AGENT_RUN_MODE_HEADLESS\x10\x012\xb5\x01\n" +
+	"\rWorkerService\x12N\n" +
+	"\vNewAgentRun\x12\x1d.worker.v1.NewAgentRunRequest\x1a\x1e.worker.v1.NewAgentRunResponse\"\x00\x12T\n" +
+	"\rListAgentRuns\x12\x1f.worker.v1.ListAgentRunsRequest\x1a .worker.v1.ListAgentRunsResponse\"\x00B\xb0\x01\n" +
 	"\rcom.worker.v1B\x12WorkerServiceProtoP\x01ZFgithub.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1\xa2\x02\x03WXX\xaa\x02\tWorker.V1\xca\x02\tWorker\\V1\xe2\x02\x15Worker\\V1\\GPBMetadata\xea\x02\n" +
 	"Worker::V1b\x06proto3"
 
@@ -292,22 +588,34 @@ func file_worker_v1_worker_service_proto_rawDescGZIP() []byte {
 	return file_worker_v1_worker_service_proto_rawDescData
 }
 
-var file_worker_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_worker_v1_worker_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_worker_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_worker_v1_worker_service_proto_goTypes = []any{
-	(*ScheduleWorkloadRequest)(nil),  // 0: worker.v1.ScheduleWorkloadRequest
-	(*ScheduleWorkloadResponse)(nil), // 1: worker.v1.ScheduleWorkloadResponse
-	(Agent)(0),                       // 2: worker.v1.Agent
+	(AgentRunStatus)(0),           // 0: worker.v1.AgentRunStatus
+	(AgentRunMode)(0),             // 1: worker.v1.AgentRunMode
+	(*NewAgentRunRequest)(nil),    // 2: worker.v1.NewAgentRunRequest
+	(*NewAgentRunResponse)(nil),   // 3: worker.v1.NewAgentRunResponse
+	(*AgentRunInfo)(nil),          // 4: worker.v1.AgentRunInfo
+	(*ListAgentRunsRequest)(nil),  // 5: worker.v1.ListAgentRunsRequest
+	(*ListAgentRunsResponse)(nil), // 6: worker.v1.ListAgentRunsResponse
+	(Agent)(0),                    // 7: worker.v1.Agent
 }
 var file_worker_v1_worker_service_proto_depIdxs = []int32{
-	2, // 0: worker.v1.ScheduleWorkloadRequest.agent:type_name -> worker.v1.Agent
-	2, // 1: worker.v1.ScheduleWorkloadResponse.agent:type_name -> worker.v1.Agent
-	0, // 2: worker.v1.WorkerService.ScheduleWorkload:input_type -> worker.v1.ScheduleWorkloadRequest
-	1, // 3: worker.v1.WorkerService.ScheduleWorkload:output_type -> worker.v1.ScheduleWorkloadResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	7, // 0: worker.v1.NewAgentRunRequest.agent:type_name -> worker.v1.Agent
+	7, // 1: worker.v1.NewAgentRunResponse.agent:type_name -> worker.v1.Agent
+	7, // 2: worker.v1.AgentRunInfo.agent:type_name -> worker.v1.Agent
+	0, // 3: worker.v1.AgentRunInfo.status:type_name -> worker.v1.AgentRunStatus
+	1, // 4: worker.v1.AgentRunInfo.mode:type_name -> worker.v1.AgentRunMode
+	4, // 5: worker.v1.ListAgentRunsResponse.agent_runs:type_name -> worker.v1.AgentRunInfo
+	2, // 6: worker.v1.WorkerService.NewAgentRun:input_type -> worker.v1.NewAgentRunRequest
+	5, // 7: worker.v1.WorkerService.ListAgentRuns:input_type -> worker.v1.ListAgentRunsRequest
+	3, // 8: worker.v1.WorkerService.NewAgentRun:output_type -> worker.v1.NewAgentRunResponse
+	6, // 9: worker.v1.WorkerService.ListAgentRuns:output_type -> worker.v1.ListAgentRunsResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_worker_v1_worker_service_proto_init() }
@@ -321,13 +629,14 @@ func file_worker_v1_worker_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worker_v1_worker_service_proto_rawDesc), len(file_worker_v1_worker_service_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_worker_v1_worker_service_proto_goTypes,
 		DependencyIndexes: file_worker_v1_worker_service_proto_depIdxs,
+		EnumInfos:         file_worker_v1_worker_service_proto_enumTypes,
 		MessageInfos:      file_worker_v1_worker_service_proto_msgTypes,
 	}.Build()
 	File_worker_v1_worker_service_proto = out.File

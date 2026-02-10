@@ -73,7 +73,7 @@ func (m *WorkloadManager) Launch(_ context.Context, workloadID, agentID string, 
 	}
 	opts.EnvVars["AGENTCTL_WORKER_URL"] = m.ctlURL
 	opts.EnvVars["AGENTCTL_WROKER_SECRET"] = m.ctlSecret
-	opts.EnvVars["FLOWGENTIC_WORKLOAD_ID"] = workloadID
+	opts.EnvVars["FLOWGENTIC_AGENT_RUN_ID"] = workloadID
 
 	wrappedOnEvent := func(e driver.Event) {
 		e.SessionID = workloadID
@@ -156,15 +156,24 @@ func (m *WorkloadManager) GetSession(id string) (driver.Session, bool) {
 	return e.session, true
 }
 
-// ListSessions returns info for all active sessions.
-func (m *WorkloadManager) ListSessions() []driver.SessionInfo {
+// SessionListEntry pairs a workload ID (agent_run_id) with its session info.
+type SessionListEntry struct {
+	AgentRunID string
+	Info       driver.SessionInfo
+}
+
+// ListSessions returns info for all active sessions, keyed by agent run ID.
+func (m *WorkloadManager) ListSessions() []SessionListEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	infos := make([]driver.SessionInfo, 0, len(m.sessions))
-	for _, e := range m.sessions {
-		infos = append(infos, e.session.Info())
+	entries := make([]SessionListEntry, 0, len(m.sessions))
+	for id, e := range m.sessions {
+		entries = append(entries, SessionListEntry{
+			AgentRunID: id,
+			Info:       e.session.Info(),
+		})
 	}
-	return infos
+	return entries
 }
 
 // StopSession stops the session with the given ID.

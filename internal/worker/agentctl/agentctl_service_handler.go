@@ -2,6 +2,7 @@ package agentctl
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"connectrpc.com/connect"
@@ -13,6 +14,16 @@ import (
 type agentCtlServiceHandler struct {
 	log     *slog.Logger
 	handler EventHandler
+}
+
+// SetTopic implements workerv1connect.AgentCtlServiceHandler.
+func (h *agentCtlServiceHandler) SetTopic(_ context.Context, r *connect.Request[workerv1.SetTopicRequest]) (*connect.Response[workerv1.SetTopicResponse], error) {
+	topic := []rune(r.Msg.Topic)
+	if len(topic) > 140 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("topic too long (max 140 chars)"))
+	}
+	h.log.Info("agent wants to set topic", "topic", topic)
+	return &connect.Response[workerv1.SetTopicResponse]{}, nil
 }
 
 func (h *agentCtlServiceHandler) ReportStatus(

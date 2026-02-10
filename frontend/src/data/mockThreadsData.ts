@@ -37,7 +37,7 @@ export const threads: Thread[] = [
   {
     id: "1",
     projectId: "1",
-    mode: "orchestrated",
+    mode: "plan",
     controlPlaneId: "cp-embedded",
     title: "User Authentication Flow",
     description: `Implement a **complete user authentication system** with the following features:
@@ -117,7 +117,7 @@ The login UI task had two competing implementations. GPT-4's version had better 
   {
     id: "2",
     projectId: "1",
-    mode: "orchestrated",
+    mode: "plan",
     controlPlaneId: "cp-embedded",
     title: "Dashboard Analytics",
     description: `Build a comprehensive analytics dashboard for monitoring key business metrics.
@@ -144,7 +144,7 @@ The login UI task had two competing implementations. GPT-4's version had better 
   {
     id: "3",
     projectId: "2",
-    mode: "orchestrated",
+    mode: "plan",
     controlPlaneId: "cp-remote-1",
     title: "Payment Integration",
     description: `Integrate **Stripe** for payment processing with full subscription support.
@@ -183,7 +183,7 @@ All 6 tasks completed successfully. Stripe integration is live in production.
   {
     id: "4",
     projectId: "2",
-    mode: "orchestrated",
+    mode: "plan",
     controlPlaneId: "cp-embedded",
     title: "Email Notification System",
     description: `Set up a transactional email system using **SendGrid** or **AWS SES**.
@@ -209,7 +209,7 @@ Technical requirements:
   {
     id: "5",
     projectId: "3",
-    mode: "orchestrated",
+    mode: "plan",
     controlPlaneId: "cp-embedded",
     title: "API Rate Limiting",
     description: `Implement robust rate limiting to protect API endpoints from abuse.
@@ -240,7 +240,7 @@ Response headers should include \`X-RateLimit-Remaining\` and \`X-RateLimit-Rese
   {
     id: "6",
     projectId: "3",
-    mode: "single_agent",
+    mode: "build",
     controlPlaneId: "cp-embedded",
     model: "claude-opus-4",
     title: "User Settings Page",

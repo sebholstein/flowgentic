@@ -24,68 +24,102 @@ func TestDriver_Capabilities(t *testing.T) {
 	d := NewDriver(DriverDeps{Log: testLogger()})
 	caps := d.Capabilities()
 	assert.True(t, caps.Has(driver.CapStreaming))
-	assert.True(t, caps.Has(driver.CapSessionResume))
+	assert.False(t, caps.Has(driver.CapSessionResume))
 	assert.True(t, caps.Has(driver.CapCustomModel))
 	assert.True(t, caps.Has(driver.CapYolo))
-	assert.False(t, caps.Has(driver.CapSystemPrompt))
+	assert.True(t, caps.Has(driver.CapSystemPrompt))
 }
 
-func TestNormalizeCodexEvent_ThreadStarted(t *testing.T) {
-	raw := []byte(`{"type":"thread.started","thread_id":"t123"}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_AgentMessageDelta(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"itemId":   "item_1",
+		"delta":    "Hello ",
+	})
+	events := normalizeNotification("item/agentMessage/delta", params)
 	require.Len(t, events, 1)
-	assert.Equal(t, driver.EventTypeSessionStart, events[0].Type)
-	assert.Equal(t, "t123", events[0].Text)
+	assert.Equal(t, driver.EventTypeMessage, events[0].Type)
+	assert.Equal(t, "Hello ", events[0].Text)
+	assert.True(t, events[0].Delta)
 }
 
-func TestNormalizeCodexEvent_TurnCompleted(t *testing.T) {
-	raw := []byte(`{"type":"turn.completed","usage":{"input_tokens":100}}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_ReasoningDelta(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"delta":    "thinking...",
+	})
+	events := normalizeNotification("item/reasoning/textDelta", params)
 	require.Len(t, events, 1)
-	assert.Equal(t, driver.EventTypeTurnComplete, events[0].Type)
+	assert.Equal(t, driver.EventTypeThinking, events[0].Type)
+	assert.Equal(t, "thinking...", events[0].Text)
+	assert.True(t, events[0].Delta)
 }
 
-func TestNormalizeCodexEvent_ItemStarted_CommandExecution(t *testing.T) {
-	raw := []byte(`{"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"ls","status":"in_progress"}}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_ItemStarted_CommandExecution(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"item": map[string]any{
+			"id":      "item_1",
+			"type":    "commandExecution",
+			"command": "ls -la",
+		},
+	})
+	events := normalizeNotification("item/started", params)
 	require.Len(t, events, 1)
 	assert.Equal(t, driver.EventTypeToolStart, events[0].Type)
 	assert.Equal(t, "command_execution", events[0].ToolName)
 	assert.Equal(t, "item_1", events[0].ToolID)
-	assert.Equal(t, "ls", events[0].Text)
+	assert.Equal(t, "ls -la", events[0].Text)
 }
 
-func TestNormalizeCodexEvent_ItemCompleted_AgentMessage(t *testing.T) {
-	raw := []byte(`{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"The capital of France is Paris."}}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_ItemCompleted_AgentMessage(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"item": map[string]any{
+			"id":   "item_2",
+			"type": "agentMessage",
+			"text": "The capital of France is Paris.",
+		},
+	})
+	events := normalizeNotification("item/completed", params)
 	require.Len(t, events, 1)
 	assert.Equal(t, driver.EventTypeMessage, events[0].Type)
 	assert.Equal(t, "The capital of France is Paris.", events[0].Text)
+	assert.False(t, events[0].Delta)
 }
 
-func TestNormalizeCodexEvent_ItemCompleted_Reasoning(t *testing.T) {
-	raw := []byte(`{"type":"item.completed","item":{"id":"item_0","type":"reasoning","text":"thinking..."}}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_ItemCompleted_Reasoning(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"item": map[string]any{
+			"id":   "item_0",
+			"type": "reasoning",
+			"text": "thinking...",
+		},
+	})
+	events := normalizeNotification("item/completed", params)
 	require.Len(t, events, 1)
 	assert.Equal(t, driver.EventTypeThinking, events[0].Type)
 	assert.Equal(t, "thinking...", events[0].Text)
 }
 
-func TestNormalizeCodexEvent_ItemCompleted_CommandExecution(t *testing.T) {
+func TestNormalizeNotification_ItemCompleted_CommandExecution(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		exitCode := 0
-		raw, _ := json.Marshal(codexEvent{
-			Type: "item.completed",
-			Item: &codexItem{
-				ID:               "item_1",
-				Type:             "command_execution",
-				Command:          "echo hi",
-				AggregatedOutput: "hi\n",
-				ExitCode:         &exitCode,
-				Status:           "completed",
+		params, _ := json.Marshal(map[string]any{
+			"threadId": "t1",
+			"item": map[string]any{
+				"id":               "item_1",
+				"type":             "commandExecution",
+				"command":          "echo hi",
+				"aggregatedOutput": "hi\n",
+				"exitCode":         exitCode,
+				"status":           "completed",
+				"cwd":              "/tmp",
+				"commandActions":   []any{},
 			},
 		})
-		events := normalizeCodexEvent(raw)
+		events := normalizeNotification("item/completed", params)
 		require.Len(t, events, 1)
 		assert.Equal(t, driver.EventTypeToolResult, events[0].Type)
 		assert.Equal(t, "item_1", events[0].ToolID)
@@ -95,50 +129,77 @@ func TestNormalizeCodexEvent_ItemCompleted_CommandExecution(t *testing.T) {
 
 	t.Run("failure", func(t *testing.T) {
 		exitCode := 1
-		raw, _ := json.Marshal(codexEvent{
-			Type: "item.completed",
-			Item: &codexItem{
-				ID:               "item_1",
-				Type:             "command_execution",
-				AggregatedOutput: "error",
-				ExitCode:         &exitCode,
-				Status:           "completed",
+		params, _ := json.Marshal(map[string]any{
+			"threadId": "t1",
+			"item": map[string]any{
+				"id":               "item_1",
+				"type":             "commandExecution",
+				"aggregatedOutput": "error",
+				"exitCode":         exitCode,
+				"status":           "completed",
+				"cwd":              "/tmp",
+				"commandActions":   []any{},
 			},
 		})
-		events := normalizeCodexEvent(raw)
+		events := normalizeNotification("item/completed", params)
 		require.Len(t, events, 1)
 		assert.True(t, events[0].ToolError)
 	})
 }
 
-func TestNormalizeCodexEvent_Error(t *testing.T) {
-	raw := []byte(`{"type":"error","message":"something went wrong"}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_ItemCompleted_FileChange(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+		"item": map[string]any{
+			"id":     "item_3",
+			"type":   "fileChange",
+			"status": "completed",
+			"changes": []map[string]any{
+				{"path": "main.go", "diff": "+new line", "kind": map[string]string{"type": "update"}},
+			},
+		},
+	})
+	events := normalizeNotification("item/completed", params)
+	require.Len(t, events, 1)
+	assert.Equal(t, driver.EventTypeToolResult, events[0].Type)
+	assert.Equal(t, "item_3", events[0].ToolID)
+	assert.Equal(t, "main.go\n+new line", events[0].Text)
+}
+
+func TestNormalizeNotification_TurnCompleted(t *testing.T) {
+	params, _ := json.Marshal(map[string]any{
+		"threadId": "t1",
+	})
+	events := normalizeNotification("turn/completed", params)
+	require.Len(t, events, 1)
+	assert.Equal(t, driver.EventTypeTurnComplete, events[0].Type)
+}
+
+func TestNormalizeNotification_Error(t *testing.T) {
+	params := json.RawMessage(`{"message":"something went wrong"}`)
+	events := normalizeNotification("error", params)
 	require.Len(t, events, 1)
 	assert.Equal(t, driver.EventTypeError, events[0].Type)
 }
 
-func TestNormalizeCodexEvent_Unknown(t *testing.T) {
-	raw := []byte(`{"type":"turn.started"}`)
-	events := normalizeCodexEvent(raw)
+func TestNormalizeNotification_Unknown(t *testing.T) {
+	events := normalizeNotification("turn/started", json.RawMessage(`{}`))
 	assert.Nil(t, events)
 }
 
-func TestNormalizeCodexEvent_InvalidJSON(t *testing.T) {
-	events := normalizeCodexEvent([]byte(`{invalid`))
-	assert.Nil(t, events)
+func TestExtractThreadID(t *testing.T) {
+	t.Run("present", func(t *testing.T) {
+		params := json.RawMessage(`{"threadId":"abc-123","delta":"hi"}`)
+		assert.Equal(t, "abc-123", extractThreadID(params))
+	})
+
+	t.Run("missing", func(t *testing.T) {
+		params := json.RawMessage(`{"delta":"hi"}`)
+		assert.Equal(t, "", extractThreadID(params))
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		assert.Equal(t, "", extractThreadID(nil))
+	})
 }
 
-func TestSessionMetaParsing(t *testing.T) {
-	// thread.started contains the session ID as thread_id at the top level.
-	raw := []byte(`{"type":"thread.started","thread_id":"abc-123-def"}`)
-	var evt codexEvent
-	require.NoError(t, json.Unmarshal(raw, &evt))
-	assert.Equal(t, "thread.started", evt.Type)
-	assert.Equal(t, "abc-123-def", evt.ThreadID)
-}
-
-func TestDriver_ImplementsSessionResolver(t *testing.T) {
-	d := NewDriver(DriverDeps{Log: testLogger()})
-	var _ driver.SessionResolver = d
-}

@@ -34,9 +34,7 @@ import {
   Archive,
   Plus,
 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { threads } from "@/data/mockThreadsData";
-import { threadTasks } from "@/data/mockTasksData";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxItems } from "@/data/mockInboxData";
 import { threadStatusConfig } from "@/constants/threadStatusConfig";
 import { taskStatusConfig } from "@/constants/taskStatusConfig";
@@ -49,7 +47,12 @@ import { WindowDragHeader } from "@/components/layout/WindowDragHeader";
 import { useIsMacOS } from "@/hooks/use-electron";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { useClient } from "@/lib/connect";
-import { ProjectManagementService } from "@/proto/gen/controlplane/v1/project_management_service_pb";
+import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
+import { WorkerService } from "@/proto/gen/controlplane/v1/worker_service_pb";
+import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
+import { projectsQueryOptions } from "@/lib/queries/projects";
+import { workersQueryOptions } from "@/lib/queries/workers";
+import { threadsQueryOptions } from "@/lib/queries/threads";
 
 // Flattened tree node types for virtualization
 type FlatTreeNode =
@@ -400,11 +403,11 @@ export function ThreadsSidebar({
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { feedback?: string };
   const queryClient = useQueryClient();
-  const projectClient = useClient(ProjectManagementService);
-  const { data: projectsData } = useQuery({
-    queryKey: ["projects"],
-    queryFn: () => projectClient.listProjects({}),
-  });
+  const projectClient = useClient(ProjectService);
+  const workerClient = useClient(WorkerService);
+  const threadClient = useClient(ThreadService);
+  const { data: projectsData } = useQuery(projectsQueryOptions(projectClient));
+  const { data: workersData } = useQuery(workersQueryOptions(workerClient));
   const fetchedProjects = useMemo<Project[]>(
     () =>
       (projectsData?.projects ?? []).map((p) => ({
@@ -418,6 +421,34 @@ export function ThreadsSidebar({
       })),
     [projectsData],
   );
+  const threadQueries = useQueries({
+    queries: fetchedProjects.map((p) => threadsQueryOptions(threadClient, p.id)),
+  });
+
+  const backendThreads = useMemo<Thread[]>(() => {
+    const result: Thread[] = [];
+    for (const q of threadQueries) {
+      for (const t of q.data?.threads ?? []) {
+        result.push({
+          id: t.id,
+          title: t.id.slice(0, 8),
+          description: "",
+          status: "pending",
+          taskCount: 0,
+          completedTasks: 0,
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+          overseer: { id: "overseer", name: "Overseer" },
+          projectId: t.projectId,
+          mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
+          model: t.model,
+          harness: t.agent,
+        });
+      }
+    }
+    return result;
+  }, [threadQueries]);
+
   const [activeTab, setActiveTab] = useState<SidebarTab>(() =>
     search.feedback ? "feedback" : "threads",
   );
@@ -516,8 +547,8 @@ export function ThreadsSidebar({
   // Group threads by project
   const threadsByProject = useMemo(() => {
     const filtered = searchQuery
-      ? threads.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
-      : threads;
+      ? backendThreads.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      : backendThreads;
 
     // When on archived tab, only show archived. Otherwise, only show non-archived.
     const visible = filtered.filter((t) =>
@@ -531,27 +562,22 @@ export function ThreadsSidebar({
       grouped.set(thread.projectId, existing);
     }
 
-    for (const [projectId, projectThreads] of grouped.entries()) {
-      const sorted = projectThreads
-        .map((thread, index) => ({ thread, index }))
-        .sort((a, b) => {
-          const aArchived = archivedThreads.has(a.thread.id);
-          const bArchived = archivedThreads.has(b.thread.id);
-          if (aArchived !== bArchived) return aArchived ? 1 : -1;
+    for (const [, projectThreads] of grouped.entries()) {
+      projectThreads.sort((a, b) => {
+        const aArchived = archivedThreads.has(a.id);
+        const bArchived = archivedThreads.has(b.id);
+        if (aArchived !== bArchived) return aArchived ? 1 : -1;
 
-          const aPinned = pinnedThreads.has(a.thread.id);
-          const bPinned = pinnedThreads.has(b.thread.id);
-          if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        const aPinned = pinnedThreads.has(a.id);
+        const bPinned = pinnedThreads.has(b.id);
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
 
-          return a.index - b.index;
-        })
-        .map(({ thread }) => thread);
-
-      grouped.set(projectId, sorted);
+        return 0;
+      });
     }
 
     return grouped;
-  }, [searchQuery, showArchived, archivedThreads, pinnedThreads]);
+  }, [searchQuery, backendThreads, showArchived, archivedThreads, pinnedThreads]);
 
   // Flatten tree for virtualization
   const flattenedNodes = useMemo(() => {
@@ -566,19 +592,12 @@ export function ThreadsSidebar({
 
       if (expandedProjects.has(project.id)) {
         for (const thread of projectThreads) {
-          const tasks = threadTasks[thread.id] ?? [];
           nodes.push({
             type: "thread",
             thread,
             projectId: project.id,
-            hasChildren: tasks.length > 0,
+            hasChildren: false,
           });
-
-          if (expandedThreads.has(thread.id) && tasks.length > 0) {
-            for (const task of tasks) {
-              nodes.push({ type: "task", task, threadId: thread.id });
-            }
-          }
         }
       }
     }
@@ -743,6 +762,7 @@ export function ThreadsSidebar({
     defaultPlannerModel: string;
     embeddedWorkerPath: string;
     workerPaths: Record<string, string>;
+    defaultWorkerId: string;
   }) => {
     createProjectMutation.mutate(data);
   };
@@ -920,6 +940,7 @@ export function ThreadsSidebar({
           open={newProjectDialogOpen}
           onOpenChange={setNewProjectDialogOpen}
           onSave={handleCreateProject}
+          workers={workersData?.workers ?? []}
         />
         </>
       )}

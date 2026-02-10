@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
+	"github.com/sebastianm/flowgentic/internal/worker/procutil"
 )
 
 // DriverDeps are the dependencies for the Claude Code driver.
@@ -183,7 +184,7 @@ func (s *claudeSession) launchHeadless(ctx context.Context, opts driver.LaunchOp
 		return fmt.Errorf("stdout pipe: %w", err)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartWithCleanup(cmd); err != nil {
 		return fmt.Errorf("start claude: %w", err)
 	}
 
@@ -309,7 +310,7 @@ func buildFlags(opts driver.LaunchOpts, agentSessionID string) []string {
 		flags = append(flags, "--allowed-tools", strings.Join(opts.AllowedTools, ","))
 	}
 
-	flags = append(flags, "--output-format", "stream-json")
+	flags = append(flags, "--output-format", "stream-json", "--include-partial-messages")
 
 	if opts.Yolo {
 		flags = append(flags, "--dangerously-skip-permissions")

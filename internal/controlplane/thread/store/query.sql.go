@@ -11,8 +11,8 @@ import (
 )
 
 const createThread = `-- name: CreateThread :exec
-INSERT INTO threads (id, project_id, agent, model, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO threads (id, project_id, agent, model, mode, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateThreadParams struct {
@@ -20,6 +20,7 @@ type CreateThreadParams struct {
 	ProjectID string
 	Agent     string
 	Model     string
+	Mode      string
 	CreatedAt string
 	UpdatedAt string
 }
@@ -30,6 +31,7 @@ func (q *Queries) CreateThread(ctx context.Context, arg CreateThreadParams) erro
 		arg.ProjectID,
 		arg.Agent,
 		arg.Model,
+		arg.Mode,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -45,7 +47,7 @@ func (q *Queries) DeleteThread(ctx context.Context, id string) (sql.Result, erro
 }
 
 const getThread = `-- name: GetThread :one
-SELECT id, project_id, agent, model, created_at, updated_at FROM threads
+SELECT id, project_id, agent, model, created_at, updated_at, mode FROM threads
 WHERE id = ?
 `
 
@@ -59,12 +61,13 @@ func (q *Queries) GetThread(ctx context.Context, id string) (Thread, error) {
 		&i.Model,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Mode,
 	)
 	return i, err
 }
 
 const listThreads = `-- name: ListThreads :many
-SELECT id, project_id, agent, model, created_at, updated_at FROM threads
+SELECT id, project_id, agent, model, created_at, updated_at, mode FROM threads
 WHERE project_id = ?
 ORDER BY created_at
 `
@@ -85,6 +88,7 @@ func (q *Queries) ListThreads(ctx context.Context, projectID string) ([]Thread, 
 			&i.Model,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Mode,
 		); err != nil {
 			return nil, err
 		}

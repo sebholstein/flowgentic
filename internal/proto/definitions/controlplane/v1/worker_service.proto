@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package controlplane.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
 
-// WorkerManagementService provides CRUD operations for managing worker
+// WorkerService provides CRUD operations for managing worker
 // configurations on the control plane.
-service WorkerManagementService {
+service WorkerService {
   // ListWorkers returns all configured workers.
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse) {}
 
@@ -30,8 +32,8 @@ message WorkerConfig {
   string name = 2;
   string url = 3;
   string secret = 4;
-  string created_at = 5;
-  string updated_at = 6;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
 }
 
 message ListWorkersRequest {}

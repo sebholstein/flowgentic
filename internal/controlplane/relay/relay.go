@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sebastianm/flowgentic/internal/config"
 )
 
 // allowedPrefixes is the set of service path prefixes that the relay will
@@ -20,9 +19,8 @@ var allowedPrefixes = []string{
 
 // StartDeps are the dependencies required to start the relay.
 type StartDeps struct {
-	Mux     *http.ServeMux
-	Log     *slog.Logger
-	Workers []config.WorkerEndpoint
+	Mux *http.ServeMux
+	Log *slog.Logger
 }
 
 // Registry holds the set of known workers and their connection details.
@@ -77,13 +75,13 @@ func (r *Registry) RemoveWorker(id string) {
 }
 
 // Start registers the relay handler on the mux for each allowed service prefix
-// and returns the Registry so other features can look up worker endpoints.
+// and returns the Registry so other features can add workers dynamically.
 func Start(deps StartDeps) *Registry {
-	reg := buildRegistry(deps.Workers, deps.Log)
+	reg := &Registry{
+		urls:    make(map[string]*url.URL),
+		secrets: make(map[string]string),
+	}
 
-	// Always register relay handlers so dynamically added workers (e.g. the
-	// embedded worker) can be reached even when no workers are configured at
-	// startup.
 	for _, prefix := range allowedPrefixes {
 		deps.Mux.Handle(prefix, &relayHandler{
 			log: deps.Log,
@@ -91,27 +89,7 @@ func Start(deps StartDeps) *Registry {
 		})
 	}
 
-	deps.Log.Info("relay: registered", "workers", len(reg.urls), "default", reg.defaultID)
-	return reg
-}
-
-func buildRegistry(workers []config.WorkerEndpoint, log *slog.Logger) *Registry {
-	reg := &Registry{
-		urls:    make(map[string]*url.URL, len(workers)),
-		secrets: make(map[string]string, len(workers)),
-	}
-	for _, w := range workers {
-		u, err := url.Parse(w.URL)
-		if err != nil {
-			log.Error("relay: invalid worker URL, skipping", "id", w.ID, "url", w.URL, "error", err)
-			continue
-		}
-		reg.urls[w.ID] = u
-		reg.secrets[w.ID] = w.Secret
-		if reg.defaultID == "" {
-			reg.defaultID = w.ID
-		}
-	}
+	deps.Log.Info("relay: registered handlers")
 	return reg
 }
 

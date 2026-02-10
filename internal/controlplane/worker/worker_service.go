@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sebastianm/flowgentic/internal/controlplane/project"
 )
@@ -13,8 +14,8 @@ type Worker struct {
 	Name      string
 	URL       string
 	Secret    string
-	CreatedAt string
-	UpdatedAt string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Store persists worker configurations.

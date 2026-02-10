@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,8 +39,8 @@ func (m *memStore) CreateProject(_ context.Context, p Project) (Project, error) 
 	if _, exists := m.projects[p.ID]; exists {
 		return Project{}, fmt.Errorf("project %q already exists", p.ID)
 	}
-	p.CreatedAt = "2025-01-01T00:00:00.000Z"
-	p.UpdatedAt = "2025-01-01T00:00:00.000Z"
+	p.CreatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	p.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	m.projects[p.ID] = p
 	return p, nil
 }
@@ -48,7 +49,7 @@ func (m *memStore) UpdateProject(_ context.Context, p Project) (Project, error) 
 	if _, exists := m.projects[p.ID]; !exists {
 		return Project{}, fmt.Errorf("project %q not found", p.ID)
 	}
-	p.UpdatedAt = "2025-01-01T00:00:01.000Z"
+	p.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 1, 0, time.UTC)
 	m.projects[p.ID] = p
 	return p, nil
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/sebastianm/flowgentic/internal/controlplane/project"
 )
 
+const timeFormat = "2006-01-02T15:04:05.000Z"
+
 // SQLiteStore implements project.Store using sqlc-generated queries.
 type SQLiteStore struct {
 	db *sql.DB
@@ -47,7 +49,7 @@ func (s *SQLiteStore) GetProject(ctx context.Context, id string) (project.Projec
 }
 
 func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (project.Project, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	p.CreatedAt = now
 	p.UpdatedAt = now
 
@@ -56,6 +58,7 @@ func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (pro
 		return project.Project{}, err
 	}
 
+	nowStr := now.Format(timeFormat)
 	err = s.q.CreateProject(ctx, CreateProjectParams{
 		ID:                  p.ID,
 		Name:                p.Name,
@@ -63,8 +66,8 @@ func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (pro
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
 		WorkerPaths:         wpJSON,
-		CreatedAt:           p.CreatedAt,
-		UpdatedAt:           p.UpdatedAt,
+		CreatedAt:           nowStr,
+		UpdatedAt:           nowStr,
 		SortIndex:           int64(p.SortIndex),
 	})
 	if err != nil {
@@ -74,7 +77,7 @@ func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (pro
 }
 
 func (s *SQLiteStore) UpdateProject(ctx context.Context, p project.Project) (project.Project, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	p.UpdatedAt = now
 
 	wpJSON, err := marshalWorkerPaths(p.WorkerPaths)
@@ -88,7 +91,7 @@ func (s *SQLiteStore) UpdateProject(ctx context.Context, p project.Project) (pro
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
 		WorkerPaths:         wpJSON,
-		UpdatedAt:           p.UpdatedAt,
+		UpdatedAt:           now.Format(timeFormat),
 		SortIndex:           int64(p.SortIndex),
 		ID:                  p.ID,
 	})
@@ -153,6 +156,8 @@ func projectFromRow(r Project) (project.Project, error) {
 	if err != nil {
 		return project.Project{}, err
 	}
+	createdAt, _ := time.Parse(timeFormat, r.CreatedAt)
+	updatedAt, _ := time.Parse(timeFormat, r.UpdatedAt)
 	return project.Project{
 		ID:                  r.ID,
 		Name:                r.Name,
@@ -160,8 +165,8 @@ func projectFromRow(r Project) (project.Project, error) {
 		DefaultPlannerModel: r.DefaultPlannerModel,
 		EmbeddedWorkerPath:  r.EmbeddedWorkerPath,
 		WorkerPaths:         wp,
-		CreatedAt:           r.CreatedAt,
-		UpdatedAt:           r.UpdatedAt,
+		CreatedAt:           createdAt,
+		UpdatedAt:           updatedAt,
 		SortIndex:           int32(r.SortIndex),
 	}, nil
 }

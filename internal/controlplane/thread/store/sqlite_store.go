@@ -9,6 +9,8 @@ import (
 	"github.com/sebastianm/flowgentic/internal/controlplane/thread"
 )
 
+const timeFormat = "2006-01-02T15:04:05.000Z"
+
 // SQLiteStore implements thread.Store using sqlc-generated queries.
 type SQLiteStore struct {
 	q *Queries
@@ -41,17 +43,19 @@ func (s *SQLiteStore) GetThread(ctx context.Context, id string) (thread.Thread, 
 }
 
 func (s *SQLiteStore) CreateThread(ctx context.Context, t thread.Thread) (thread.Thread, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	t.CreatedAt = now
 	t.UpdatedAt = now
 
+	nowStr := now.Format(timeFormat)
 	err := s.q.CreateThread(ctx, CreateThreadParams{
 		ID:        t.ID,
 		ProjectID: t.ProjectID,
 		Agent:     t.Agent,
 		Model:     t.Model,
-		CreatedAt: t.CreatedAt,
-		UpdatedAt: t.UpdatedAt,
+		Mode:      t.Mode,
+		CreatedAt: nowStr,
+		UpdatedAt: nowStr,
 	})
 	if err != nil {
 		return thread.Thread{}, fmt.Errorf("inserting thread: %w", err)
@@ -60,13 +64,13 @@ func (s *SQLiteStore) CreateThread(ctx context.Context, t thread.Thread) (thread
 }
 
 func (s *SQLiteStore) UpdateThread(ctx context.Context, t thread.Thread) (thread.Thread, error) {
-	now := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	now := time.Now().UTC()
 	t.UpdatedAt = now
 
 	res, err := s.q.UpdateThread(ctx, UpdateThreadParams{
 		Agent:     t.Agent,
 		Model:     t.Model,
-		UpdatedAt: t.UpdatedAt,
+		UpdatedAt: now.Format(timeFormat),
 		ID:        t.ID,
 	})
 	if err != nil {
@@ -101,12 +105,15 @@ func (s *SQLiteStore) DeleteThread(ctx context.Context, id string) error {
 }
 
 func threadFromRow(r Thread) thread.Thread {
+	createdAt, _ := time.Parse(timeFormat, r.CreatedAt)
+	updatedAt, _ := time.Parse(timeFormat, r.UpdatedAt)
 	return thread.Thread{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Agent:     r.Agent,
 		Model:     r.Model,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		Mode:      r.Mode,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}
 }

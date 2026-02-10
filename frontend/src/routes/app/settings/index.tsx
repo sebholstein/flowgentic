@@ -5,7 +5,7 @@ import { useSidebarStore } from "@/stores/sidebarStore";
 import { Pencil, Trash2, Plus, Bot, RefreshCw, RotateCcw } from "lucide-react";
 import { useClient } from "@/lib/connect";
 import { SystemService } from "@/proto/gen/worker/v1/system_service_pb";
-import { WorkerManagementService } from "@/proto/gen/controlplane/v1/worker_management_service_pb";
+import { WorkerService } from "@/proto/gen/controlplane/v1/worker_service_pb";
 import {
   EmbeddedWorkerService,
   EmbeddedWorkerStatus,
@@ -733,7 +733,7 @@ function EmbeddedWorkerItem({
   const isConnected = effectiveStatus === "connected";
 
   const client = useClient(SystemService);
-  const cpClient = useClient(WorkerManagementService);
+  const cpClient = useClient(WorkerService);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["agents", worker.id],
     queryFn: () => client.listAgents({ disableCache: false }),
@@ -830,7 +830,7 @@ function WorkerWithAgents({
   onRemove: (id: string) => void;
 }) {
   const client = useClient(SystemService);
-  const cpClient = useClient(WorkerManagementService);
+  const cpClient = useClient(WorkerService);
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["agents", worker.id],
     queryFn: () => client.listAgents({ disableCache: false }),

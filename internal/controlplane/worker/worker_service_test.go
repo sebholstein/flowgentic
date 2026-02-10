@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,8 +31,8 @@ func (m *memStore) CreateWorker(_ context.Context, w Worker) (Worker, error) {
 	if _, exists := m.workers[w.ID]; exists {
 		return Worker{}, fmt.Errorf("worker %q already exists", w.ID)
 	}
-	w.CreatedAt = "2025-01-01T00:00:00.000Z"
-	w.UpdatedAt = "2025-01-01T00:00:00.000Z"
+	w.CreatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	w.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	m.workers[w.ID] = w
 	return w, nil
 }
@@ -40,7 +41,7 @@ func (m *memStore) UpdateWorker(_ context.Context, w Worker) (Worker, error) {
 	if _, exists := m.workers[w.ID]; !exists {
 		return Worker{}, fmt.Errorf("worker %q not found", w.ID)
 	}
-	w.UpdatedAt = "2025-01-01T00:00:01.000Z"
+	w.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 1, 0, time.UTC)
 	m.workers[w.ID] = w
 	return w, nil
 }

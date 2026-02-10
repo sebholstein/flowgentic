@@ -6,15 +6,16 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// projectManagementServiceHandler implements controlplanev1connect.ProjectManagementServiceHandler.
-type projectManagementServiceHandler struct {
+// projectServiceHandler implements controlplanev1connect.ProjectServiceHandler.
+type projectServiceHandler struct {
 	log *slog.Logger
 	svc *ProjectService
 }
 
-func (h *projectManagementServiceHandler) ListProjects(
+func (h *projectServiceHandler) ListProjects(
 	ctx context.Context,
 	_ *connect.Request[controlplanev1.ListProjectsRequest],
 ) (*connect.Response[controlplanev1.ListProjectsResponse], error) {
@@ -33,7 +34,7 @@ func (h *projectManagementServiceHandler) ListProjects(
 	}), nil
 }
 
-func (h *projectManagementServiceHandler) GetProject(
+func (h *projectServiceHandler) GetProject(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.GetProjectRequest],
 ) (*connect.Response[controlplanev1.GetProjectResponse], error) {
@@ -51,7 +52,7 @@ func (h *projectManagementServiceHandler) GetProject(
 	}), nil
 }
 
-func (h *projectManagementServiceHandler) CreateProject(
+func (h *projectServiceHandler) CreateProject(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.CreateProjectRequest],
 ) (*connect.Response[controlplanev1.CreateProjectResponse], error) {
@@ -75,7 +76,7 @@ func (h *projectManagementServiceHandler) CreateProject(
 	}), nil
 }
 
-func (h *projectManagementServiceHandler) UpdateProject(
+func (h *projectServiceHandler) UpdateProject(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.UpdateProjectRequest],
 ) (*connect.Response[controlplanev1.UpdateProjectResponse], error) {
@@ -103,7 +104,7 @@ func (h *projectManagementServiceHandler) UpdateProject(
 	}), nil
 }
 
-func (h *projectManagementServiceHandler) DeleteProject(
+func (h *projectServiceHandler) DeleteProject(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.DeleteProjectRequest],
 ) (*connect.Response[controlplanev1.DeleteProjectResponse], error) {
@@ -118,7 +119,7 @@ func (h *projectManagementServiceHandler) DeleteProject(
 	return connect.NewResponse(&controlplanev1.DeleteProjectResponse{}), nil
 }
 
-func (h *projectManagementServiceHandler) ReorderProjects(
+func (h *projectServiceHandler) ReorderProjects(
 	ctx context.Context,
 	req *connect.Request[controlplanev1.ReorderProjectsRequest],
 ) (*connect.Response[controlplanev1.ReorderProjectsResponse], error) {
@@ -142,8 +143,8 @@ func projectToProto(p Project) *controlplanev1.ProjectConfig {
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
 		WorkerPaths:         p.WorkerPaths,
-		CreatedAt:           p.CreatedAt,
-		UpdatedAt:           p.UpdatedAt,
+		CreatedAt:           timestamppb.New(p.CreatedAt),
+		UpdatedAt:           timestamppb.New(p.UpdatedAt),
 		SortIndex:           p.SortIndex,
 	}
 }

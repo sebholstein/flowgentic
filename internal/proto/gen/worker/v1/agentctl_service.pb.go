@@ -22,6 +22,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SetTopicRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentRunId    string                 `protobuf:"bytes,1,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	Topic         string                 `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetTopicRequest) Reset() {
+	*x = SetTopicRequest{}
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetTopicRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetTopicRequest) ProtoMessage() {}
+
+func (x *SetTopicRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetTopicRequest.ProtoReflect.Descriptor instead.
+func (*SetTopicRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SetTopicRequest) GetAgentRunId() string {
+	if x != nil {
+		return x.AgentRunId
+	}
+	return ""
+}
+
+func (x *SetTopicRequest) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+type SetTopicResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetTopicResponse) Reset() {
+	*x = SetTopicResponse{}
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetTopicResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetTopicResponse) ProtoMessage() {}
+
+func (x *SetTopicResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetTopicResponse.ProtoReflect.Descriptor instead.
+func (*SetTopicResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{1}
+}
+
 type ReportStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -33,7 +121,7 @@ type ReportStatusRequest struct {
 
 func (x *ReportStatusRequest) Reset() {
 	*x = ReportStatusRequest{}
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[0]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +133,7 @@ func (x *ReportStatusRequest) String() string {
 func (*ReportStatusRequest) ProtoMessage() {}
 
 func (x *ReportStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[0]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +146,7 @@ func (x *ReportStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportStatusRequest.ProtoReflect.Descriptor instead.
 func (*ReportStatusRequest) Descriptor() ([]byte, []int) {
-	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{0}
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ReportStatusRequest) GetSessionId() string {
@@ -90,7 +178,7 @@ type ReportStatusResponse struct {
 
 func (x *ReportStatusResponse) Reset() {
 	*x = ReportStatusResponse{}
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[1]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -102,7 +190,7 @@ func (x *ReportStatusResponse) String() string {
 func (*ReportStatusResponse) ProtoMessage() {}
 
 func (x *ReportStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[1]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,7 +203,7 @@ func (x *ReportStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportStatusResponse.ProtoReflect.Descriptor instead.
 func (*ReportStatusResponse) Descriptor() ([]byte, []int) {
-	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{1}
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{3}
 }
 
 type SubmitPlanRequest struct {
@@ -129,7 +217,7 @@ type SubmitPlanRequest struct {
 
 func (x *SubmitPlanRequest) Reset() {
 	*x = SubmitPlanRequest{}
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[2]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -141,7 +229,7 @@ func (x *SubmitPlanRequest) String() string {
 func (*SubmitPlanRequest) ProtoMessage() {}
 
 func (x *SubmitPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[2]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -154,7 +242,7 @@ func (x *SubmitPlanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitPlanRequest.ProtoReflect.Descriptor instead.
 func (*SubmitPlanRequest) Descriptor() ([]byte, []int) {
-	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{2}
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SubmitPlanRequest) GetSessionId() string {
@@ -186,7 +274,7 @@ type SubmitPlanResponse struct {
 
 func (x *SubmitPlanResponse) Reset() {
 	*x = SubmitPlanResponse{}
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[3]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +286,7 @@ func (x *SubmitPlanResponse) String() string {
 func (*SubmitPlanResponse) ProtoMessage() {}
 
 func (x *SubmitPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_agentctl_service_proto_msgTypes[3]
+	mi := &file_worker_v1_agentctl_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,14 +299,19 @@ func (x *SubmitPlanResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitPlanResponse.ProtoReflect.Descriptor instead.
 func (*SubmitPlanResponse) Descriptor() ([]byte, []int) {
-	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{3}
+	return file_worker_v1_agentctl_service_proto_rawDescGZIP(), []int{5}
 }
 
 var File_worker_v1_agentctl_service_proto protoreflect.FileDescriptor
 
 const file_worker_v1_agentctl_service_proto_rawDesc = "" +
 	"\n" +
-	" worker/v1/agentctl_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"}\n" +
+	" worker/v1/agentctl_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"I\n" +
+	"\x0fSetTopicRequest\x12 \n" +
+	"\fagent_run_id\x18\x01 \x01(\tR\n" +
+	"agentRunId\x12\x14\n" +
+	"\x05topic\x18\x02 \x01(\tR\x05topic\"\x12\n" +
+	"\x10SetTopicResponse\"}\n" +
 	"\x13ReportStatusRequest\x12&\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12&\n" +
@@ -230,8 +323,9 @@ const file_worker_v1_agentctl_service_proto_rawDesc = "" +
 	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12&\n" +
 	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x12\n" +
 	"\x04plan\x18\x03 \x01(\fR\x04plan\"\x14\n" +
-	"\x12SubmitPlanResponse2\xb1\x01\n" +
-	"\x0fAgentCtlService\x12Q\n" +
+	"\x12SubmitPlanResponse2\xf8\x01\n" +
+	"\x0fAgentCtlService\x12E\n" +
+	"\bSetTopic\x12\x1a.worker.v1.SetTopicRequest\x1a\x1b.worker.v1.SetTopicResponse\"\x00\x12Q\n" +
 	"\fReportStatus\x12\x1e.worker.v1.ReportStatusRequest\x1a\x1f.worker.v1.ReportStatusResponse\"\x00\x12K\n" +
 	"\n" +
 	"SubmitPlan\x12\x1c.worker.v1.SubmitPlanRequest\x1a\x1d.worker.v1.SubmitPlanResponse\"\x00B\xb2\x01\n" +
@@ -250,23 +344,27 @@ func file_worker_v1_agentctl_service_proto_rawDescGZIP() []byte {
 	return file_worker_v1_agentctl_service_proto_rawDescData
 }
 
-var file_worker_v1_agentctl_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_worker_v1_agentctl_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_worker_v1_agentctl_service_proto_goTypes = []any{
-	(*ReportStatusRequest)(nil),  // 0: worker.v1.ReportStatusRequest
-	(*ReportStatusResponse)(nil), // 1: worker.v1.ReportStatusResponse
-	(*SubmitPlanRequest)(nil),    // 2: worker.v1.SubmitPlanRequest
-	(*SubmitPlanResponse)(nil),   // 3: worker.v1.SubmitPlanResponse
-	(Agent)(0),                   // 4: worker.v1.Agent
+	(*SetTopicRequest)(nil),      // 0: worker.v1.SetTopicRequest
+	(*SetTopicResponse)(nil),     // 1: worker.v1.SetTopicResponse
+	(*ReportStatusRequest)(nil),  // 2: worker.v1.ReportStatusRequest
+	(*ReportStatusResponse)(nil), // 3: worker.v1.ReportStatusResponse
+	(*SubmitPlanRequest)(nil),    // 4: worker.v1.SubmitPlanRequest
+	(*SubmitPlanResponse)(nil),   // 5: worker.v1.SubmitPlanResponse
+	(Agent)(0),                   // 6: worker.v1.Agent
 }
 var file_worker_v1_agentctl_service_proto_depIdxs = []int32{
-	4, // 0: worker.v1.ReportStatusRequest.agent:type_name -> worker.v1.Agent
-	4, // 1: worker.v1.SubmitPlanRequest.agent:type_name -> worker.v1.Agent
-	0, // 2: worker.v1.AgentCtlService.ReportStatus:input_type -> worker.v1.ReportStatusRequest
-	2, // 3: worker.v1.AgentCtlService.SubmitPlan:input_type -> worker.v1.SubmitPlanRequest
-	1, // 4: worker.v1.AgentCtlService.ReportStatus:output_type -> worker.v1.ReportStatusResponse
-	3, // 5: worker.v1.AgentCtlService.SubmitPlan:output_type -> worker.v1.SubmitPlanResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
+	6, // 0: worker.v1.ReportStatusRequest.agent:type_name -> worker.v1.Agent
+	6, // 1: worker.v1.SubmitPlanRequest.agent:type_name -> worker.v1.Agent
+	0, // 2: worker.v1.AgentCtlService.SetTopic:input_type -> worker.v1.SetTopicRequest
+	2, // 3: worker.v1.AgentCtlService.ReportStatus:input_type -> worker.v1.ReportStatusRequest
+	4, // 4: worker.v1.AgentCtlService.SubmitPlan:input_type -> worker.v1.SubmitPlanRequest
+	1, // 5: worker.v1.AgentCtlService.SetTopic:output_type -> worker.v1.SetTopicResponse
+	3, // 6: worker.v1.AgentCtlService.ReportStatus:output_type -> worker.v1.ReportStatusResponse
+	5, // 7: worker.v1.AgentCtlService.SubmitPlan:output_type -> worker.v1.SubmitPlanResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -284,7 +382,7 @@ func file_worker_v1_agentctl_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worker_v1_agentctl_service_proto_rawDesc), len(file_worker_v1_agentctl_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

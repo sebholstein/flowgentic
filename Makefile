@@ -23,7 +23,7 @@ package: build ## Build binaries and package the Electron app
 sqlc: ## Generate Go code from SQL queries
 	sqlc generate
 
-proto: proto-lint ## Generate Go code from proto files
+proto: proto-lint proto-clean ## Generate Go code from proto files
 	buf generate
 
 proto-lint: ## Lint proto files
@@ -32,8 +32,8 @@ proto-lint: ## Lint proto files
 proto-clean: ## Remove all generated proto code
 	rm -rf internal/proto/gen
 
-run-worker: ## Run the worker (requires FLOWGENTIC_WORKER_SECRET)
-	FLOWGENTIC_WORKER_SECRET=dev-secret go run ./cmd/flowgentic-worker
+run-worker: build-agentctl ## Run the worker (requires FLOWGENTIC_WORKER_SECRET)
+	PATH="$(CURDIR)/bin:$(PATH)" FLOWGENTIC_WORKER_SECRET=dev-secret go run ./cmd/flowgentic-worker
 
 run-worker-2: ## Run a second worker on port 8082
 	FLOWGENTIC_WORKER_SECRET=dev-secret-2 go run ./cmd/flowgentic-worker --listen-addr=:8082

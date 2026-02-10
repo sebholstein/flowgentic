@@ -8,8 +8,8 @@ SELECT * FROM threads
 WHERE id = ?;
 
 -- name: CreateThread :exec
-INSERT INTO threads (id, project_id, agent, model, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO threads (id, project_id, agent, model, mode, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: UpdateThread :execresult
 UPDATE threads

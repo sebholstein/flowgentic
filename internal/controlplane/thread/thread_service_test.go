@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,8 +41,8 @@ func (m *memStore) CreateThread(_ context.Context, t Thread) (Thread, error) {
 	if _, exists := m.threads[t.ID]; exists {
 		return Thread{}, fmt.Errorf("thread %q already exists", t.ID)
 	}
-	t.CreatedAt = "2025-01-01T00:00:00.000Z"
-	t.UpdatedAt = "2025-01-01T00:00:00.000Z"
+	t.CreatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	t.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	m.threads[t.ID] = t
 	return t, nil
 }
@@ -53,7 +54,7 @@ func (m *memStore) UpdateThread(_ context.Context, t Thread) (Thread, error) {
 	}
 	existing.Agent = t.Agent
 	existing.Model = t.Model
-	existing.UpdatedAt = "2025-01-01T00:00:01.000Z"
+	existing.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 1, 0, time.UTC)
 	m.threads[t.ID] = existing
 	return existing, nil
 }
@@ -73,12 +74,11 @@ func TestThreadService(t *testing.T) {
 		ctx := context.Background()
 
 		created, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
 			ProjectID: "my-project",
 			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
-		assert.Equal(t, "my-thread", created.ID)
+		assert.NotEmpty(t, created.ID)
 		assert.Equal(t, "my-project", created.ProjectID)
 		assert.Equal(t, "claude-code", created.Agent)
 
@@ -93,7 +93,6 @@ func TestThreadService(t *testing.T) {
 		ctx := context.Background()
 
 		created, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
 			ProjectID: "my-project",
 			Agent:     "claude-code",
 			Model:     "opus",
@@ -102,27 +101,12 @@ func TestThreadService(t *testing.T) {
 		assert.Equal(t, "opus", created.Model)
 	})
 
-	t.Run("create rejects invalid id", func(t *testing.T) {
-		store := newMemStore()
-		svc := NewThreadService(store)
-		ctx := context.Background()
-
-		_, err := svc.CreateThread(ctx, Thread{
-			ID:        "Invalid-ID",
-			ProjectID: "my-project",
-			Agent:     "claude-code",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid thread id")
-	})
-
 	t.Run("create rejects empty project id", func(t *testing.T) {
 		store := newMemStore()
 		svc := NewThreadService(store)
 		ctx := context.Background()
 
 		_, err := svc.CreateThread(ctx, Thread{
-			ID:    "my-thread",
 			Agent: "claude-code",
 		})
 		require.Error(t, err)
@@ -135,7 +119,6 @@ func TestThreadService(t *testing.T) {
 		ctx := context.Background()
 
 		_, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
 			ProjectID: "my-project",
 		})
 		require.Error(t, err)
@@ -157,15 +140,14 @@ func TestThreadService(t *testing.T) {
 		svc := NewThreadService(store)
 		ctx := context.Background()
 
-		_, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
+		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
 			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 
 		updated, err := svc.UpdateThread(ctx, Thread{
-			ID:    "my-thread",
+			ID:    created.ID,
 			Agent: "codex",
 			Model: "gpt-4",
 		})
@@ -180,7 +162,7 @@ func TestThreadService(t *testing.T) {
 		ctx := context.Background()
 
 		_, err := svc.UpdateThread(ctx, Thread{
-			ID: "my-thread",
+			ID: "some-id",
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "agent is required")
@@ -191,14 +173,13 @@ func TestThreadService(t *testing.T) {
 		svc := NewThreadService(store)
 		ctx := context.Background()
 
-		_, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
+		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
 			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 
-		err = svc.DeleteThread(ctx, "my-thread")
+		err = svc.DeleteThread(ctx, created.ID)
 		require.NoError(t, err)
 
 		threads, err := svc.ListThreads(ctx, "my-project")
@@ -211,14 +192,13 @@ func TestThreadService(t *testing.T) {
 		svc := NewThreadService(store)
 		ctx := context.Background()
 
-		_, err := svc.CreateThread(ctx, Thread{
-			ID:        "my-thread",
+		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
 			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 
-		got, err := svc.GetThread(ctx, "my-thread")
+		got, err := svc.GetThread(ctx, created.ID)
 		require.NoError(t, err)
 		assert.Equal(t, "claude-code", got.Agent)
 	})

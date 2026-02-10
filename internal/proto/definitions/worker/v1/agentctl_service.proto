@@ -9,11 +9,19 @@ option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/
 
 // AgentCtlService receives status reports and plan submissions from agent processes via the agentctl binary.
 service AgentCtlService {
+  rpc SetTopic(SetTopicRequest) returns (SetTopicResponse) {}
   // ReportStatus receives a status update from an agent process.
   rpc ReportStatus(ReportStatusRequest) returns (ReportStatusResponse) {}
   // SubmitPlan receives a plan submission from an agent process for human review.
   rpc SubmitPlan(SubmitPlanRequest) returns (SubmitPlanResponse) {}
 }
+
+message SetTopicRequest {
+  string agent_run_id = 1;
+  string topic = 2;
+}
+
+message SetTopicResponse {}
 
 message ReportStatusRequest {
   string session_id = 1 [(buf.validate.field).string.min_len = 1];

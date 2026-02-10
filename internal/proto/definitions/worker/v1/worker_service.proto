@@ -7,16 +7,33 @@ import "worker/v1/agent.proto";
 
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
 
-// WorkerService is the API exposed by each worker node.
-// The control plane calls these RPCs to schedule and manage workloads.
-service WorkerService {
-  // ScheduleWorkload asks the worker to run an agent workload.
-  rpc ScheduleWorkload(ScheduleWorkloadRequest) returns (ScheduleWorkloadResponse) {}
+enum AgentRunStatus {
+  AGENT_RUN_STATUS_UNSPECIFIED = 0;
+  AGENT_RUN_STATUS_STARTING = 1;
+  AGENT_RUN_STATUS_RUNNING = 2;
+  AGENT_RUN_STATUS_IDLE = 3;
+  AGENT_RUN_STATUS_STOPPING = 4;
+  AGENT_RUN_STATUS_STOPPED = 5;
+  AGENT_RUN_STATUS_ERRORED = 6;
 }
 
-message ScheduleWorkloadRequest {
-  // Unique identifier for this workload, assigned by the control plane.
-  string workload_id = 1 [(buf.validate.field).string.min_len = 1];
+enum AgentRunMode {
+  AGENT_RUN_MODE_UNSPECIFIED = 0;
+  AGENT_RUN_MODE_HEADLESS = 1;
+}
+
+// WorkerService is the API exposed by each worker node.
+// The control plane calls these RPCs to dispatch agent runs to workers.
+service WorkerService {
+  // NewAgentRun asks the worker to run an agent workload.
+  rpc NewAgentRun(NewAgentRunRequest) returns (NewAgentRunResponse) {}
+  // ListAgentRuns returns all currently active agent runs on this worker.
+  rpc ListAgentRuns(ListAgentRunsRequest) returns (ListAgentRunsResponse) {}
+}
+
+message NewAgentRunRequest {
+  // Unique identifier for this agent run, assigned by the control plane.
+  string agent_run_id = 1 [(buf.validate.field).string.min_len = 1];
   // Agent driver to use.
   Agent agent = 2;
   // Session mode: "headless" or "interactive".
@@ -37,12 +54,12 @@ message ScheduleWorkloadRequest {
   repeated string allowed_tools = 10;
 }
 
-message ScheduleWorkloadResponse {
-  // Whether the worker accepted the workload.
+message NewAgentRunResponse {
+  // Whether the worker accepted the agent run.
   bool accepted = 1;
   // Human-readable message (e.g. reason for rejection).
   string message = 2;
-  // The session ID for the launched workload.
+  // The session ID for the launched agent run.
   string session_id = 3;
   // The agent driver used.
   Agent agent = 4;
@@ -52,4 +69,19 @@ message ScheduleWorkloadResponse {
   string mode = 6;
   // The agent-side session ID (assigned by or passed to the CLI).
   string agent_session_id = 11;
+}
+
+message AgentRunInfo {
+  string agent_run_id = 1;
+  Agent agent = 2;
+  AgentRunStatus status = 3;
+  AgentRunMode mode = 4;
+  string session_id = 5;
+  string agent_session_id = 6;
+}
+
+message ListAgentRunsRequest {}
+
+message ListAgentRunsResponse {
+  repeated AgentRunInfo agent_runs = 1;
 }

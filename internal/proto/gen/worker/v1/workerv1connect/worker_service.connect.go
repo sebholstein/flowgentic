@@ -33,15 +33,20 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// WorkerServiceScheduleWorkloadProcedure is the fully-qualified name of the WorkerService's
-	// ScheduleWorkload RPC.
-	WorkerServiceScheduleWorkloadProcedure = "/worker.v1.WorkerService/ScheduleWorkload"
+	// WorkerServiceNewAgentRunProcedure is the fully-qualified name of the WorkerService's NewAgentRun
+	// RPC.
+	WorkerServiceNewAgentRunProcedure = "/worker.v1.WorkerService/NewAgentRun"
+	// WorkerServiceListAgentRunsProcedure is the fully-qualified name of the WorkerService's
+	// ListAgentRuns RPC.
+	WorkerServiceListAgentRunsProcedure = "/worker.v1.WorkerService/ListAgentRuns"
 )
 
 // WorkerServiceClient is a client for the worker.v1.WorkerService service.
 type WorkerServiceClient interface {
-	// ScheduleWorkload asks the worker to run an agent workload.
-	ScheduleWorkload(context.Context, *connect.Request[v1.ScheduleWorkloadRequest]) (*connect.Response[v1.ScheduleWorkloadResponse], error)
+	// NewAgentRun asks the worker to run an agent workload.
+	NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error)
+	// ListAgentRuns returns all currently active agent runs on this worker.
+	ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error)
 }
 
 // NewWorkerServiceClient constructs a client for the worker.v1.WorkerService service. By default,
@@ -55,10 +60,16 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	workerServiceMethods := v1.File_worker_v1_worker_service_proto.Services().ByName("WorkerService").Methods()
 	return &workerServiceClient{
-		scheduleWorkload: connect.NewClient[v1.ScheduleWorkloadRequest, v1.ScheduleWorkloadResponse](
+		newAgentRun: connect.NewClient[v1.NewAgentRunRequest, v1.NewAgentRunResponse](
 			httpClient,
-			baseURL+WorkerServiceScheduleWorkloadProcedure,
-			connect.WithSchema(workerServiceMethods.ByName("ScheduleWorkload")),
+			baseURL+WorkerServiceNewAgentRunProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("NewAgentRun")),
+			connect.WithClientOptions(opts...),
+		),
+		listAgentRuns: connect.NewClient[v1.ListAgentRunsRequest, v1.ListAgentRunsResponse](
+			httpClient,
+			baseURL+WorkerServiceListAgentRunsProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("ListAgentRuns")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -66,18 +77,26 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // workerServiceClient implements WorkerServiceClient.
 type workerServiceClient struct {
-	scheduleWorkload *connect.Client[v1.ScheduleWorkloadRequest, v1.ScheduleWorkloadResponse]
+	newAgentRun   *connect.Client[v1.NewAgentRunRequest, v1.NewAgentRunResponse]
+	listAgentRuns *connect.Client[v1.ListAgentRunsRequest, v1.ListAgentRunsResponse]
 }
 
-// ScheduleWorkload calls worker.v1.WorkerService.ScheduleWorkload.
-func (c *workerServiceClient) ScheduleWorkload(ctx context.Context, req *connect.Request[v1.ScheduleWorkloadRequest]) (*connect.Response[v1.ScheduleWorkloadResponse], error) {
-	return c.scheduleWorkload.CallUnary(ctx, req)
+// NewAgentRun calls worker.v1.WorkerService.NewAgentRun.
+func (c *workerServiceClient) NewAgentRun(ctx context.Context, req *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error) {
+	return c.newAgentRun.CallUnary(ctx, req)
+}
+
+// ListAgentRuns calls worker.v1.WorkerService.ListAgentRuns.
+func (c *workerServiceClient) ListAgentRuns(ctx context.Context, req *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error) {
+	return c.listAgentRuns.CallUnary(ctx, req)
 }
 
 // WorkerServiceHandler is an implementation of the worker.v1.WorkerService service.
 type WorkerServiceHandler interface {
-	// ScheduleWorkload asks the worker to run an agent workload.
-	ScheduleWorkload(context.Context, *connect.Request[v1.ScheduleWorkloadRequest]) (*connect.Response[v1.ScheduleWorkloadResponse], error)
+	// NewAgentRun asks the worker to run an agent workload.
+	NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error)
+	// ListAgentRuns returns all currently active agent runs on this worker.
+	ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error)
 }
 
 // NewWorkerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -87,16 +106,24 @@ type WorkerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	workerServiceMethods := v1.File_worker_v1_worker_service_proto.Services().ByName("WorkerService").Methods()
-	workerServiceScheduleWorkloadHandler := connect.NewUnaryHandler(
-		WorkerServiceScheduleWorkloadProcedure,
-		svc.ScheduleWorkload,
-		connect.WithSchema(workerServiceMethods.ByName("ScheduleWorkload")),
+	workerServiceNewAgentRunHandler := connect.NewUnaryHandler(
+		WorkerServiceNewAgentRunProcedure,
+		svc.NewAgentRun,
+		connect.WithSchema(workerServiceMethods.ByName("NewAgentRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceListAgentRunsHandler := connect.NewUnaryHandler(
+		WorkerServiceListAgentRunsProcedure,
+		svc.ListAgentRuns,
+		connect.WithSchema(workerServiceMethods.ByName("ListAgentRuns")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/worker.v1.WorkerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case WorkerServiceScheduleWorkloadProcedure:
-			workerServiceScheduleWorkloadHandler.ServeHTTP(w, r)
+		case WorkerServiceNewAgentRunProcedure:
+			workerServiceNewAgentRunHandler.ServeHTTP(w, r)
+		case WorkerServiceListAgentRunsProcedure:
+			workerServiceListAgentRunsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -106,6 +133,10 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 // UnimplementedWorkerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWorkerServiceHandler struct{}
 
-func (UnimplementedWorkerServiceHandler) ScheduleWorkload(context.Context, *connect.Request[v1.ScheduleWorkloadRequest]) (*connect.Response[v1.ScheduleWorkloadResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.ScheduleWorkload is not implemented"))
+func (UnimplementedWorkerServiceHandler) NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.NewAgentRun is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.ListAgentRuns is not implemented"))
 }
