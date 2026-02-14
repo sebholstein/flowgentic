@@ -389,12 +389,22 @@ func (d *acpDriver) buildMeta(opts LaunchOpts) map[string]any {
 
 func sessionMCPServers(opts LaunchOpts) []acp.McpServer {
 	servers := append([]acp.McpServer(nil), opts.MCPServers...)
+	if !shouldInjectDefaultFlowgenticMCP(opts) {
+		return servers
+	}
 	if flowgentic, ok := defaultFlowgenticMCPServer(opts.EnvVars); ok && !hasStdioMCPServerNamed(servers, flowgentic.Stdio.Name) {
 		// Keep a stable trace of the exact binary used for the session-scoped MCP server.
 		slog.Default().Info("injecting flowgentic MCP server", "command", flowgentic.Stdio.Command, "args", flowgentic.Stdio.Args)
 		servers = append(servers, flowgentic)
 	}
 	return servers
+}
+
+func shouldInjectDefaultFlowgenticMCP(opts LaunchOpts) bool {
+	if strings.EqualFold(strings.TrimSpace(opts.EnvVars["FLOWGENTIC_ENABLE_DEFAULT_MCP"]), "1") {
+		return true
+	}
+	return strings.Contains(opts.SystemPrompt, "## Flowgentic MCP")
 }
 
 func defaultFlowgenticMCPServer(envVars map[string]string) (acp.McpServer, bool) {
@@ -452,10 +462,8 @@ func resolveAgentctlInvocation(envVars map[string]string) (string, []string) {
 
 	if cwd, err := os.Getwd(); err == nil && cwd != "" {
 		sourceCmdDir := filepath.Join(cwd, "cmd", "agentctl")
-		if st, statErr := os.Stat(sourceCmdDir); statErr == nil && st.IsDir() {
-			// Dev fallback: run source directly to avoid stale/missing bin/agentctl.
-			slog.Default().Warn("falling back to go run for flowgentic MCP server", "command", "go", "args", []string{"run", sourceCmdDir})
-			return "go", []string{"run", sourceCmdDir}
+		if _, statErr := os.Stat(sourceCmdDir); statErr == nil {
+			slog.Default().Warn("flowgentic MCP using PATH agentctl; build/install `agentctl` with `mcp serve` support for best compatibility")
 		}
 	}
 

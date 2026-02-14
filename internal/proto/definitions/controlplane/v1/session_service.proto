@@ -78,10 +78,10 @@ message SessionEvent {
   oneof payload {
     AgentMessageChunk agent_message_chunk = 10;
     AgentThoughtChunk agent_thought_chunk = 11;
-    ToolCallStart tool_call_start = 12;
+    ToolCall tool_call = 12;
     ToolCallUpdate tool_call_update = 13;
     StatusChange status_change = 14;
-    ModeChange mode_change = 15;
+    CurrentModeUpdate current_mode_update = 15;
     UserMessage user_message = 16;
   }
 }
@@ -93,26 +93,32 @@ message UserMessage { string text = 1; }
 
 enum ToolCallStatus {
   TOOL_CALL_STATUS_UNSPECIFIED = 0;
-  TOOL_CALL_STATUS_RUNNING = 1;
+  TOOL_CALL_STATUS_IN_PROGRESS = 1;
   TOOL_CALL_STATUS_COMPLETED = 2;
-  TOOL_CALL_STATUS_ERRORED = 3;
+  TOOL_CALL_STATUS_FAILED = 3;
 }
 
 enum ToolCallKind {
   TOOL_CALL_KIND_UNSPECIFIED = 0;
-  TOOL_CALL_KIND_FILE = 1;
-  TOOL_CALL_KIND_SHELL = 2;
-  TOOL_CALL_KIND_SEARCH = 3;
-  TOOL_CALL_KIND_OTHER = 4;
+  TOOL_CALL_KIND_READ = 1;
+  TOOL_CALL_KIND_EDIT = 2;
+  TOOL_CALL_KIND_DELETE = 3;
+  TOOL_CALL_KIND_MOVE = 4;
+  TOOL_CALL_KIND_SEARCH = 5;
+  TOOL_CALL_KIND_EXECUTE = 6;
+  TOOL_CALL_KIND_THINK = 7;
+  TOOL_CALL_KIND_FETCH = 8;
+  TOOL_CALL_KIND_OTHER = 9;
 }
 
-message ToolCallStart {
+message ToolCall {
   string tool_call_id = 1;
   string title = 2;
   ToolCallKind kind = 3;
   string raw_input = 4;
   repeated ToolCallLocation locations = 5;
   ToolCallStatus status = 6;
+  repeated ToolCallContentBlock content = 7;
 }
 
 message ToolCallUpdate {
@@ -121,11 +127,21 @@ message ToolCallUpdate {
   ToolCallStatus status = 3;
   string raw_output = 4;
   repeated ToolCallLocation locations = 5;
+  repeated ToolCallContentBlock content = 6;
 }
+
+message ToolCallContentBlock {
+  oneof block {
+    ToolCallDiff diff = 1;
+    ToolCallText text = 2;
+  }
+}
+message ToolCallDiff { string path = 1; string new_text = 2; string old_text = 3; }
+message ToolCallText { string text = 1; }
 
 message ToolCallLocation { string path = 1; int64 line = 2; }
 message StatusChange { string status = 1; }
-message ModeChange { string mode_id = 1; }
+message CurrentModeUpdate { string mode_id = 1; }
 
 // --- RPC Messages ---
 

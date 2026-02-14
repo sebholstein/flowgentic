@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
@@ -719,6 +721,7 @@ func (a *Adapter) buildSDKOptions() []claudecode.Option {
 			if l == "" {
 				return
 			}
+			a.appendSubprocessDebugLine("stderr", l)
 			if strings.Contains(strings.ToLower(l), "mcp") {
 				a.log.Warn("claude stderr (mcp)", "line", l)
 				return
@@ -731,6 +734,25 @@ func (a *Adapter) buildSDKOptions() []claudecode.Option {
 	sdkOpts = append(sdkOpts, claudecode.WithDebugWriter(io.Discard))
 
 	return sdkOpts
+}
+
+func (a *Adapter) appendSubprocessDebugLine(stream, line string) {
+	const debugPath = "/tmp/flowgentic-claude-acp.log"
+
+	f, err := os.OpenFile(debugPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	_, _ = fmt.Fprintf(
+		f,
+		"%s stream=%s session=%s line=%s\n",
+		time.Now().UTC().Format(time.RFC3339Nano),
+		stream,
+		a.sessionID,
+		line,
+	)
 }
 
 // Ensure compile-time interface compliance.

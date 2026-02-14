@@ -12,6 +12,7 @@ import (
 
 func TestSessionMCPServers_InjectsFlowgenticServer(t *testing.T) {
 	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "foo\n## Flowgentic MCP\nbar",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":    "http://127.0.0.1:9999",
 			"AGENTCTL_WORKER_SECRET": "secret",
@@ -40,6 +41,7 @@ func TestSessionMCPServers_UsesAgentctlBinOverride(t *testing.T) {
 	require.NoError(t, os.WriteFile(agentctlPath, []byte("#!/bin/sh\nif [ \"$1\" = \"mcp\" ] && [ \"$2\" = \"serve\" ] && [ \"$3\" = \"--help\" ]; then exit 0; fi\nexit 0\n"), 0o755))
 
 	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "## Flowgentic MCP",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
 			"AGENTCTL_AGENT_RUN_ID": "run-1",
@@ -54,6 +56,7 @@ func TestSessionMCPServers_UsesAgentctlBinOverride(t *testing.T) {
 
 func TestSessionMCPServers_NoInjectionWithoutAgentCtlEnv(t *testing.T) {
 	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "## Flowgentic MCP",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_SECRET": "secret",
 		},
@@ -64,6 +67,7 @@ func TestSessionMCPServers_NoInjectionWithoutAgentCtlEnv(t *testing.T) {
 
 func TestSessionMCPServers_DoesNotDuplicateFlowgenticServer(t *testing.T) {
 	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "## Flowgentic MCP",
 		MCPServers: []acp.McpServer{
 			{
 				Stdio: &acp.McpServerStdio{
@@ -76,6 +80,33 @@ func TestSessionMCPServers_DoesNotDuplicateFlowgenticServer(t *testing.T) {
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
 			"AGENTCTL_AGENT_RUN_ID": "run-1",
+		},
+	})
+
+	require.Len(t, servers, 1)
+	require.NotNil(t, servers[0].Stdio)
+	assert.Equal(t, "flowgentic", servers[0].Stdio.Name)
+}
+
+func TestSessionMCPServers_NoDefaultInjectionWithoutMarker(t *testing.T) {
+	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "normal chat session",
+		EnvVars: map[string]string{
+			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
+			"AGENTCTL_AGENT_RUN_ID": "run-1",
+		},
+	})
+
+	assert.Empty(t, servers)
+}
+
+func TestSessionMCPServers_InjectsWithEnvOverride(t *testing.T) {
+	servers := sessionMCPServers(LaunchOpts{
+		SystemPrompt: "normal chat session",
+		EnvVars: map[string]string{
+			"AGENTCTL_WORKER_URL":           "http://127.0.0.1:9999",
+			"AGENTCTL_AGENT_RUN_ID":         "run-1",
+			"FLOWGENTIC_ENABLE_DEFAULT_MCP": "1",
 		},
 	})
 

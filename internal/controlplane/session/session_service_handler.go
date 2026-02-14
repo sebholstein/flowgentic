@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
 
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
 	workerv1 "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1"
@@ -122,9 +120,6 @@ func (h *sessionServiceHandler) PromptSession(
 
 	h.log.Info("PromptSession: forwarding to worker", "thread_id", threadID, "session_id", sess.ID, "worker_id", sess.WorkerID, "session_status", sess.Status)
 
-	// Persist the user message as a raw SessionEvent.
-	h.persistUserMessage(sess.ID, text)
-
 	// Forward to the worker.
 	workerURL, secret, ok := h.svc.LookupWorker(sess.WorkerID)
 	if !ok {
@@ -150,60 +145,6 @@ func (h *sessionServiceHandler) PromptSession(
 	h.log.Info("PromptSession: completed", "session_id", sess.ID)
 
 	return connect.NewResponse(&controlplanev1.PromptSessionResponse{}), nil
-}
-
-// persistUserMessage creates and persists a synthetic UserMessage event.
-func (h *sessionServiceHandler) persistUserMessage(sessionID, text string) {
-	// Build a worker-side SessionEvent with UserMessage payload.
-	// We use sequence=0 here; the store will assign a proper sequence via the unique index.
-	// Actually, we need a proper sequence. We'll use the current max + 1.
-	// For simplicity, use time-based sequence that won't conflict with worker events
-	// (worker events use monotonic counters starting from 1).
-	// A cleaner approach: query max sequence and add 1.
-	now := time.Now().UTC()
-	event := &workerv1.SessionEvent{
-		SessionId: sessionID,
-		Timestamp: now.Format(time.RFC3339Nano),
-		Payload: &workerv1.SessionEvent_UserMessage{
-			UserMessage: &workerv1.UserMessage{Text: text},
-		},
-	}
-
-	payload, err := proto.Marshal(event)
-	if err != nil {
-		h.log.Error("persistUserMessage: marshal failed", "session_id", sessionID, "error", err)
-		return
-	}
-
-	// Get next sequence by loading existing events and finding max.
-	// This is simple and correct for the single-writer (CP) case.
-	events, err := h.store.ListSessionEventsBySession(context.Background(), sessionID)
-	if err != nil {
-		h.log.Error("persistUserMessage: failed to load events", "session_id", sessionID, "error", err)
-		return
-	}
-	var maxSeq int64
-	for _, e := range events {
-		if e.Sequence > maxSeq {
-			maxSeq = e.Sequence
-		}
-	}
-	seq := maxSeq + 1
-
-	// Update the event with the correct sequence before persisting.
-	event.Sequence = seq
-	payload, _ = proto.Marshal(event)
-
-	evt := SessionEvent{
-		SessionID: sessionID,
-		Sequence:  seq,
-		EventType: "user_message",
-		Payload:   payload,
-		CreatedAt: now,
-	}
-	if err := h.store.InsertSessionEvent(context.Background(), evt); err != nil {
-		h.log.Error("persistUserMessage: insert failed", "session_id", sessionID, "error", err)
-	}
 }
 
 func (h *sessionServiceHandler) WatchSessionEvents(
@@ -273,13 +214,13 @@ func (h *sessionServiceHandler) WatchSessionEvents(
 	}
 }
 
-// deserializeAndConvertEvent deserializes a stored event payload and converts it to a CP-side SessionEvent.
+// deserializeAndConvertEvent deserializes a stored JSON event payload and converts it to a CP-side SessionEvent.
 func deserializeAndConvertEvent(e SessionEvent) (*controlplanev1.SessionEvent, error) {
-	var workerEvent workerv1.SessionEvent
-	if err := proto.Unmarshal(e.Payload, &workerEvent); err != nil {
-		return nil, fmt.Errorf("unmarshal event: %w", err)
+	record, err := UnmarshalRecord(e.Payload)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal event record: %w", err)
 	}
-	return workerEventToCPEvent(&workerEvent), nil
+	return RecordToCPEvent(record), nil
 }
 
 func (h *sessionServiceHandler) buildScopeMatcher(
@@ -363,9 +304,9 @@ func workerEventToCPEvent(w *workerv1.SessionEvent) *controlplanev1.SessionEvent
 		e.Payload = &controlplanev1.SessionEvent_AgentThoughtChunk{
 			AgentThoughtChunk: &controlplanev1.AgentThoughtChunk{Text: p.AgentThoughtChunk.GetText()},
 		}
-	case *workerv1.SessionEvent_ToolCallStart:
-		tc := p.ToolCallStart
-		cpTc := &controlplanev1.ToolCallStart{
+	case *workerv1.SessionEvent_ToolCall:
+		tc := p.ToolCall
+		cpTc := &controlplanev1.ToolCall{
 			ToolCallId: tc.GetToolCallId(),
 			Title:      tc.GetTitle(),
 			Kind:       controlplanev1.ToolCallKind(tc.GetKind()),
@@ -378,7 +319,10 @@ func workerEventToCPEvent(w *workerv1.SessionEvent) *controlplanev1.SessionEvent
 				Line: loc.GetLine(),
 			})
 		}
-		e.Payload = &controlplanev1.SessionEvent_ToolCallStart{ToolCallStart: cpTc}
+		for _, cb := range tc.GetContent() {
+			cpTc.Content = append(cpTc.Content, workerContentBlockToCP(cb))
+		}
+		e.Payload = &controlplanev1.SessionEvent_ToolCall{ToolCall: cpTc}
 	case *workerv1.SessionEvent_ToolCallUpdate:
 		tc := p.ToolCallUpdate
 		cpTc := &controlplanev1.ToolCallUpdate{
@@ -393,14 +337,17 @@ func workerEventToCPEvent(w *workerv1.SessionEvent) *controlplanev1.SessionEvent
 				Line: loc.GetLine(),
 			})
 		}
+		for _, cb := range tc.GetContent() {
+			cpTc.Content = append(cpTc.Content, workerContentBlockToCP(cb))
+		}
 		e.Payload = &controlplanev1.SessionEvent_ToolCallUpdate{ToolCallUpdate: cpTc}
 	case *workerv1.SessionEvent_StatusChange:
 		e.Payload = &controlplanev1.SessionEvent_StatusChange{
 			StatusChange: &controlplanev1.StatusChange{Status: p.StatusChange.GetStatus().String()},
 		}
-	case *workerv1.SessionEvent_ModeChange:
-		e.Payload = &controlplanev1.SessionEvent_ModeChange{
-			ModeChange: &controlplanev1.ModeChange{ModeId: p.ModeChange.GetModeId()},
+	case *workerv1.SessionEvent_CurrentModeUpdate:
+		e.Payload = &controlplanev1.SessionEvent_CurrentModeUpdate{
+			CurrentModeUpdate: &controlplanev1.CurrentModeUpdate{ModeId: p.CurrentModeUpdate.GetModeId()},
 		}
 	case *workerv1.SessionEvent_UserMessage:
 		e.Payload = &controlplanev1.SessionEvent_UserMessage{
@@ -409,4 +356,30 @@ func workerEventToCPEvent(w *workerv1.SessionEvent) *controlplanev1.SessionEvent
 	}
 
 	return e
+}
+
+// workerContentBlockToCP converts a worker-side ToolCallContentBlock to a CP-side one.
+func workerContentBlockToCP(cb *workerv1.ToolCallContentBlock) *controlplanev1.ToolCallContentBlock {
+	switch b := cb.Block.(type) {
+	case *workerv1.ToolCallContentBlock_Diff:
+		return &controlplanev1.ToolCallContentBlock{
+			Block: &controlplanev1.ToolCallContentBlock_Diff{
+				Diff: &controlplanev1.ToolCallDiff{
+					Path:    b.Diff.GetPath(),
+					NewText: b.Diff.GetNewText(),
+					OldText: b.Diff.GetOldText(),
+				},
+			},
+		}
+	case *workerv1.ToolCallContentBlock_Text:
+		return &controlplanev1.ToolCallContentBlock{
+			Block: &controlplanev1.ToolCallContentBlock_Text{
+				Text: &controlplanev1.ToolCallText{
+					Text: b.Text.GetText(),
+				},
+			},
+		}
+	default:
+		return &controlplanev1.ToolCallContentBlock{}
+	}
 }

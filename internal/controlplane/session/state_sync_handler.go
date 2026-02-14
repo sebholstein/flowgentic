@@ -5,8 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	workerv1 "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1"
 )
 
@@ -74,16 +72,17 @@ func (h *stateSyncHandler) HandleSessionEvent(_ string, event *workerv1.SessionE
 }
 
 func (h *stateSyncHandler) persistEvent(event *workerv1.SessionEvent) {
-	payload, err := proto.Marshal(event)
+	record := WorkerEventToRecord(event)
+	payload, err := MarshalRecord(record)
 	if err != nil {
-		h.log.Error("state sync: failed to marshal event", "session_id", event.GetSessionId(), "error", err)
+		h.log.Error("state sync: failed to marshal event record", "session_id", event.GetSessionId(), "error", err)
 		return
 	}
 
 	evt := SessionEvent{
 		SessionID: event.GetSessionId(),
 		Sequence:  event.GetSequence(),
-		EventType: eventTypeFromPayload(event),
+		EventType: record.Type,
 		Payload:   payload,
 		CreatedAt: time.Now(),
 	}
@@ -94,28 +93,6 @@ func (h *stateSyncHandler) persistEvent(event *workerv1.SessionEvent) {
 			"sequence", event.GetSequence(),
 			"error", err,
 		)
-	}
-}
-
-// eventTypeFromPayload derives a string event type from the proto oneof case.
-func eventTypeFromPayload(event *workerv1.SessionEvent) string {
-	switch event.Payload.(type) {
-	case *workerv1.SessionEvent_AgentMessageChunk:
-		return "agent_message_chunk"
-	case *workerv1.SessionEvent_AgentThoughtChunk:
-		return "agent_thought_chunk"
-	case *workerv1.SessionEvent_ToolCallStart:
-		return "tool_call_start"
-	case *workerv1.SessionEvent_ToolCallUpdate:
-		return "tool_call_update"
-	case *workerv1.SessionEvent_StatusChange:
-		return "status_change"
-	case *workerv1.SessionEvent_ModeChange:
-		return "mode_change"
-	case *workerv1.SessionEvent_UserMessage:
-		return "user_message"
-	default:
-		return "unknown"
 	}
 }
 

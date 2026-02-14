@@ -1,6 +1,6 @@
 import type {
   SessionEvent,
-  ToolCallStart,
+  ToolCall,
   ToolCallUpdate,
 } from "@/proto/gen/controlplane/v1/session_service_pb";
 import {
@@ -62,9 +62,12 @@ export type ChatMessage = UserMessage | AgentMessage | ToolMessage | ThinkingMes
 
 export function mapToolCallKind(kind: ToolCallKind): ToolType {
   switch (kind) {
-    case ToolCallKind.FILE:
+    case ToolCallKind.READ:
+    case ToolCallKind.EDIT:
+    case ToolCallKind.DELETE:
+    case ToolCallKind.MOVE:
       return "edit_file";
-    case ToolCallKind.SHELL:
+    case ToolCallKind.EXECUTE:
       return "bash";
     case ToolCallKind.SEARCH:
       return "search";
@@ -75,11 +78,11 @@ export function mapToolCallKind(kind: ToolCallKind): ToolType {
 
 export function mapToolCallStatus(status: ToolCallStatus): ToolStatus {
   switch (status) {
-    case ToolCallStatus.RUNNING:
+    case ToolCallStatus.IN_PROGRESS:
       return "running";
     case ToolCallStatus.COMPLETED:
       return "success";
-    case ToolCallStatus.ERRORED:
+    case ToolCallStatus.FAILED:
       return "error";
     default:
       return "running";
@@ -88,9 +91,9 @@ export function mapToolCallStatus(status: ToolCallStatus): ToolStatus {
 
 // --- Live event mappers ---
 
-export function mapToolCallStartToMessage(tc: ToolCallStart, timestamp: string): ToolMessage {
+export function mapToolCallStartToMessage(tc: ToolCall, timestamp: string): ToolMessage {
   const parsedInput = tc.rawInput ? safeParseJSON<Record<string, unknown>>(tc.rawInput) : undefined;
-  const toolType = isMcpToolCall(tc.title, parsedInput) ? "mcp" : mapToolCallKind(tc.kind);
+  const toolType = isMcpToolCall(tc.title, parsedInput ?? undefined) ? "mcp" : mapToolCallKind(tc.kind);
   return {
     id: `tool-${tc.toolCallId}`,
     type: "tool",
@@ -129,8 +132,8 @@ export function isAgentThoughtChunk(evt: SessionEvent): evt is SessionEvent & { 
   return evt.payload.case === "agentThoughtChunk";
 }
 
-export function isToolCallStart(evt: SessionEvent): evt is SessionEvent & { payload: { case: "toolCallStart" } } {
-  return evt.payload.case === "toolCallStart";
+export function isToolCallStart(evt: SessionEvent): evt is SessionEvent & { payload: { case: "toolCall" } } {
+  return evt.payload.case === "toolCall";
 }
 
 export function isToolCallUpdate(evt: SessionEvent): evt is SessionEvent & { payload: { case: "toolCallUpdate" } } {
@@ -160,7 +163,10 @@ function formatToolSubtitle(kind: ToolCallKind, rawInput: string | undefined, ti
     const input = safeParseJSON<Record<string, unknown>>(rawInput);
     if (input) {
       switch (kind) {
-        case ToolCallKind.FILE: {
+        case ToolCallKind.READ:
+        case ToolCallKind.EDIT:
+        case ToolCallKind.DELETE:
+        case ToolCallKind.MOVE: {
           if (typeof input.filePath === "string") {
             const parts = input.filePath.split("/");
             return parts[parts.length - 1] || input.filePath;
@@ -171,7 +177,7 @@ function formatToolSubtitle(kind: ToolCallKind, rawInput: string | undefined, ti
           }
           break;
         }
-        case ToolCallKind.SHELL: {
+        case ToolCallKind.EXECUTE: {
           if (typeof input.command === "string") {
             return input.command.length > 60 ? input.command.slice(0, 60) + "..." : input.command;
           }
@@ -191,14 +197,14 @@ function formatToolSubtitle(kind: ToolCallKind, rawInput: string | undefined, ti
   }
 
   if (title) {
-    if (kind === ToolCallKind.FILE) {
-      const match = title.match(/^(?:Read|Write|Edit|Create)\s+(.+)$/i);
+    if (kind === ToolCallKind.READ || kind === ToolCallKind.EDIT || kind === ToolCallKind.DELETE || kind === ToolCallKind.MOVE) {
+      const match = title.match(/^(?:Read|Write|Edit|Create|Delete|Move)\s+(.+)$/i);
       if (match) {
         const parts = match[1].split("/");
         return parts[parts.length - 1] || match[1];
       }
     }
-    if (kind === ToolCallKind.SHELL) {
+    if (kind === ToolCallKind.EXECUTE) {
       const colonIdx = title.indexOf(":");
       if (colonIdx > 0) {
         return title.slice(colonIdx + 1).trim();
@@ -238,7 +244,7 @@ function extractWrittenContent(kind: ToolCallKind, rawInput: string | undefined)
   const input = safeParseJSON<Record<string, unknown>>(rawInput);
   if (!input) return undefined;
 
-  if (kind === ToolCallKind.FILE) {
+  if (kind === ToolCallKind.EDIT) {
     if (typeof input.newString === "string") return input.newString;
     if (typeof input.content === "string") return input.content;
   }

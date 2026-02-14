@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -134,6 +135,11 @@ func (m *SessionManager) Launch(_ context.Context, sessionID, agentID string, op
 	m.mu.Lock()
 	m.sessions[sessionID] = entry
 	m.mu.Unlock()
+
+	// Emit the initial prompt as a user_message event.
+	if opts.Prompt != "" {
+		m.emitUserMessage(sessionID, entry, opts.Prompt)
+	}
 
 	snap := SessionSnapshot{SessionID: sessionID, Info: sess.Info()}
 	m.notifySubscribers(StateEvent{Type: StateEventUpdate, SessionID: sessionID, Snapshot: &snap})
@@ -362,16 +368,16 @@ func (m *SessionManager) emitSessionEvent(sessionID string, entry *sessionEntry,
 			AgentThoughtChunk: &workerv1.AgentThoughtChunk{Text: text},
 		}
 	case u.ToolCall != nil:
-		event.Payload = &workerv1.SessionEvent_ToolCallStart{
-			ToolCallStart: acpToolCallToProto(u.ToolCall),
+		event.Payload = &workerv1.SessionEvent_ToolCall{
+			ToolCall: acpToolCallToProto(u.ToolCall),
 		}
 	case u.ToolCallUpdate != nil:
 		event.Payload = &workerv1.SessionEvent_ToolCallUpdate{
 			ToolCallUpdate: acpToolCallUpdateToProto(u.ToolCallUpdate),
 		}
 	case u.CurrentModeUpdate != nil:
-		event.Payload = &workerv1.SessionEvent_ModeChange{
-			ModeChange: &workerv1.ModeChange{ModeId: string(u.CurrentModeUpdate.CurrentModeId)},
+		event.Payload = &workerv1.SessionEvent_CurrentModeUpdate{
+			CurrentModeUpdate: &workerv1.CurrentModeUpdate{ModeId: string(u.CurrentModeUpdate.CurrentModeId)},
 		}
 	default:
 		return // skip events we don't handle
@@ -550,6 +556,7 @@ func (m *SessionManager) CheckSessionResumable(agentID, agentSessionID, cwd stri
 }
 
 // Prompt sends a follow-up prompt to a running session.
+// It emits a user_message event before forwarding to the ACP session.
 func (m *SessionManager) Prompt(ctx context.Context, sessionID string, blocks []acp.ContentBlock) (*acp.PromptResponse, error) {
 	m.mu.RLock()
 	e, ok := m.sessions[sessionID]
@@ -557,7 +564,40 @@ func (m *SessionManager) Prompt(ctx context.Context, sessionID string, blocks []
 	if !ok {
 		return nil, fmt.Errorf("session not found: %s", sessionID)
 	}
+
+	// Extract text from content blocks and emit a user_message event.
+	text := extractTextFromBlocks(blocks)
+	if text != "" {
+		m.emitUserMessage(sessionID, e, text)
+	}
+
 	return e.session.Prompt(ctx, blocks)
+}
+
+// emitUserMessage creates and enqueues a user_message SessionEvent.
+func (m *SessionManager) emitUserMessage(sessionID string, entry *sessionEntry, text string) {
+	seq := entry.nextSeq.Add(1)
+	event := &workerv1.SessionEvent{
+		SessionId: sessionID,
+		Sequence:  seq,
+		Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		Payload: &workerv1.SessionEvent_UserMessage{
+			UserMessage: &workerv1.UserMessage{Text: text},
+		},
+	}
+	m.eventQueue.Append(sessionID, event)
+	m.notifyEventSubscribers(SessionEventUpdate{SessionID: sessionID, Event: event})
+}
+
+// extractTextFromBlocks concatenates text from ACP content blocks.
+func extractTextFromBlocks(blocks []acp.ContentBlock) string {
+	var parts []string
+	for _, b := range blocks {
+		if b.Text != nil {
+			parts = append(parts, b.Text.Text)
+		}
+	}
+	return strings.Join(parts, "\n")
 }
 
 // Cancel cancels the active prompt on a running session.
@@ -588,8 +628,8 @@ func (m *SessionManager) GetStateSnapshot() []SessionSnapshot {
 
 // --- ACP → Proto conversion helpers ---
 
-func acpToolCallToProto(tc *acp.SessionUpdateToolCall) *workerv1.ToolCallStart {
-	p := &workerv1.ToolCallStart{
+func acpToolCallToProto(tc *acp.SessionUpdateToolCall) *workerv1.ToolCall {
+	p := &workerv1.ToolCall{
 		ToolCallId: string(tc.ToolCallId),
 		Title:      tc.Title,
 		Kind:       acpToolKindToProto(tc.Kind),
@@ -631,12 +671,22 @@ func acpToolCallUpdateToProto(tc *acp.SessionToolCallUpdate) *workerv1.ToolCallU
 
 func acpToolKindToProto(k acp.ToolKind) workerv1.ToolCallKind {
 	switch k {
-	case "file", "read", "write", "edit":
-		return workerv1.ToolCallKind_TOOL_CALL_KIND_FILE
-	case "shell", "bash", "command":
-		return workerv1.ToolCallKind_TOOL_CALL_KIND_SHELL
+	case "read":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_READ
+	case "edit", "write", "file":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_EDIT
+	case "delete":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_DELETE
+	case "move":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_MOVE
 	case "search", "grep", "glob":
 		return workerv1.ToolCallKind_TOOL_CALL_KIND_SEARCH
+	case "execute", "shell", "bash", "command":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_EXECUTE
+	case "think":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_THINK
+	case "fetch":
+		return workerv1.ToolCallKind_TOOL_CALL_KIND_FETCH
 	default:
 		return workerv1.ToolCallKind_TOOL_CALL_KIND_OTHER
 	}
@@ -644,14 +694,14 @@ func acpToolKindToProto(k acp.ToolKind) workerv1.ToolCallKind {
 
 func acpToolStatusToProto(s acp.ToolCallStatus) workerv1.ToolCallStatus {
 	switch s {
-	case "running":
-		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_RUNNING
+	case "running", "in_progress":
+		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_IN_PROGRESS
 	case "completed":
 		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_COMPLETED
-	case "errored":
-		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_ERRORED
+	case "errored", "failed":
+		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_FAILED
 	default:
-		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_RUNNING
+		return workerv1.ToolCallStatus_TOOL_CALL_STATUS_IN_PROGRESS
 	}
 }
 

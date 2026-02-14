@@ -26,24 +26,24 @@ type ToolCallStatus int32
 
 const (
 	ToolCallStatus_TOOL_CALL_STATUS_UNSPECIFIED ToolCallStatus = 0
-	ToolCallStatus_TOOL_CALL_STATUS_RUNNING     ToolCallStatus = 1
+	ToolCallStatus_TOOL_CALL_STATUS_IN_PROGRESS ToolCallStatus = 1
 	ToolCallStatus_TOOL_CALL_STATUS_COMPLETED   ToolCallStatus = 2
-	ToolCallStatus_TOOL_CALL_STATUS_ERRORED     ToolCallStatus = 3
+	ToolCallStatus_TOOL_CALL_STATUS_FAILED      ToolCallStatus = 3
 )
 
 // Enum value maps for ToolCallStatus.
 var (
 	ToolCallStatus_name = map[int32]string{
 		0: "TOOL_CALL_STATUS_UNSPECIFIED",
-		1: "TOOL_CALL_STATUS_RUNNING",
+		1: "TOOL_CALL_STATUS_IN_PROGRESS",
 		2: "TOOL_CALL_STATUS_COMPLETED",
-		3: "TOOL_CALL_STATUS_ERRORED",
+		3: "TOOL_CALL_STATUS_FAILED",
 	}
 	ToolCallStatus_value = map[string]int32{
 		"TOOL_CALL_STATUS_UNSPECIFIED": 0,
-		"TOOL_CALL_STATUS_RUNNING":     1,
+		"TOOL_CALL_STATUS_IN_PROGRESS": 1,
 		"TOOL_CALL_STATUS_COMPLETED":   2,
-		"TOOL_CALL_STATUS_ERRORED":     3,
+		"TOOL_CALL_STATUS_FAILED":      3,
 	}
 )
 
@@ -78,27 +78,42 @@ type ToolCallKind int32
 
 const (
 	ToolCallKind_TOOL_CALL_KIND_UNSPECIFIED ToolCallKind = 0
-	ToolCallKind_TOOL_CALL_KIND_FILE        ToolCallKind = 1
-	ToolCallKind_TOOL_CALL_KIND_SHELL       ToolCallKind = 2
-	ToolCallKind_TOOL_CALL_KIND_SEARCH      ToolCallKind = 3
-	ToolCallKind_TOOL_CALL_KIND_OTHER       ToolCallKind = 4
+	ToolCallKind_TOOL_CALL_KIND_READ        ToolCallKind = 1
+	ToolCallKind_TOOL_CALL_KIND_EDIT        ToolCallKind = 2
+	ToolCallKind_TOOL_CALL_KIND_DELETE      ToolCallKind = 3
+	ToolCallKind_TOOL_CALL_KIND_MOVE        ToolCallKind = 4
+	ToolCallKind_TOOL_CALL_KIND_SEARCH      ToolCallKind = 5
+	ToolCallKind_TOOL_CALL_KIND_EXECUTE     ToolCallKind = 6
+	ToolCallKind_TOOL_CALL_KIND_THINK       ToolCallKind = 7
+	ToolCallKind_TOOL_CALL_KIND_FETCH       ToolCallKind = 8
+	ToolCallKind_TOOL_CALL_KIND_OTHER       ToolCallKind = 9
 )
 
 // Enum value maps for ToolCallKind.
 var (
 	ToolCallKind_name = map[int32]string{
 		0: "TOOL_CALL_KIND_UNSPECIFIED",
-		1: "TOOL_CALL_KIND_FILE",
-		2: "TOOL_CALL_KIND_SHELL",
-		3: "TOOL_CALL_KIND_SEARCH",
-		4: "TOOL_CALL_KIND_OTHER",
+		1: "TOOL_CALL_KIND_READ",
+		2: "TOOL_CALL_KIND_EDIT",
+		3: "TOOL_CALL_KIND_DELETE",
+		4: "TOOL_CALL_KIND_MOVE",
+		5: "TOOL_CALL_KIND_SEARCH",
+		6: "TOOL_CALL_KIND_EXECUTE",
+		7: "TOOL_CALL_KIND_THINK",
+		8: "TOOL_CALL_KIND_FETCH",
+		9: "TOOL_CALL_KIND_OTHER",
 	}
 	ToolCallKind_value = map[string]int32{
 		"TOOL_CALL_KIND_UNSPECIFIED": 0,
-		"TOOL_CALL_KIND_FILE":        1,
-		"TOOL_CALL_KIND_SHELL":       2,
-		"TOOL_CALL_KIND_SEARCH":      3,
-		"TOOL_CALL_KIND_OTHER":       4,
+		"TOOL_CALL_KIND_READ":        1,
+		"TOOL_CALL_KIND_EDIT":        2,
+		"TOOL_CALL_KIND_DELETE":      3,
+		"TOOL_CALL_KIND_MOVE":        4,
+		"TOOL_CALL_KIND_SEARCH":      5,
+		"TOOL_CALL_KIND_EXECUTE":     6,
+		"TOOL_CALL_KIND_THINK":       7,
+		"TOOL_CALL_KIND_FETCH":       8,
+		"TOOL_CALL_KIND_OTHER":       9,
 	}
 )
 
@@ -547,10 +562,10 @@ type SessionEvent struct {
 	//
 	//	*SessionEvent_AgentMessageChunk
 	//	*SessionEvent_AgentThoughtChunk
-	//	*SessionEvent_ToolCallStart
+	//	*SessionEvent_ToolCall
 	//	*SessionEvent_ToolCallUpdate
 	//	*SessionEvent_StatusChange
-	//	*SessionEvent_ModeChange
+	//	*SessionEvent_CurrentModeUpdate
 	//	*SessionEvent_UserMessage
 	Payload       isSessionEvent_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
@@ -633,10 +648,10 @@ func (x *SessionEvent) GetAgentThoughtChunk() *AgentThoughtChunk {
 	return nil
 }
 
-func (x *SessionEvent) GetToolCallStart() *ToolCallStart {
+func (x *SessionEvent) GetToolCall() *ToolCall {
 	if x != nil {
-		if x, ok := x.Payload.(*SessionEvent_ToolCallStart); ok {
-			return x.ToolCallStart
+		if x, ok := x.Payload.(*SessionEvent_ToolCall); ok {
+			return x.ToolCall
 		}
 	}
 	return nil
@@ -660,10 +675,10 @@ func (x *SessionEvent) GetStatusChange() *StatusChange {
 	return nil
 }
 
-func (x *SessionEvent) GetModeChange() *ModeChange {
+func (x *SessionEvent) GetCurrentModeUpdate() *CurrentModeUpdate {
 	if x != nil {
-		if x, ok := x.Payload.(*SessionEvent_ModeChange); ok {
-			return x.ModeChange
+		if x, ok := x.Payload.(*SessionEvent_CurrentModeUpdate); ok {
+			return x.CurrentModeUpdate
 		}
 	}
 	return nil
@@ -690,8 +705,8 @@ type SessionEvent_AgentThoughtChunk struct {
 	AgentThoughtChunk *AgentThoughtChunk `protobuf:"bytes,11,opt,name=agent_thought_chunk,json=agentThoughtChunk,proto3,oneof"`
 }
 
-type SessionEvent_ToolCallStart struct {
-	ToolCallStart *ToolCallStart `protobuf:"bytes,12,opt,name=tool_call_start,json=toolCallStart,proto3,oneof"`
+type SessionEvent_ToolCall struct {
+	ToolCall *ToolCall `protobuf:"bytes,12,opt,name=tool_call,json=toolCall,proto3,oneof"`
 }
 
 type SessionEvent_ToolCallUpdate struct {
@@ -702,8 +717,8 @@ type SessionEvent_StatusChange struct {
 	StatusChange *StatusChange `protobuf:"bytes,14,opt,name=status_change,json=statusChange,proto3,oneof"`
 }
 
-type SessionEvent_ModeChange struct {
-	ModeChange *ModeChange `protobuf:"bytes,15,opt,name=mode_change,json=modeChange,proto3,oneof"`
+type SessionEvent_CurrentModeUpdate struct {
+	CurrentModeUpdate *CurrentModeUpdate `protobuf:"bytes,15,opt,name=current_mode_update,json=currentModeUpdate,proto3,oneof"`
 }
 
 type SessionEvent_UserMessage struct {
@@ -714,13 +729,13 @@ func (*SessionEvent_AgentMessageChunk) isSessionEvent_Payload() {}
 
 func (*SessionEvent_AgentThoughtChunk) isSessionEvent_Payload() {}
 
-func (*SessionEvent_ToolCallStart) isSessionEvent_Payload() {}
+func (*SessionEvent_ToolCall) isSessionEvent_Payload() {}
 
 func (*SessionEvent_ToolCallUpdate) isSessionEvent_Payload() {}
 
 func (*SessionEvent_StatusChange) isSessionEvent_Payload() {}
 
-func (*SessionEvent_ModeChange) isSessionEvent_Payload() {}
+func (*SessionEvent_CurrentModeUpdate) isSessionEvent_Payload() {}
 
 func (*SessionEvent_UserMessage) isSessionEvent_Payload() {}
 
@@ -857,32 +872,33 @@ func (x *UserMessage) GetText() string {
 	return ""
 }
 
-type ToolCallStart struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolCallId    string                 `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Kind          ToolCallKind           `protobuf:"varint,3,opt,name=kind,proto3,enum=controlplane.v1.ToolCallKind" json:"kind,omitempty"`
-	RawInput      string                 `protobuf:"bytes,4,opt,name=raw_input,json=rawInput,proto3" json:"raw_input,omitempty"`
-	Locations     []*ToolCallLocation    `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
-	Status        ToolCallStatus         `protobuf:"varint,6,opt,name=status,proto3,enum=controlplane.v1.ToolCallStatus" json:"status,omitempty"`
+type ToolCall struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	ToolCallId    string                  `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
+	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Kind          ToolCallKind            `protobuf:"varint,3,opt,name=kind,proto3,enum=controlplane.v1.ToolCallKind" json:"kind,omitempty"`
+	RawInput      string                  `protobuf:"bytes,4,opt,name=raw_input,json=rawInput,proto3" json:"raw_input,omitempty"`
+	Locations     []*ToolCallLocation     `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
+	Status        ToolCallStatus          `protobuf:"varint,6,opt,name=status,proto3,enum=controlplane.v1.ToolCallStatus" json:"status,omitempty"`
+	Content       []*ToolCallContentBlock `protobuf:"bytes,7,rep,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ToolCallStart) Reset() {
-	*x = ToolCallStart{}
+func (x *ToolCall) Reset() {
+	*x = ToolCall{}
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ToolCallStart) String() string {
+func (x *ToolCall) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ToolCallStart) ProtoMessage() {}
+func (*ToolCall) ProtoMessage() {}
 
-func (x *ToolCallStart) ProtoReflect() protoreflect.Message {
+func (x *ToolCall) ProtoReflect() protoreflect.Message {
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -894,60 +910,68 @@ func (x *ToolCallStart) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ToolCallStart.ProtoReflect.Descriptor instead.
-func (*ToolCallStart) Descriptor() ([]byte, []int) {
+// Deprecated: Use ToolCall.ProtoReflect.Descriptor instead.
+func (*ToolCall) Descriptor() ([]byte, []int) {
 	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ToolCallStart) GetToolCallId() string {
+func (x *ToolCall) GetToolCallId() string {
 	if x != nil {
 		return x.ToolCallId
 	}
 	return ""
 }
 
-func (x *ToolCallStart) GetTitle() string {
+func (x *ToolCall) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *ToolCallStart) GetKind() ToolCallKind {
+func (x *ToolCall) GetKind() ToolCallKind {
 	if x != nil {
 		return x.Kind
 	}
 	return ToolCallKind_TOOL_CALL_KIND_UNSPECIFIED
 }
 
-func (x *ToolCallStart) GetRawInput() string {
+func (x *ToolCall) GetRawInput() string {
 	if x != nil {
 		return x.RawInput
 	}
 	return ""
 }
 
-func (x *ToolCallStart) GetLocations() []*ToolCallLocation {
+func (x *ToolCall) GetLocations() []*ToolCallLocation {
 	if x != nil {
 		return x.Locations
 	}
 	return nil
 }
 
-func (x *ToolCallStart) GetStatus() ToolCallStatus {
+func (x *ToolCall) GetStatus() ToolCallStatus {
 	if x != nil {
 		return x.Status
 	}
 	return ToolCallStatus_TOOL_CALL_STATUS_UNSPECIFIED
 }
 
+func (x *ToolCall) GetContent() []*ToolCallContentBlock {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
 type ToolCallUpdate struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolCallId    string                 `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Status        ToolCallStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=controlplane.v1.ToolCallStatus" json:"status,omitempty"`
-	RawOutput     string                 `protobuf:"bytes,4,opt,name=raw_output,json=rawOutput,proto3" json:"raw_output,omitempty"`
-	Locations     []*ToolCallLocation    `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	ToolCallId    string                  `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
+	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Status        ToolCallStatus          `protobuf:"varint,3,opt,name=status,proto3,enum=controlplane.v1.ToolCallStatus" json:"status,omitempty"`
+	RawOutput     string                  `protobuf:"bytes,4,opt,name=raw_output,json=rawOutput,proto3" json:"raw_output,omitempty"`
+	Locations     []*ToolCallLocation     `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
+	Content       []*ToolCallContentBlock `protobuf:"bytes,6,rep,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1017,6 +1041,199 @@ func (x *ToolCallUpdate) GetLocations() []*ToolCallLocation {
 	return nil
 }
 
+func (x *ToolCallUpdate) GetContent() []*ToolCallContentBlock {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+type ToolCallContentBlock struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Block:
+	//
+	//	*ToolCallContentBlock_Diff
+	//	*ToolCallContentBlock_Text
+	Block         isToolCallContentBlock_Block `protobuf_oneof:"block"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallContentBlock) Reset() {
+	*x = ToolCallContentBlock{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallContentBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallContentBlock) ProtoMessage() {}
+
+func (x *ToolCallContentBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallContentBlock.ProtoReflect.Descriptor instead.
+func (*ToolCallContentBlock) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ToolCallContentBlock) GetBlock() isToolCallContentBlock_Block {
+	if x != nil {
+		return x.Block
+	}
+	return nil
+}
+
+func (x *ToolCallContentBlock) GetDiff() *ToolCallDiff {
+	if x != nil {
+		if x, ok := x.Block.(*ToolCallContentBlock_Diff); ok {
+			return x.Diff
+		}
+	}
+	return nil
+}
+
+func (x *ToolCallContentBlock) GetText() *ToolCallText {
+	if x != nil {
+		if x, ok := x.Block.(*ToolCallContentBlock_Text); ok {
+			return x.Text
+		}
+	}
+	return nil
+}
+
+type isToolCallContentBlock_Block interface {
+	isToolCallContentBlock_Block()
+}
+
+type ToolCallContentBlock_Diff struct {
+	Diff *ToolCallDiff `protobuf:"bytes,1,opt,name=diff,proto3,oneof"`
+}
+
+type ToolCallContentBlock_Text struct {
+	Text *ToolCallText `protobuf:"bytes,2,opt,name=text,proto3,oneof"`
+}
+
+func (*ToolCallContentBlock_Diff) isToolCallContentBlock_Block() {}
+
+func (*ToolCallContentBlock_Text) isToolCallContentBlock_Block() {}
+
+type ToolCallDiff struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	NewText       string                 `protobuf:"bytes,2,opt,name=new_text,json=newText,proto3" json:"new_text,omitempty"`
+	OldText       string                 `protobuf:"bytes,3,opt,name=old_text,json=oldText,proto3" json:"old_text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallDiff) Reset() {
+	*x = ToolCallDiff{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallDiff) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallDiff) ProtoMessage() {}
+
+func (x *ToolCallDiff) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallDiff.ProtoReflect.Descriptor instead.
+func (*ToolCallDiff) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ToolCallDiff) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ToolCallDiff) GetNewText() string {
+	if x != nil {
+		return x.NewText
+	}
+	return ""
+}
+
+func (x *ToolCallDiff) GetOldText() string {
+	if x != nil {
+		return x.OldText
+	}
+	return ""
+}
+
+type ToolCallText struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallText) Reset() {
+	*x = ToolCallText{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallText) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallText) ProtoMessage() {}
+
+func (x *ToolCallText) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallText.ProtoReflect.Descriptor instead.
+func (*ToolCallText) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ToolCallText) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 type ToolCallLocation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
@@ -1027,7 +1244,7 @@ type ToolCallLocation struct {
 
 func (x *ToolCallLocation) Reset() {
 	*x = ToolCallLocation{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1039,7 +1256,7 @@ func (x *ToolCallLocation) String() string {
 func (*ToolCallLocation) ProtoMessage() {}
 
 func (x *ToolCallLocation) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1052,7 +1269,7 @@ func (x *ToolCallLocation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallLocation.ProtoReflect.Descriptor instead.
 func (*ToolCallLocation) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{13}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ToolCallLocation) GetPath() string {
@@ -1078,7 +1295,7 @@ type StatusChange struct {
 
 func (x *StatusChange) Reset() {
 	*x = StatusChange{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[14]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1090,7 +1307,7 @@ func (x *StatusChange) String() string {
 func (*StatusChange) ProtoMessage() {}
 
 func (x *StatusChange) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[14]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1320,7 @@ func (x *StatusChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusChange.ProtoReflect.Descriptor instead.
 func (*StatusChange) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{14}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StatusChange) GetStatus() string {
@@ -1113,28 +1330,28 @@ func (x *StatusChange) GetStatus() string {
 	return ""
 }
 
-type ModeChange struct {
+type CurrentModeUpdate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ModeId        string                 `protobuf:"bytes,1,opt,name=mode_id,json=modeId,proto3" json:"mode_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ModeChange) Reset() {
-	*x = ModeChange{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[15]
+func (x *CurrentModeUpdate) Reset() {
+	*x = CurrentModeUpdate{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ModeChange) String() string {
+func (x *CurrentModeUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ModeChange) ProtoMessage() {}
+func (*CurrentModeUpdate) ProtoMessage() {}
 
-func (x *ModeChange) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[15]
+func (x *CurrentModeUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,12 +1362,12 @@ func (x *ModeChange) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ModeChange.ProtoReflect.Descriptor instead.
-func (*ModeChange) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{15}
+// Deprecated: Use CurrentModeUpdate.ProtoReflect.Descriptor instead.
+func (*CurrentModeUpdate) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *ModeChange) GetModeId() string {
+func (x *CurrentModeUpdate) GetModeId() string {
 	if x != nil {
 		return x.ModeId
 	}
@@ -1170,7 +1387,7 @@ type WatchSessionEventsRequest struct {
 
 func (x *WatchSessionEventsRequest) Reset() {
 	*x = WatchSessionEventsRequest{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[16]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1182,7 +1399,7 @@ func (x *WatchSessionEventsRequest) String() string {
 func (*WatchSessionEventsRequest) ProtoMessage() {}
 
 func (x *WatchSessionEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[16]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1195,7 +1412,7 @@ func (x *WatchSessionEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchSessionEventsRequest.ProtoReflect.Descriptor instead.
 func (*WatchSessionEventsRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{16}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *WatchSessionEventsRequest) GetSessionId() string {
@@ -1238,7 +1455,7 @@ type WatchSessionEventsResponse struct {
 
 func (x *WatchSessionEventsResponse) Reset() {
 	*x = WatchSessionEventsResponse{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[17]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1250,7 +1467,7 @@ func (x *WatchSessionEventsResponse) String() string {
 func (*WatchSessionEventsResponse) ProtoMessage() {}
 
 func (x *WatchSessionEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[17]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1263,7 +1480,7 @@ func (x *WatchSessionEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchSessionEventsResponse.ProtoReflect.Descriptor instead.
 func (*WatchSessionEventsResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{17}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *WatchSessionEventsResponse) GetEvent() *SessionEvent {
@@ -1290,7 +1507,7 @@ type PromptSessionRequest struct {
 
 func (x *PromptSessionRequest) Reset() {
 	*x = PromptSessionRequest{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[18]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1302,7 +1519,7 @@ func (x *PromptSessionRequest) String() string {
 func (*PromptSessionRequest) ProtoMessage() {}
 
 func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[18]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1315,7 +1532,7 @@ func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromptSessionRequest.ProtoReflect.Descriptor instead.
 func (*PromptSessionRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{18}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *PromptSessionRequest) GetThreadId() string {
@@ -1340,7 +1557,7 @@ type PromptSessionResponse struct {
 
 func (x *PromptSessionResponse) Reset() {
 	*x = PromptSessionResponse{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[19]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1352,7 +1569,7 @@ func (x *PromptSessionResponse) String() string {
 func (*PromptSessionResponse) ProtoMessage() {}
 
 func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[19]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1365,7 +1582,7 @@ func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromptSessionResponse.ProtoReflect.Descriptor instead.
 func (*PromptSessionResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{19}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{22}
 }
 
 var File_controlplane_v1_session_service_proto protoreflect.FileDescriptor
@@ -1402,7 +1619,7 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12 \n" +
 	"\amode_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06modeId\"\x18\n" +
-	"\x16SetSessionModeResponse\"\xfe\x04\n" +
+	"\x16SetSessionModeResponse\"\x84\x05\n" +
 	"\fSessionEvent\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
@@ -1410,12 +1627,11 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\x12T\n" +
 	"\x13agent_message_chunk\x18\n" +
 	" \x01(\v2\".controlplane.v1.AgentMessageChunkH\x00R\x11agentMessageChunk\x12T\n" +
-	"\x13agent_thought_chunk\x18\v \x01(\v2\".controlplane.v1.AgentThoughtChunkH\x00R\x11agentThoughtChunk\x12H\n" +
-	"\x0ftool_call_start\x18\f \x01(\v2\x1e.controlplane.v1.ToolCallStartH\x00R\rtoolCallStart\x12K\n" +
+	"\x13agent_thought_chunk\x18\v \x01(\v2\".controlplane.v1.AgentThoughtChunkH\x00R\x11agentThoughtChunk\x128\n" +
+	"\ttool_call\x18\f \x01(\v2\x19.controlplane.v1.ToolCallH\x00R\btoolCall\x12K\n" +
 	"\x10tool_call_update\x18\r \x01(\v2\x1f.controlplane.v1.ToolCallUpdateH\x00R\x0etoolCallUpdate\x12D\n" +
-	"\rstatus_change\x18\x0e \x01(\v2\x1d.controlplane.v1.StatusChangeH\x00R\fstatusChange\x12>\n" +
-	"\vmode_change\x18\x0f \x01(\v2\x1b.controlplane.v1.ModeChangeH\x00R\n" +
-	"modeChange\x12A\n" +
+	"\rstatus_change\x18\x0e \x01(\v2\x1d.controlplane.v1.StatusChangeH\x00R\fstatusChange\x12T\n" +
+	"\x13current_mode_update\x18\x0f \x01(\v2\".controlplane.v1.CurrentModeUpdateH\x00R\x11currentModeUpdate\x12A\n" +
 	"\fuser_message\x18\x10 \x01(\v2\x1c.controlplane.v1.UserMessageH\x00R\vuserMessageB\t\n" +
 	"\apayload\"'\n" +
 	"\x11AgentMessageChunk\x12\x12\n" +
@@ -1423,15 +1639,16 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x11AgentThoughtChunk\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\"!\n" +
 	"\vUserMessage\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\"\x91\x02\n" +
-	"\rToolCallStart\x12 \n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\xcd\x02\n" +
+	"\bToolCall\x12 \n" +
 	"\ftool_call_id\x18\x01 \x01(\tR\n" +
 	"toolCallId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x121\n" +
 	"\x04kind\x18\x03 \x01(\x0e2\x1d.controlplane.v1.ToolCallKindR\x04kind\x12\x1b\n" +
 	"\traw_input\x18\x04 \x01(\tR\brawInput\x12?\n" +
 	"\tlocations\x18\x05 \x03(\v2!.controlplane.v1.ToolCallLocationR\tlocations\x127\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1f.controlplane.v1.ToolCallStatusR\x06status\"\xe1\x01\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1f.controlplane.v1.ToolCallStatusR\x06status\x12?\n" +
+	"\acontent\x18\a \x03(\v2%.controlplane.v1.ToolCallContentBlockR\acontent\"\xa2\x02\n" +
 	"\x0eToolCallUpdate\x12 \n" +
 	"\ftool_call_id\x18\x01 \x01(\tR\n" +
 	"toolCallId\x12\x14\n" +
@@ -1439,14 +1656,24 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x06status\x18\x03 \x01(\x0e2\x1f.controlplane.v1.ToolCallStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"raw_output\x18\x04 \x01(\tR\trawOutput\x12?\n" +
-	"\tlocations\x18\x05 \x03(\v2!.controlplane.v1.ToolCallLocationR\tlocations\":\n" +
+	"\tlocations\x18\x05 \x03(\v2!.controlplane.v1.ToolCallLocationR\tlocations\x12?\n" +
+	"\acontent\x18\x06 \x03(\v2%.controlplane.v1.ToolCallContentBlockR\acontent\"\x89\x01\n" +
+	"\x14ToolCallContentBlock\x123\n" +
+	"\x04diff\x18\x01 \x01(\v2\x1d.controlplane.v1.ToolCallDiffH\x00R\x04diff\x123\n" +
+	"\x04text\x18\x02 \x01(\v2\x1d.controlplane.v1.ToolCallTextH\x00R\x04textB\a\n" +
+	"\x05block\"X\n" +
+	"\fToolCallDiff\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\bnew_text\x18\x02 \x01(\tR\anewText\x12\x19\n" +
+	"\bold_text\x18\x03 \x01(\tR\aoldText\"\"\n" +
+	"\fToolCallText\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\":\n" +
 	"\x10ToolCallLocation\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
 	"\x04line\x18\x02 \x01(\x03R\x04line\"&\n" +
 	"\fStatusChange\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\"%\n" +
-	"\n" +
-	"ModeChange\x12\x17\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\",\n" +
+	"\x11CurrentModeUpdate\x12\x17\n" +
 	"\amode_id\x18\x01 \x01(\tR\x06modeId\"\x97\x01\n" +
 	"\x19WatchSessionEventsRequest\x12\x1d\n" +
 	"\n" +
@@ -1461,18 +1688,23 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x14PromptSessionRequest\x12$\n" +
 	"\tthread_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\bthreadId\x12\x1b\n" +
 	"\x04text\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04text\"\x17\n" +
-	"\x15PromptSessionResponse*\x8e\x01\n" +
+	"\x15PromptSessionResponse*\x91\x01\n" +
 	"\x0eToolCallStatus\x12 \n" +
-	"\x1cTOOL_CALL_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
-	"\x18TOOL_CALL_STATUS_RUNNING\x10\x01\x12\x1e\n" +
-	"\x1aTOOL_CALL_STATUS_COMPLETED\x10\x02\x12\x1c\n" +
-	"\x18TOOL_CALL_STATUS_ERRORED\x10\x03*\x96\x01\n" +
+	"\x1cTOOL_CALL_STATUS_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cTOOL_CALL_STATUS_IN_PROGRESS\x10\x01\x12\x1e\n" +
+	"\x1aTOOL_CALL_STATUS_COMPLETED\x10\x02\x12\x1b\n" +
+	"\x17TOOL_CALL_STATUS_FAILED\x10\x03*\x99\x02\n" +
 	"\fToolCallKind\x12\x1e\n" +
 	"\x1aTOOL_CALL_KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
-	"\x13TOOL_CALL_KIND_FILE\x10\x01\x12\x18\n" +
-	"\x14TOOL_CALL_KIND_SHELL\x10\x02\x12\x19\n" +
-	"\x15TOOL_CALL_KIND_SEARCH\x10\x03\x12\x18\n" +
-	"\x14TOOL_CALL_KIND_OTHER\x10\x042\x82\x04\n" +
+	"\x13TOOL_CALL_KIND_READ\x10\x01\x12\x17\n" +
+	"\x13TOOL_CALL_KIND_EDIT\x10\x02\x12\x19\n" +
+	"\x15TOOL_CALL_KIND_DELETE\x10\x03\x12\x17\n" +
+	"\x13TOOL_CALL_KIND_MOVE\x10\x04\x12\x19\n" +
+	"\x15TOOL_CALL_KIND_SEARCH\x10\x05\x12\x1a\n" +
+	"\x16TOOL_CALL_KIND_EXECUTE\x10\x06\x12\x18\n" +
+	"\x14TOOL_CALL_KIND_THINK\x10\a\x12\x18\n" +
+	"\x14TOOL_CALL_KIND_FETCH\x10\b\x12\x18\n" +
+	"\x14TOOL_CALL_KIND_OTHER\x10\t2\x82\x04\n" +
 	"\x0eSessionService\x12W\n" +
 	"\n" +
 	"GetSession\x12\".controlplane.v1.GetSessionRequest\x1a#.controlplane.v1.GetSessionResponse\"\x00\x12]\n" +
@@ -1495,7 +1727,7 @@ func file_controlplane_v1_session_service_proto_rawDescGZIP() []byte {
 }
 
 var file_controlplane_v1_session_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_controlplane_v1_session_service_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_controlplane_v1_session_service_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_controlplane_v1_session_service_proto_goTypes = []any{
 	(ToolCallStatus)(0),                // 0: controlplane.v1.ToolCallStatus
 	(ToolCallKind)(0),                  // 1: controlplane.v1.ToolCallKind
@@ -1510,47 +1742,54 @@ var file_controlplane_v1_session_service_proto_goTypes = []any{
 	(*AgentMessageChunk)(nil),          // 10: controlplane.v1.AgentMessageChunk
 	(*AgentThoughtChunk)(nil),          // 11: controlplane.v1.AgentThoughtChunk
 	(*UserMessage)(nil),                // 12: controlplane.v1.UserMessage
-	(*ToolCallStart)(nil),              // 13: controlplane.v1.ToolCallStart
+	(*ToolCall)(nil),                   // 13: controlplane.v1.ToolCall
 	(*ToolCallUpdate)(nil),             // 14: controlplane.v1.ToolCallUpdate
-	(*ToolCallLocation)(nil),           // 15: controlplane.v1.ToolCallLocation
-	(*StatusChange)(nil),               // 16: controlplane.v1.StatusChange
-	(*ModeChange)(nil),                 // 17: controlplane.v1.ModeChange
-	(*WatchSessionEventsRequest)(nil),  // 18: controlplane.v1.WatchSessionEventsRequest
-	(*WatchSessionEventsResponse)(nil), // 19: controlplane.v1.WatchSessionEventsResponse
-	(*PromptSessionRequest)(nil),       // 20: controlplane.v1.PromptSessionRequest
-	(*PromptSessionResponse)(nil),      // 21: controlplane.v1.PromptSessionResponse
+	(*ToolCallContentBlock)(nil),       // 15: controlplane.v1.ToolCallContentBlock
+	(*ToolCallDiff)(nil),               // 16: controlplane.v1.ToolCallDiff
+	(*ToolCallText)(nil),               // 17: controlplane.v1.ToolCallText
+	(*ToolCallLocation)(nil),           // 18: controlplane.v1.ToolCallLocation
+	(*StatusChange)(nil),               // 19: controlplane.v1.StatusChange
+	(*CurrentModeUpdate)(nil),          // 20: controlplane.v1.CurrentModeUpdate
+	(*WatchSessionEventsRequest)(nil),  // 21: controlplane.v1.WatchSessionEventsRequest
+	(*WatchSessionEventsResponse)(nil), // 22: controlplane.v1.WatchSessionEventsResponse
+	(*PromptSessionRequest)(nil),       // 23: controlplane.v1.PromptSessionRequest
+	(*PromptSessionResponse)(nil),      // 24: controlplane.v1.PromptSessionResponse
 }
 var file_controlplane_v1_session_service_proto_depIdxs = []int32{
 	2,  // 0: controlplane.v1.GetSessionResponse.session:type_name -> controlplane.v1.SessionConfig
 	2,  // 1: controlplane.v1.ListSessionsResponse.sessions:type_name -> controlplane.v1.SessionConfig
 	10, // 2: controlplane.v1.SessionEvent.agent_message_chunk:type_name -> controlplane.v1.AgentMessageChunk
 	11, // 3: controlplane.v1.SessionEvent.agent_thought_chunk:type_name -> controlplane.v1.AgentThoughtChunk
-	13, // 4: controlplane.v1.SessionEvent.tool_call_start:type_name -> controlplane.v1.ToolCallStart
+	13, // 4: controlplane.v1.SessionEvent.tool_call:type_name -> controlplane.v1.ToolCall
 	14, // 5: controlplane.v1.SessionEvent.tool_call_update:type_name -> controlplane.v1.ToolCallUpdate
-	16, // 6: controlplane.v1.SessionEvent.status_change:type_name -> controlplane.v1.StatusChange
-	17, // 7: controlplane.v1.SessionEvent.mode_change:type_name -> controlplane.v1.ModeChange
+	19, // 6: controlplane.v1.SessionEvent.status_change:type_name -> controlplane.v1.StatusChange
+	20, // 7: controlplane.v1.SessionEvent.current_mode_update:type_name -> controlplane.v1.CurrentModeUpdate
 	12, // 8: controlplane.v1.SessionEvent.user_message:type_name -> controlplane.v1.UserMessage
-	1,  // 9: controlplane.v1.ToolCallStart.kind:type_name -> controlplane.v1.ToolCallKind
-	15, // 10: controlplane.v1.ToolCallStart.locations:type_name -> controlplane.v1.ToolCallLocation
-	0,  // 11: controlplane.v1.ToolCallStart.status:type_name -> controlplane.v1.ToolCallStatus
-	0,  // 12: controlplane.v1.ToolCallUpdate.status:type_name -> controlplane.v1.ToolCallStatus
-	15, // 13: controlplane.v1.ToolCallUpdate.locations:type_name -> controlplane.v1.ToolCallLocation
-	9,  // 14: controlplane.v1.WatchSessionEventsResponse.event:type_name -> controlplane.v1.SessionEvent
-	3,  // 15: controlplane.v1.SessionService.GetSession:input_type -> controlplane.v1.GetSessionRequest
-	5,  // 16: controlplane.v1.SessionService.ListSessions:input_type -> controlplane.v1.ListSessionsRequest
-	7,  // 17: controlplane.v1.SessionService.SetSessionMode:input_type -> controlplane.v1.SetSessionModeRequest
-	18, // 18: controlplane.v1.SessionService.WatchSessionEvents:input_type -> controlplane.v1.WatchSessionEventsRequest
-	20, // 19: controlplane.v1.SessionService.PromptSession:input_type -> controlplane.v1.PromptSessionRequest
-	4,  // 20: controlplane.v1.SessionService.GetSession:output_type -> controlplane.v1.GetSessionResponse
-	6,  // 21: controlplane.v1.SessionService.ListSessions:output_type -> controlplane.v1.ListSessionsResponse
-	8,  // 22: controlplane.v1.SessionService.SetSessionMode:output_type -> controlplane.v1.SetSessionModeResponse
-	19, // 23: controlplane.v1.SessionService.WatchSessionEvents:output_type -> controlplane.v1.WatchSessionEventsResponse
-	21, // 24: controlplane.v1.SessionService.PromptSession:output_type -> controlplane.v1.PromptSessionResponse
-	20, // [20:25] is the sub-list for method output_type
-	15, // [15:20] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	1,  // 9: controlplane.v1.ToolCall.kind:type_name -> controlplane.v1.ToolCallKind
+	18, // 10: controlplane.v1.ToolCall.locations:type_name -> controlplane.v1.ToolCallLocation
+	0,  // 11: controlplane.v1.ToolCall.status:type_name -> controlplane.v1.ToolCallStatus
+	15, // 12: controlplane.v1.ToolCall.content:type_name -> controlplane.v1.ToolCallContentBlock
+	0,  // 13: controlplane.v1.ToolCallUpdate.status:type_name -> controlplane.v1.ToolCallStatus
+	18, // 14: controlplane.v1.ToolCallUpdate.locations:type_name -> controlplane.v1.ToolCallLocation
+	15, // 15: controlplane.v1.ToolCallUpdate.content:type_name -> controlplane.v1.ToolCallContentBlock
+	16, // 16: controlplane.v1.ToolCallContentBlock.diff:type_name -> controlplane.v1.ToolCallDiff
+	17, // 17: controlplane.v1.ToolCallContentBlock.text:type_name -> controlplane.v1.ToolCallText
+	9,  // 18: controlplane.v1.WatchSessionEventsResponse.event:type_name -> controlplane.v1.SessionEvent
+	3,  // 19: controlplane.v1.SessionService.GetSession:input_type -> controlplane.v1.GetSessionRequest
+	5,  // 20: controlplane.v1.SessionService.ListSessions:input_type -> controlplane.v1.ListSessionsRequest
+	7,  // 21: controlplane.v1.SessionService.SetSessionMode:input_type -> controlplane.v1.SetSessionModeRequest
+	21, // 22: controlplane.v1.SessionService.WatchSessionEvents:input_type -> controlplane.v1.WatchSessionEventsRequest
+	23, // 23: controlplane.v1.SessionService.PromptSession:input_type -> controlplane.v1.PromptSessionRequest
+	4,  // 24: controlplane.v1.SessionService.GetSession:output_type -> controlplane.v1.GetSessionResponse
+	6,  // 25: controlplane.v1.SessionService.ListSessions:output_type -> controlplane.v1.ListSessionsResponse
+	8,  // 26: controlplane.v1.SessionService.SetSessionMode:output_type -> controlplane.v1.SetSessionModeResponse
+	22, // 27: controlplane.v1.SessionService.WatchSessionEvents:output_type -> controlplane.v1.WatchSessionEventsResponse
+	24, // 28: controlplane.v1.SessionService.PromptSession:output_type -> controlplane.v1.PromptSessionResponse
+	24, // [24:29] is the sub-list for method output_type
+	19, // [19:24] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_controlplane_v1_session_service_proto_init() }
@@ -1561,11 +1800,15 @@ func file_controlplane_v1_session_service_proto_init() {
 	file_controlplane_v1_session_service_proto_msgTypes[7].OneofWrappers = []any{
 		(*SessionEvent_AgentMessageChunk)(nil),
 		(*SessionEvent_AgentThoughtChunk)(nil),
-		(*SessionEvent_ToolCallStart)(nil),
+		(*SessionEvent_ToolCall)(nil),
 		(*SessionEvent_ToolCallUpdate)(nil),
 		(*SessionEvent_StatusChange)(nil),
-		(*SessionEvent_ModeChange)(nil),
+		(*SessionEvent_CurrentModeUpdate)(nil),
 		(*SessionEvent_UserMessage)(nil),
+	}
+	file_controlplane_v1_session_service_proto_msgTypes[13].OneofWrappers = []any{
+		(*ToolCallContentBlock_Diff)(nil),
+		(*ToolCallContentBlock_Text)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1573,7 +1816,7 @@ func file_controlplane_v1_session_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_session_service_proto_rawDesc), len(file_controlplane_v1_session_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   20,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

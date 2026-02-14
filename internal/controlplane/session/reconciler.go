@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/sebastianm/flowgentic/internal/controlplane/systemprompts"
 	workerv1 "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1"
@@ -144,45 +143,7 @@ func (r *Reconciler) dispatchSession(ctx context.Context, sess Session) {
 		return
 	}
 
-	// Persist the initial prompt as the first UserMessage event so it appears in history.
-	r.persistInitialPrompt(ctx, sess)
-
 	r.log.Info("reconciler: dispatched session", "session_id", sess.ID, "agent_session_id", agentSessionID)
-}
-
-// persistInitialPrompt stores the session's initial prompt as a UserMessage event
-// with sequence=1, so it appears as the first item in history replay.
-func (r *Reconciler) persistInitialPrompt(ctx context.Context, sess Session) {
-	if sess.Prompt == "" {
-		return
-	}
-
-	now := time.Now().UTC()
-	event := &workerv1.SessionEvent{
-		SessionId: sess.ID,
-		Sequence:  0, // sequence 0 = before any agent events (which start at 1)
-		Timestamp: now.Format(time.RFC3339Nano),
-		Payload: &workerv1.SessionEvent_UserMessage{
-			UserMessage: &workerv1.UserMessage{Text: sess.Prompt},
-		},
-	}
-
-	payload, err := proto.Marshal(event)
-	if err != nil {
-		r.log.Error("reconciler: failed to marshal initial prompt event", "session_id", sess.ID, "error", err)
-		return
-	}
-
-	evt := SessionEvent{
-		SessionID: sess.ID,
-		Sequence:  0,
-		EventType: "user_message",
-		Payload:   payload,
-		CreatedAt: now,
-	}
-	if err := r.store.InsertSessionEvent(ctx, evt); err != nil {
-		r.log.Error("reconciler: failed to persist initial prompt", "session_id", sess.ID, "error", err)
-	}
 }
 
 func renderSystemPrompt(log *slog.Logger, sess Session) string {
