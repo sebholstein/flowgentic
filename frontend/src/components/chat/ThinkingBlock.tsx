@@ -33,7 +33,11 @@ interface ThinkingBlockProps {
   className?: string;
 }
 
-export function ThinkingBlock({ thinking, defaultExpanded = false, className }: ThinkingBlockProps) {
+export function ThinkingBlock({
+  thinking,
+  defaultExpanded = false,
+  className,
+}: ThinkingBlockProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const isThinking = thinking.status === "thinking";
@@ -61,7 +65,12 @@ export function ThinkingBlock({ thinking, defaultExpanded = false, className }: 
     >
       {!expanded ? (
         <div className="flex items-center gap-2">
-          <Sparkles className={cn("size-3.5 shrink-0", isThinking ? "text-violet-400" : "text-muted-foreground/80")} />
+          <Sparkles
+            className={cn(
+              "size-3.5 shrink-0",
+              isThinking ? "text-violet-400" : "text-muted-foreground/80",
+            )}
+          />
           {isThinking ? (
             <span className="flex items-center gap-1.5 text-xs">
               <span
@@ -72,8 +81,14 @@ export function ThinkingBlock({ thinking, defaultExpanded = false, className }: 
               </span>
               <span className="flex items-center gap-0.5">
                 <span className="h-1 w-1 rounded-full bg-violet-500 animate-pulse" />
-                <span className="h-1 w-1 rounded-full bg-violet-500 animate-pulse" style={{ animationDelay: "150ms" }} />
-                <span className="h-1 w-1 rounded-full bg-violet-500 animate-pulse" style={{ animationDelay: "300ms" }} />
+                <span
+                  className="h-1 w-1 rounded-full bg-violet-500 animate-pulse"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="h-1 w-1 rounded-full bg-violet-500 animate-pulse"
+                  style={{ animationDelay: "300ms" }}
+                />
               </span>
             </span>
           ) : (
@@ -84,7 +99,12 @@ export function ThinkingBlock({ thinking, defaultExpanded = false, className }: 
       ) : (
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className={cn("size-3.5 shrink-0", isThinking ? "text-violet-400" : "text-muted-foreground/80")} />
+            <Sparkles
+              className={cn(
+                "size-3.5 shrink-0",
+                isThinking ? "text-violet-400" : "text-muted-foreground/80",
+              )}
+            />
             {isThinking ? (
               <span className="flex items-center gap-1.5 text-xs">
                 <span
@@ -101,27 +121,33 @@ export function ThinkingBlock({ thinking, defaultExpanded = false, className }: 
           </div>
           {hasContent && (
             <div
-              className={cn(
-                "ml-[22px] rounded-lg border border-border/30 bg-muted/20 px-3 py-2",
-              )}
+              className={cn("ml-[22px] rounded-lg border border-border/30 bg-muted/20 px-3 py-2")}
             >
               <p
                 className={cn(
                   "text-[11px] leading-relaxed whitespace-pre-wrap font-mono",
                   isThinking ? "text-violet-300/80" : "text-muted-foreground",
                 )}
-                style={isThinking ? {
-                  background: "linear-gradient(90deg, rgb(192 132 252 / 0.8) 0%, rgb(196 181 253) 50%, rgb(192 132 252 / 0.8) 100%)",
-                  backgroundSize: "200% 100%",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  animation: "shimmer 2s linear infinite",
-                } : undefined}
+                style={
+                  isThinking
+                    ? {
+                        background:
+                          "linear-gradient(90deg, rgb(192 132 252 / 0.8) 0%, rgb(196 181 253) 50%, rgb(192 132 252 / 0.8) 100%)",
+                        backgroundSize: "200% 100%",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        animation: "shimmer 2s linear infinite",
+                      }
+                    : undefined
+                }
               >
                 {displayContent}
                 {isThinking && (
-                  <span className="inline-block w-1.5 h-3 bg-violet-400 ml-0.5 animate-pulse align-middle" style={{ WebkitTextFillColor: 'initial' }} />
+                  <span
+                    className="inline-block w-1.5 h-3 bg-violet-400 ml-0.5 animate-pulse align-middle"
+                    style={{ WebkitTextFillColor: "initial" }}
+                  />
                 )}
               </p>
             </div>

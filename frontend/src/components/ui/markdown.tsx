@@ -1,13 +1,61 @@
 import { codeToHtml } from "shiki";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { PatchDiff } from "@pierre/diffs/react";
 import { cn } from "@/lib/utils";
-import { memo, useEffect, useState } from "react";
+import { Component, memo, useEffect, useState, type ReactNode } from "react";
 
 interface MarkdownProps {
   children: string;
   className?: string;
 }
+
+function isDiffContent(lang: string, content: string): boolean {
+  if (lang === "diff" || lang === "patch") return true;
+  return content.startsWith("diff --git") || /^---\s+\S/.test(content);
+}
+
+/** Returns true when the patch string looks complete enough for PatchDiff to parse. */
+function isCompletePatch(content: string): boolean {
+  return /^@@\s/m.test(content);
+}
+
+class DiffErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children;
+  }
+}
+
+const DiffBlock = memo(function DiffBlock({ children }: { children: string }) {
+  if (!isCompletePatch(children)) {
+    return (
+      <pre className="bg-zinc-800 text-xs p-3 rounded-lg overflow-x-auto">
+        <code>{children}</code>
+      </pre>
+    );
+  }
+
+  const fallback = (
+    <pre className="bg-zinc-800 text-xs p-3 rounded-lg overflow-x-auto">
+      <code>{children}</code>
+    </pre>
+  );
+
+  return (
+    <DiffErrorBoundary fallback={fallback}>
+      <div className="rounded-lg text-xs overflow-hidden">
+        <PatchDiff patch={children} options={{ theme: "vesper", diffStyle: "unified" }} />
+      </div>
+    </DiffErrorBoundary>
+  );
+});
 
 const CodeBlock = memo(function CodeBlock({
   className,
@@ -22,13 +70,17 @@ const CodeBlock = memo(function CodeBlock({
 
   useEffect(() => {
     let cancelled = false;
-    codeToHtml(children, { lang, theme: "one-dark-pro" }).then((result) => {
+    codeToHtml(children, { lang, theme: "vesper" }).then((result) => {
       if (!cancelled) setHtml(result);
     });
     return () => {
       cancelled = true;
     };
   }, [children, lang]);
+
+  if (isDiffContent(lang, children)) {
+    return <DiffBlock>{children}</DiffBlock>;
+  }
 
   if (!match) {
     return (
@@ -40,7 +92,10 @@ const CodeBlock = memo(function CodeBlock({
 
   return html ? (
     // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki generates safe HTML for syntax highlighting
-    <div className="rounded-lg text-xs overflow-hidden [&_pre]:p-3 [&_pre]:overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />
+    <div
+      className="rounded-lg text-xs overflow-hidden [&_pre]:p-3 [&_pre]:overflow-x-auto"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   ) : (
     <pre>
       <code>{children}</code>
@@ -58,11 +113,7 @@ const components: Components = {
     if (!hasLanguage && !isMultiline) {
       return <code className={className}>{children}</code>;
     }
-    return (
-      <CodeBlock className={className}>
-        {String(children).replace(/\n$/, "")}
-      </CodeBlock>
-    );
+    return <CodeBlock className={className}>{String(children).replace(/\n$/, "")}</CodeBlock>;
   },
 };
 

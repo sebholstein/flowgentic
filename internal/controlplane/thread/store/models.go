@@ -67,8 +67,6 @@ type Task struct {
 type Thread struct {
 	ID        string
 	ProjectID string
-	Agent     string
-	Model     string
 	CreatedAt string
 	UpdatedAt string
 	Mode      string

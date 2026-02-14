@@ -56,13 +56,21 @@ func (s *Server) startFeatures(mux *http.ServeMux, db *sql.DB, cp config.Control
 		DB:  db,
 	})
 
-	// Wire up session feature (must come before thread, which needs SessionCreator).
+	// Wire up thread feature.
+	threadSvc := thread.Start(thread.StartDeps{
+		Mux: mux,
+		Log: s.log,
+		DB:  db,
+	})
+
+	// Wire up session feature (needs thread service for topic updates).
 	serverCtx, serverCancel := context.WithCancel(context.Background())
 	sessionFeature := session.Start(serverCtx, session.StartDeps{
-		Mux:      mux,
-		Log:      s.log,
-		DB:       db,
-		Registry: registry,
+		Mux:                mux,
+		Log:                s.log,
+		DB:                 db,
+		Registry:           registry,
+		ThreadTopicUpdater: threadSvc,
 	})
 
 	// Wire up task feature.
@@ -70,14 +78,6 @@ func (s *Server) startFeatures(mux *http.ServeMux, db *sql.DB, cp config.Control
 		Mux: mux,
 		Log: s.log,
 		DB:  db,
-	})
-
-	// Wire up thread feature.
-	threadSvc := thread.Start(thread.StartDeps{
-		Mux:             mux,
-		Log:             s.log,
-		DB:              db,
-		SessionCreator: sessionFeature.Service,
 	})
 
 	// Start state sync watchers for all configured workers.

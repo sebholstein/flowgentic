@@ -1497,6 +1497,142 @@ func (x *WatchSessionEventsResponse) GetIsHistory() bool {
 	return false
 }
 
+type CreateSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ThreadId      string                 `protobuf:"bytes,1,opt,name=thread_id,json=threadId,proto3" json:"thread_id,omitempty"`
+	WorkerId      string                 `protobuf:"bytes,2,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	Prompt        string                 `protobuf:"bytes,3,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	Agent         string                 `protobuf:"bytes,4,opt,name=agent,proto3" json:"agent,omitempty"`
+	Model         string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
+	Mode          string                 `protobuf:"bytes,6,opt,name=mode,proto3" json:"mode,omitempty"`
+	SessionMode   string                 `protobuf:"bytes,7,opt,name=session_mode,json=sessionMode,proto3" json:"session_mode,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSessionRequest) Reset() {
+	*x = CreateSessionRequest{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSessionRequest) ProtoMessage() {}
+
+func (x *CreateSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSessionRequest.ProtoReflect.Descriptor instead.
+func (*CreateSessionRequest) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *CreateSessionRequest) GetThreadId() string {
+	if x != nil {
+		return x.ThreadId
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetWorkerId() string {
+	if x != nil {
+		return x.WorkerId
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetPrompt() string {
+	if x != nil {
+		return x.Prompt
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetAgent() string {
+	if x != nil {
+		return x.Agent
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *CreateSessionRequest) GetSessionMode() string {
+	if x != nil {
+		return x.SessionMode
+	}
+	return ""
+}
+
+type CreateSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *SessionConfig         `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateSessionResponse) Reset() {
+	*x = CreateSessionResponse{}
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSessionResponse) ProtoMessage() {}
+
+func (x *CreateSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateSessionResponse.ProtoReflect.Descriptor instead.
+func (*CreateSessionResponse) Descriptor() ([]byte, []int) {
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *CreateSessionResponse) GetSession() *SessionConfig {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
 type PromptSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ThreadId      string                 `protobuf:"bytes,1,opt,name=thread_id,json=threadId,proto3" json:"thread_id,omitempty"`
@@ -1507,7 +1643,7 @@ type PromptSessionRequest struct {
 
 func (x *PromptSessionRequest) Reset() {
 	*x = PromptSessionRequest{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1519,7 +1655,7 @@ func (x *PromptSessionRequest) String() string {
 func (*PromptSessionRequest) ProtoMessage() {}
 
 func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[21]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1532,7 +1668,7 @@ func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromptSessionRequest.ProtoReflect.Descriptor instead.
 func (*PromptSessionRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{21}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *PromptSessionRequest) GetThreadId() string {
@@ -1557,7 +1693,7 @@ type PromptSessionResponse struct {
 
 func (x *PromptSessionResponse) Reset() {
 	*x = PromptSessionResponse{}
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1569,7 +1705,7 @@ func (x *PromptSessionResponse) String() string {
 func (*PromptSessionResponse) ProtoMessage() {}
 
 func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_session_service_proto_msgTypes[22]
+	mi := &file_controlplane_v1_session_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1582,7 +1718,7 @@ func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromptSessionResponse.ProtoReflect.Descriptor instead.
 func (*PromptSessionResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{22}
+	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{24}
 }
 
 var File_controlplane_v1_session_service_proto protoreflect.FileDescriptor
@@ -1684,7 +1820,17 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x1aWatchSessionEventsResponse\x123\n" +
 	"\x05event\x18\x01 \x01(\v2\x1d.controlplane.v1.SessionEventR\x05event\x12\x1d\n" +
 	"\n" +
-	"is_history\x18\x02 \x01(\bR\tisHistory\"Y\n" +
+	"is_history\x18\x02 \x01(\bR\tisHistory\"\xcb\x01\n" +
+	"\x14CreateSessionRequest\x12\x1b\n" +
+	"\tthread_id\x18\x01 \x01(\tR\bthreadId\x12\x1b\n" +
+	"\tworker_id\x18\x02 \x01(\tR\bworkerId\x12\x16\n" +
+	"\x06prompt\x18\x03 \x01(\tR\x06prompt\x12\x14\n" +
+	"\x05agent\x18\x04 \x01(\tR\x05agent\x12\x14\n" +
+	"\x05model\x18\x05 \x01(\tR\x05model\x12\x12\n" +
+	"\x04mode\x18\x06 \x01(\tR\x04mode\x12!\n" +
+	"\fsession_mode\x18\a \x01(\tR\vsessionMode\"Q\n" +
+	"\x15CreateSessionResponse\x128\n" +
+	"\asession\x18\x01 \x01(\v2\x1e.controlplane.v1.SessionConfigR\asession\"Y\n" +
 	"\x14PromptSessionRequest\x12$\n" +
 	"\tthread_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\bthreadId\x12\x1b\n" +
 	"\x04text\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04text\"\x17\n" +
@@ -1704,8 +1850,9 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x16TOOL_CALL_KIND_EXECUTE\x10\x06\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_THINK\x10\a\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_FETCH\x10\b\x12\x18\n" +
-	"\x14TOOL_CALL_KIND_OTHER\x10\t2\x82\x04\n" +
-	"\x0eSessionService\x12W\n" +
+	"\x14TOOL_CALL_KIND_OTHER\x10\t2\xe4\x04\n" +
+	"\x0eSessionService\x12`\n" +
+	"\rCreateSession\x12%.controlplane.v1.CreateSessionRequest\x1a&.controlplane.v1.CreateSessionResponse\"\x00\x12W\n" +
 	"\n" +
 	"GetSession\x12\".controlplane.v1.GetSessionRequest\x1a#.controlplane.v1.GetSessionResponse\"\x00\x12]\n" +
 	"\fListSessions\x12$.controlplane.v1.ListSessionsRequest\x1a%.controlplane.v1.ListSessionsResponse\"\x00\x12c\n" +
@@ -1727,7 +1874,7 @@ func file_controlplane_v1_session_service_proto_rawDescGZIP() []byte {
 }
 
 var file_controlplane_v1_session_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_controlplane_v1_session_service_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_controlplane_v1_session_service_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_controlplane_v1_session_service_proto_goTypes = []any{
 	(ToolCallStatus)(0),                // 0: controlplane.v1.ToolCallStatus
 	(ToolCallKind)(0),                  // 1: controlplane.v1.ToolCallKind
@@ -1752,8 +1899,10 @@ var file_controlplane_v1_session_service_proto_goTypes = []any{
 	(*CurrentModeUpdate)(nil),          // 20: controlplane.v1.CurrentModeUpdate
 	(*WatchSessionEventsRequest)(nil),  // 21: controlplane.v1.WatchSessionEventsRequest
 	(*WatchSessionEventsResponse)(nil), // 22: controlplane.v1.WatchSessionEventsResponse
-	(*PromptSessionRequest)(nil),       // 23: controlplane.v1.PromptSessionRequest
-	(*PromptSessionResponse)(nil),      // 24: controlplane.v1.PromptSessionResponse
+	(*CreateSessionRequest)(nil),       // 23: controlplane.v1.CreateSessionRequest
+	(*CreateSessionResponse)(nil),      // 24: controlplane.v1.CreateSessionResponse
+	(*PromptSessionRequest)(nil),       // 25: controlplane.v1.PromptSessionRequest
+	(*PromptSessionResponse)(nil),      // 26: controlplane.v1.PromptSessionResponse
 }
 var file_controlplane_v1_session_service_proto_depIdxs = []int32{
 	2,  // 0: controlplane.v1.GetSessionResponse.session:type_name -> controlplane.v1.SessionConfig
@@ -1775,21 +1924,24 @@ var file_controlplane_v1_session_service_proto_depIdxs = []int32{
 	16, // 16: controlplane.v1.ToolCallContentBlock.diff:type_name -> controlplane.v1.ToolCallDiff
 	17, // 17: controlplane.v1.ToolCallContentBlock.text:type_name -> controlplane.v1.ToolCallText
 	9,  // 18: controlplane.v1.WatchSessionEventsResponse.event:type_name -> controlplane.v1.SessionEvent
-	3,  // 19: controlplane.v1.SessionService.GetSession:input_type -> controlplane.v1.GetSessionRequest
-	5,  // 20: controlplane.v1.SessionService.ListSessions:input_type -> controlplane.v1.ListSessionsRequest
-	7,  // 21: controlplane.v1.SessionService.SetSessionMode:input_type -> controlplane.v1.SetSessionModeRequest
-	21, // 22: controlplane.v1.SessionService.WatchSessionEvents:input_type -> controlplane.v1.WatchSessionEventsRequest
-	23, // 23: controlplane.v1.SessionService.PromptSession:input_type -> controlplane.v1.PromptSessionRequest
-	4,  // 24: controlplane.v1.SessionService.GetSession:output_type -> controlplane.v1.GetSessionResponse
-	6,  // 25: controlplane.v1.SessionService.ListSessions:output_type -> controlplane.v1.ListSessionsResponse
-	8,  // 26: controlplane.v1.SessionService.SetSessionMode:output_type -> controlplane.v1.SetSessionModeResponse
-	22, // 27: controlplane.v1.SessionService.WatchSessionEvents:output_type -> controlplane.v1.WatchSessionEventsResponse
-	24, // 28: controlplane.v1.SessionService.PromptSession:output_type -> controlplane.v1.PromptSessionResponse
-	24, // [24:29] is the sub-list for method output_type
-	19, // [19:24] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	2,  // 19: controlplane.v1.CreateSessionResponse.session:type_name -> controlplane.v1.SessionConfig
+	23, // 20: controlplane.v1.SessionService.CreateSession:input_type -> controlplane.v1.CreateSessionRequest
+	3,  // 21: controlplane.v1.SessionService.GetSession:input_type -> controlplane.v1.GetSessionRequest
+	5,  // 22: controlplane.v1.SessionService.ListSessions:input_type -> controlplane.v1.ListSessionsRequest
+	7,  // 23: controlplane.v1.SessionService.SetSessionMode:input_type -> controlplane.v1.SetSessionModeRequest
+	21, // 24: controlplane.v1.SessionService.WatchSessionEvents:input_type -> controlplane.v1.WatchSessionEventsRequest
+	25, // 25: controlplane.v1.SessionService.PromptSession:input_type -> controlplane.v1.PromptSessionRequest
+	24, // 26: controlplane.v1.SessionService.CreateSession:output_type -> controlplane.v1.CreateSessionResponse
+	4,  // 27: controlplane.v1.SessionService.GetSession:output_type -> controlplane.v1.GetSessionResponse
+	6,  // 28: controlplane.v1.SessionService.ListSessions:output_type -> controlplane.v1.ListSessionsResponse
+	8,  // 29: controlplane.v1.SessionService.SetSessionMode:output_type -> controlplane.v1.SetSessionModeResponse
+	22, // 30: controlplane.v1.SessionService.WatchSessionEvents:output_type -> controlplane.v1.WatchSessionEventsResponse
+	26, // 31: controlplane.v1.SessionService.PromptSession:output_type -> controlplane.v1.PromptSessionResponse
+	26, // [26:32] is the sub-list for method output_type
+	20, // [20:26] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_controlplane_v1_session_service_proto_init() }
@@ -1816,7 +1968,7 @@ func file_controlplane_v1_session_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_session_service_proto_rawDesc), len(file_controlplane_v1_session_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

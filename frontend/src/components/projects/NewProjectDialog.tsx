@@ -46,13 +46,23 @@ function validateResourceName(value: string) {
 
 type ProjectFormValues = Pick<
   CreateProjectRequest,
-  "id" | "name" | "defaultPlannerAgent" | "defaultPlannerModel" | "embeddedWorkerPath" | "workerPaths" | "agentPlanningTaskPreferences"
+  | "id"
+  | "name"
+  | "defaultPlannerAgent"
+  | "defaultPlannerModel"
+  | "embeddedWorkerPath"
+  | "workerPaths"
+  | "agentPlanningTaskPreferences"
 > & {
   defaultWorkerId: string;
 };
 
 function NameAndIdFields() {
-  const { register, setValue, formState: { errors } } = useFormContext<ProjectFormValues>();
+  const {
+    register,
+    setValue,
+    formState: { errors },
+  } = useFormContext<ProjectFormValues>();
   const idManuallyEdited = useRef(false);
 
   return (
@@ -72,9 +82,7 @@ function NameAndIdFields() {
           placeholder="e.g. My Project"
           autoFocus
         />
-        {errors.name && (
-          <p className="text-xs text-destructive">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="project-id">ID</Label>
@@ -88,9 +96,7 @@ function NameAndIdFields() {
           placeholder="e.g. my-project"
           className={errors.id ? "border-destructive" : undefined}
         />
-        {errors.id && (
-          <p className="text-xs text-destructive">{errors.id.message}</p>
-        )}
+        {errors.id && <p className="text-xs text-destructive">{errors.id.message}</p>}
       </div>
     </>
   );
@@ -207,7 +213,9 @@ export function NewProjectDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>New Project</DialogTitle>
-          <DialogDescription>Create a new project for organizing threads and tasks.</DialogDescription>
+          <DialogDescription>
+            Create a new project for organizing threads and tasks.
+          </DialogDescription>
         </DialogHeader>
         <Form form={form} onSubmit={handleSubmit} className="space-y-4">
           <NameAndIdFields />
@@ -253,9 +261,7 @@ export function NewProjectDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Create Project
-            </Button>
+            <Button type="submit">Create Project</Button>
           </DialogFooter>
         </Form>
       </DialogContent>

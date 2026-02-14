@@ -4,11 +4,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Markdown } from "@/components/ui/markdown";
-import { Clock, Calendar, Layers, Activity, Zap, Users, User, Server } from "lucide-react";
+import { Clock, Calendar, Layers, Activity, Zap, Users, User } from "lucide-react";
 import { useThreadContext } from "./route";
-import { ThreadVCSBanner } from "@/components/vcs/ThreadVCSBanner";
-import { useInfrastructureStore, selectControlPlaneById } from "@/stores/serverStore";
-import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
 
 export const Route = createFileRoute("/app/threads/$threadId/")({
   component: ThreadOverviewTab,
@@ -24,11 +21,7 @@ const threadStatusConfig: Record<string, { color: string; bgColor: string; label
 
 function ThreadOverviewTab() {
   const { thread, tasks } = useThreadContext();
-  const controlPlane = useInfrastructureStore((s) =>
-    thread.controlPlaneId ? selectControlPlaneById(s, thread.controlPlaneId) : undefined,
-  );
-
-  const threadStatus = threadStatusConfig[thread.status];
+  const threadStatus = threadStatusConfig["pending"];
   const completedCount = tasks.filter((t) => t.status === "completed").length;
   const runningCount = tasks.filter((t) => t.status === "running").length;
   const needsFeedbackCount = tasks.filter((t) => t.status === "needs_feedback").length;
@@ -73,16 +66,12 @@ function ThreadOverviewTab() {
                   : "text-violet-400 border-violet-500/30",
               )}
             >
-              {thread.mode === "build" ? (
-                <User className="size-3" />
-              ) : (
-                <Users className="size-3" />
-              )}
+              {thread.mode === "build" ? <User className="size-3" /> : <Users className="size-3" />}
               {thread.mode === "build" ? "Build" : "Plan"}
             </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-3">{thread.topic}</h1>
-          <Markdown>{thread.description}</Markdown>
+          <Markdown>{""}</Markdown>
         </div>
 
         {/* Thread Properties - Compact */}
@@ -136,14 +125,6 @@ function ThreadOverviewTab() {
               <span>{thread.updatedAt}</span>
             </div>
 
-            {/* Control Plane */}
-            {controlPlane && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Server className="size-3.5" />
-                <span>{controlPlane.name}</span>
-                <ServerStatusDot status={controlPlane.status} />
-              </div>
-            )}
           </div>
 
           {/* Task Status Summary - Inline */}
@@ -200,21 +181,6 @@ function ThreadOverviewTab() {
           </div>
         </div>
 
-        {/* VCS Strategy Banner */}
-        {thread.vcs && thread.vcs.strategy !== "none" && (
-          <ThreadVCSBanner
-            threadVCS={thread.vcs}
-            taskVCSInfos={tasks
-              .filter((t) => t.vcs)
-              .map((t) => ({
-                taskId: t.id,
-                taskName: t.name,
-                taskStatus: t.status,
-                vcs: t.vcs!,
-              }))}
-            className="mb-6"
-          />
-        )}
       </div>
     </ScrollArea>
   );

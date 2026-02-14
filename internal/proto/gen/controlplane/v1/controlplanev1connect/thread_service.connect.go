@@ -41,9 +41,6 @@ const (
 	// ThreadServiceCreateThreadProcedure is the fully-qualified name of the ThreadService's
 	// CreateThread RPC.
 	ThreadServiceCreateThreadProcedure = "/controlplane.v1.ThreadService/CreateThread"
-	// ThreadServiceUpdateThreadProcedure is the fully-qualified name of the ThreadService's
-	// UpdateThread RPC.
-	ThreadServiceUpdateThreadProcedure = "/controlplane.v1.ThreadService/UpdateThread"
 	// ThreadServiceDeleteThreadProcedure is the fully-qualified name of the ThreadService's
 	// DeleteThread RPC.
 	ThreadServiceDeleteThreadProcedure = "/controlplane.v1.ThreadService/DeleteThread"
@@ -63,8 +60,6 @@ type ThreadServiceClient interface {
 	GetThread(context.Context, *connect.Request[v1.GetThreadRequest]) (*connect.Response[v1.GetThreadResponse], error)
 	// CreateThread registers a new thread.
 	CreateThread(context.Context, *connect.Request[v1.CreateThreadRequest]) (*connect.Response[v1.CreateThreadResponse], error)
-	// UpdateThread modifies an existing thread configuration.
-	UpdateThread(context.Context, *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error)
 	// DeleteThread removes a thread by ID.
 	DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error)
 	// WatchThreadUpdates streams real-time thread updates (e.g. topic changes).
@@ -102,12 +97,6 @@ func NewThreadServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(threadServiceMethods.ByName("CreateThread")),
 			connect.WithClientOptions(opts...),
 		),
-		updateThread: connect.NewClient[v1.UpdateThreadRequest, v1.UpdateThreadResponse](
-			httpClient,
-			baseURL+ThreadServiceUpdateThreadProcedure,
-			connect.WithSchema(threadServiceMethods.ByName("UpdateThread")),
-			connect.WithClientOptions(opts...),
-		),
 		deleteThread: connect.NewClient[v1.DeleteThreadRequest, v1.DeleteThreadResponse](
 			httpClient,
 			baseURL+ThreadServiceDeleteThreadProcedure,
@@ -134,7 +123,6 @@ type threadServiceClient struct {
 	listThreads        *connect.Client[v1.ListThreadsRequest, v1.ListThreadsResponse]
 	getThread          *connect.Client[v1.GetThreadRequest, v1.GetThreadResponse]
 	createThread       *connect.Client[v1.CreateThreadRequest, v1.CreateThreadResponse]
-	updateThread       *connect.Client[v1.UpdateThreadRequest, v1.UpdateThreadResponse]
 	deleteThread       *connect.Client[v1.DeleteThreadRequest, v1.DeleteThreadResponse]
 	watchThreadUpdates *connect.Client[v1.WatchThreadUpdatesRequest, v1.WatchThreadUpdatesResponse]
 	archiveThread      *connect.Client[v1.ArchiveThreadRequest, v1.ArchiveThreadResponse]
@@ -153,11 +141,6 @@ func (c *threadServiceClient) GetThread(ctx context.Context, req *connect.Reques
 // CreateThread calls controlplane.v1.ThreadService.CreateThread.
 func (c *threadServiceClient) CreateThread(ctx context.Context, req *connect.Request[v1.CreateThreadRequest]) (*connect.Response[v1.CreateThreadResponse], error) {
 	return c.createThread.CallUnary(ctx, req)
-}
-
-// UpdateThread calls controlplane.v1.ThreadService.UpdateThread.
-func (c *threadServiceClient) UpdateThread(ctx context.Context, req *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error) {
-	return c.updateThread.CallUnary(ctx, req)
 }
 
 // DeleteThread calls controlplane.v1.ThreadService.DeleteThread.
@@ -183,8 +166,6 @@ type ThreadServiceHandler interface {
 	GetThread(context.Context, *connect.Request[v1.GetThreadRequest]) (*connect.Response[v1.GetThreadResponse], error)
 	// CreateThread registers a new thread.
 	CreateThread(context.Context, *connect.Request[v1.CreateThreadRequest]) (*connect.Response[v1.CreateThreadResponse], error)
-	// UpdateThread modifies an existing thread configuration.
-	UpdateThread(context.Context, *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error)
 	// DeleteThread removes a thread by ID.
 	DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error)
 	// WatchThreadUpdates streams real-time thread updates (e.g. topic changes).
@@ -218,12 +199,6 @@ func NewThreadServiceHandler(svc ThreadServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(threadServiceMethods.ByName("CreateThread")),
 		connect.WithHandlerOptions(opts...),
 	)
-	threadServiceUpdateThreadHandler := connect.NewUnaryHandler(
-		ThreadServiceUpdateThreadProcedure,
-		svc.UpdateThread,
-		connect.WithSchema(threadServiceMethods.ByName("UpdateThread")),
-		connect.WithHandlerOptions(opts...),
-	)
 	threadServiceDeleteThreadHandler := connect.NewUnaryHandler(
 		ThreadServiceDeleteThreadProcedure,
 		svc.DeleteThread,
@@ -250,8 +225,6 @@ func NewThreadServiceHandler(svc ThreadServiceHandler, opts ...connect.HandlerOp
 			threadServiceGetThreadHandler.ServeHTTP(w, r)
 		case ThreadServiceCreateThreadProcedure:
 			threadServiceCreateThreadHandler.ServeHTTP(w, r)
-		case ThreadServiceUpdateThreadProcedure:
-			threadServiceUpdateThreadHandler.ServeHTTP(w, r)
 		case ThreadServiceDeleteThreadProcedure:
 			threadServiceDeleteThreadHandler.ServeHTTP(w, r)
 		case ThreadServiceWatchThreadUpdatesProcedure:
@@ -277,10 +250,6 @@ func (UnimplementedThreadServiceHandler) GetThread(context.Context, *connect.Req
 
 func (UnimplementedThreadServiceHandler) CreateThread(context.Context, *connect.Request[v1.CreateThreadRequest]) (*connect.Response[v1.CreateThreadResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.ThreadService.CreateThread is not implemented"))
-}
-
-func (UnimplementedThreadServiceHandler) UpdateThread(context.Context, *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.ThreadService.UpdateThread is not implemented"))
 }
 
 func (UnimplementedThreadServiceHandler) DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error) {

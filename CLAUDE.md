@@ -3,6 +3,7 @@
 # General
 - This project is not released yet. No backward compatibility is needed — freely remove or change old code, APIs, and formats instead of keeping legacy fallbacks.
 - Use Conventional Commits for all git commit messages (e.g. `feat: ...`, `fix(scope): ...`).
+- Do NOT add `Co-Authored-By` lines to commit messages.
 
 ## Technologies
 

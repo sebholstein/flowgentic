@@ -4,6 +4,8 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: "Flowgentic",
+    executableName: "Flowgentic",
   },
   rebuildConfig: {},
   makers: [

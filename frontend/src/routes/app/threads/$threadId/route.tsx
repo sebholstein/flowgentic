@@ -6,11 +6,11 @@ import "@xyflow/react/dist/style.css";
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { GitBranch, Activity, Workflow, Inbox, Brain, User, Server, Loader2 } from "lucide-react";
+import { GitBranch, Activity, Workflow, Inbox, User, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { threadStatusConfig } from "@/constants/threadStatusConfig";
 import { useClient } from "@/lib/connect";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
+import type { ThreadConfig } from "@/proto/gen/controlplane/v1/thread_service_pb";
 import { TaskService } from "@/proto/gen/controlplane/v1/task_service_pb";
 import { SessionService } from "@/proto/gen/controlplane/v1/session_service_pb";
 import { tasksQueryOptions } from "@/lib/queries/tasks";
@@ -18,18 +18,17 @@ import { sessionsQueryOptions } from "@/lib/queries/sessions";
 import { ThreadGraphView } from "@/components/threads/ThreadGraphView";
 import { TaskDetailSidebar } from "@/components/threads/TaskDetailSidebar";
 import { AgentChatPanel, type ChatMessage } from "@/components/chat/AgentChatPanel";
+import { ThreadSetupForm } from "@/components/ui/ThreadSetupForm";
 import { useSessionEvents } from "@/hooks/use-session-events";
+import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
+import { WorkerService } from "@/proto/gen/controlplane/v1/worker_service_pb";
+import { SystemService } from "@/proto/gen/worker/v1/system_service_pb";
+import { Agent, AgentSchema } from "@/proto/gen/worker/v1/agent_pb";
+import { projectsQueryOptions } from "@/lib/queries/projects";
+import { workersQueryOptions } from "@/lib/queries/workers";
+import type { Project } from "@/types/project";
+import type { Worker } from "@/types/server";
 
-const availableModels = [
-  { id: "claude-opus-4", name: "Claude Opus 4" },
-  { id: "claude-sonnet-4", name: "Claude Sonnet 4" },
-  { id: "gpt-4", name: "GPT-4" },
-  { id: "gpt-4o", name: "GPT-4o" },
-  { id: "gemini-pro", name: "Gemini Pro" },
-];
-import { useInfrastructureStore, selectControlPlaneById } from "@/stores/serverStore";
-import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
-import type { Thread } from "@/types/thread";
 import type { Task } from "@/types/task";
 import type { TaskConfig } from "@/proto/gen/controlplane/v1/task_service_pb";
 
@@ -53,7 +52,7 @@ export const Route = createFileRoute("/app/threads/$threadId")({
 
 // Context for sharing thread data with child routes
 interface ThreadContextValue {
-  thread: Thread;
+  thread: ThreadConfig;
   tasks: Task[];
   selectedTaskId?: string;
   onSelectTask: (taskId: string) => void;
@@ -91,7 +90,7 @@ function ThreadLayout() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<"page" | "graph">("page");
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
-  const [leftPanelPercent, setLeftPanelPercent] = useState(50);
+  const [leftPanelPercent, setLeftPanelPercent] = useState(60);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const threadClient = useClient(ThreadService);
@@ -100,26 +99,7 @@ function ThreadLayout() {
     queryFn: () => threadClient.getThread({ id: threadId }),
   });
 
-  const thread = useMemo<Thread | undefined>(() => {
-    const t = threadData?.thread;
-    if (!t) return undefined;
-    return {
-      id: t.id,
-      topic: t.topic || "Untitled",
-      description: "",
-      status: "pending",
-      taskCount: 0,
-      completedTasks: 0,
-      createdAt: t.createdAt ?? "",
-      updatedAt: t.updatedAt ?? "",
-      overseer: { id: "overseer", name: "Overseer" },
-      projectId: t.projectId,
-      mode: t.mode === "plan" || t.mode === "build" ? t.mode : "build",
-      model: t.model,
-      harness: t.agent,
-      plan: t.plan || undefined,
-    };
-  }, [threadData]);
+  const thread = threadData?.thread;
 
   // Task and session queries
   const taskClient = useClient(TaskService);
@@ -131,12 +111,7 @@ function ThreadLayout() {
     return (tasksData?.tasks ?? []).map(mapBackendTask);
   }, [tasksData]);
 
-  const controlPlane = useInfrastructureStore((s) =>
-    thread?.controlPlaneId ? selectControlPlaneById(s, thread.controlPlaneId) : undefined,
-  );
-  const [threadMode, setThreadMode] = useState<"plan" | "build">("plan");
-  const [threadModel, setThreadModel] = useState("claude-opus-4");
-  const isBuildMode = threadMode === "build";
+  const isBuildMode = thread?.mode === "build";
 
   // Stream session events for the thread chat
   const {
@@ -198,16 +173,114 @@ function ThreadLayout() {
   const isPanelStreaming =
     isSessionResponding || isAwaitingBootstrapResponse || isPrimingExistingSession;
 
+  // --- Session setup state (shown when no sessions exist) ---
+  const projectClient = useClient(ProjectService);
+  const workerClient = useClient(WorkerService);
+  const systemClient = useClient(SystemService);
+  const { data: projectsData } = useQuery(projectsQueryOptions(projectClient));
+  const { data: workersData } = useQuery(workersQueryOptions(workerClient));
+
+  const projects = useMemo<Project[]>(
+    () =>
+      (projectsData?.projects ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        defaultPlannerAgent: p.defaultPlannerAgent,
+        defaultPlannerModel: p.defaultPlannerModel,
+        embeddedWorkerPath: p.embeddedWorkerPath,
+        workerPaths: p.workerPaths,
+        sortIndex: p.sortIndex,
+      })),
+    [projectsData],
+  );
+
+  const workers = useMemo<Worker[]>(
+    () =>
+      (workersData?.workers ?? []).map((w) => ({
+        id: w.id,
+        name: w.name,
+        type: "remote" as const,
+        url: w.url,
+        status: "connected" as const,
+        controlPlaneId: "",
+      })),
+    [workersData],
+  );
+
+  const [agent, setAgent] = useState<Agent>(Agent.CLAUDE_CODE);
+  const [workerId, setWorkerId] = useState("");
+  const [sessionMode, setSessionMode] = useState("code");
+  const [threadModel, setThreadModel] = useState("");
+
+  const {
+    data: modelsData,
+    isLoading: modelsLoading,
+    isError: modelsIsError,
+  } = useQuery({
+    queryKey: ["agent-models", workerId, agent],
+    queryFn: () =>
+      systemClient.getAgentModels(
+        { agent, disableCache: false },
+        { headers: { "X-Worker-Id": workerId } },
+      ),
+    enabled: !!workerId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!modelsData) return;
+    const models = modelsData.models;
+    const fallbackModel = modelsData.defaultModel || models[0] || "";
+    if (!fallbackModel) return;
+    if (!threadModel || !models.includes(threadModel)) {
+      setThreadModel(fallbackModel);
+    }
+  }, [modelsData, threadModel]);
+
+  // Set initial worker
+  const initialWorkerSet = useRef(false);
+  if (!initialWorkerSet.current && workers.length > 0 && !workerId) {
+    initialWorkerSet.current = true;
+    setWorkerId(workers[0].id);
+  }
+
+  // Create session mutation (first message on a new thread)
+  const createSessionMutation = useMutation({
+    mutationFn: (prompt: string) =>
+      sessionClient.createSession({
+        threadId,
+        workerId,
+        prompt,
+        agent: AgentSchema.value[agent].name,
+        model: threadModel,
+        mode: thread?.mode ?? "plan",
+        sessionMode,
+      }),
+    onSuccess: (_resp, prompt) => {
+      const bootstrapData: ThreadBootstrapState = {
+        initialPrompt: prompt,
+        createdAt: Date.now(),
+      };
+      queryClient.setQueryData(["thread-bootstrap", threadId], bootstrapData);
+      queryClient.invalidateQueries({ queryKey: ["sessions", threadId] });
+      queryClient.invalidateQueries({ queryKey: ["thread", threadId] });
+    },
+  });
+
   // Follow-up message mutation
   const promptMutation = useMutation({
     mutationFn: (text: string) => sessionClient.promptSession({ threadId, text }),
   });
 
-  const handleSendFollowUp = useCallback(
+  const handleSendMessage = useCallback(
     (text: string) => {
-      promptMutation.mutate(text);
+      if (hasAnySession || createSessionMutation.isPending || createSessionMutation.isSuccess) {
+        promptMutation.mutate(text);
+      } else {
+        createSessionMutation.mutate(text);
+      }
     },
-    [promptMutation],
+    [hasAnySession, createSessionMutation, promptMutation],
   );
 
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : undefined;
@@ -264,8 +337,6 @@ function ThreadLayout() {
     );
   }
 
-  const StatusIcon = threadStatusConfig[thread.status].icon;
-
   // Determine active tab from current route
   const currentPath = routerState.location.pathname;
   const getActiveTab = () => {
@@ -316,20 +387,7 @@ function ThreadLayout() {
                   Build
                 </Badge>
               )}
-              <StatusIcon
-                className={cn("size-4 shrink-0", threadStatusConfig[thread.status].color)}
-              />
-              <span className="font-medium text-sm truncate">{thread.topic}</span>
-              {controlPlane && (
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-5 shrink-0 font-medium text-muted-foreground border-border gap-1"
-                >
-                  <Server className="size-2.5" />
-                  {controlPlane.name}
-                  <ServerStatusDot status={controlPlane.status} />
-                </Badge>
-              )}
+              <span className="font-medium text-sm truncate">{thread.topic || "Untitled"}</span>
             </div>
           )}
 
@@ -377,18 +435,6 @@ function ThreadLayout() {
                     </Badge>
                   </Link>
                 )}
-                {thread.memory && (
-                  <Link
-                    to="/app/threads/$threadId/memory"
-                    params={{ threadId }}
-                    className={cn(tabTriggerClass)}
-                    data-active={activeTab === "memory" && view === "page"}
-                    onClick={() => setView("page")}
-                  >
-                    <Brain className="size-3.5" />
-                    Memory
-                  </Link>
-                )}
                 <button
                   type="button"
                   className={cn(tabTriggerClass)}
@@ -401,21 +447,6 @@ function ThreadLayout() {
               </nav>
             </div>
           )}
-          {/* Memory icon for single agent mode */}
-          {isBuildMode && thread.memory && (
-            <div className="flex-1 min-w-0 flex items-center justify-end px-4" style={noDragStyle}>
-              <Link
-                to="/app/threads/$threadId/memory"
-                params={{ threadId }}
-                className={cn(tabTriggerClass)}
-                data-active={activeTab === "memory"}
-                onClick={() => setView("page")}
-              >
-                <Brain className="size-3.5" />
-                Memory
-              </Link>
-            </div>
-          )}
         </div>
 
         <div className="flex flex-1 min-h-0" ref={containerRef}>
@@ -426,19 +457,40 @@ function ThreadLayout() {
                 target={{
                   type: "thread_overseer",
                   entityId: thread.id,
-                  agentName: threadModel
-                    ? (availableModels.find((m) => m.id === threadModel)?.name ?? "Agent")
-                    : "Agent",
-                  title: thread.topic,
+                  agentName: "Agent",
+                  title: thread.topic || "Untitled",
                   agentColor: "bg-violet-500",
                 }}
                 hideHeader
-                showSetupOnEmpty={false}
+                emptyStateContent={
+                  !hasAnySession ? (
+                    <ThreadSetupForm
+                      threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
+                      onModeChange={() => {}}
+                      threadModel={threadModel}
+                      onModelChange={setThreadModel}
+                      project={projects.find((p) => p.id === thread.projectId)}
+                      projects={projects}
+                      onProjectChange={() => {}}
+                      workerId={workerId}
+                      workers={workers}
+                      onWorkerChange={setWorkerId}
+                      agent={agent}
+                      onAgentChange={setAgent}
+                      sessionMode={sessionMode}
+                      onSessionModeChange={setSessionMode}
+                      availableModels={modelsData?.models ?? []}
+                      defaultModel={modelsData?.defaultModel ?? ""}
+                      modelsLoading={modelsLoading}
+                      modelsError={modelsIsError ? "Could not load models for this agent" : null}
+                    />
+                  ) : undefined
+                }
                 externalMessages={displayMessages}
                 pendingAgentText={pendingAgentText}
                 pendingThoughtText={pendingThoughtText}
                 isStreaming={isPanelStreaming}
-                onSend={handleSendFollowUp}
+                onSend={handleSendMessage}
               />
             </div>
           ) : (
@@ -455,15 +507,38 @@ function ThreadLayout() {
                         type: "thread_overseer",
                         entityId: thread.id,
                         agentName: "Overseer",
-                        title: thread.topic,
+                        title: thread.topic || "Untitled",
                         agentColor: "bg-violet-500",
                       }}
-                      showSetupOnEmpty={false}
+                      emptyStateContent={
+                        !hasAnySession ? (
+                          <ThreadSetupForm
+                            threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
+                            onModeChange={() => {}}
+                            threadModel={threadModel}
+                            onModelChange={setThreadModel}
+                            project={projects.find((p) => p.id === thread.projectId)}
+                            projects={projects}
+                            onProjectChange={() => {}}
+                            workerId={workerId}
+                            workers={workers}
+                            onWorkerChange={setWorkerId}
+                            agent={agent}
+                            onAgentChange={setAgent}
+                            sessionMode={sessionMode}
+                            onSessionModeChange={setSessionMode}
+                            availableModels={modelsData?.models ?? []}
+                            defaultModel={modelsData?.defaultModel ?? ""}
+                            modelsLoading={modelsLoading}
+                            modelsError={modelsIsError ? "Could not load models for this agent" : null}
+                          />
+                        ) : undefined
+                      }
                       externalMessages={displayMessages}
                       pendingAgentText={pendingAgentText}
                       pendingThoughtText={pendingThoughtText}
                       isStreaming={isPanelStreaming}
-                      onSend={handleSendFollowUp}
+                      onSend={handleSendMessage}
                     />
                   </div>
                   {/* Resize handle - wide hit area, thin visual line */}

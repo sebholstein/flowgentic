@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useMemo } from "react";
+import { useAtom } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Command,
@@ -30,12 +31,12 @@ import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
 import { projectsQueryOptions } from "@/lib/queries/projects";
 import { threadsQueryOptions } from "@/lib/queries/threads";
-import { threadStatusConfig } from "@/constants/threadStatusConfig";
-import type { Thread } from "@/types/thread";
+import type { ThreadConfig } from "@/proto/gen/controlplane/v1/thread_service_pb";
 
 // Import inbox data
 import { inboxItems } from "@/data/mockInboxData";
 import type { InboxItemType } from "@/types/inbox";
+import { commandPaletteOpenAtom } from "@/stores/atoms";
 
 // Type icons mapping for inbox items
 const inboxTypeIcons: Record<InboxItemType, typeof GitCompare> = {
@@ -49,7 +50,7 @@ const inboxTypeIcons: Record<InboxItemType, typeof GitCompare> = {
 };
 
 export function CommandPalette() {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useAtom(commandPaletteOpenAtom);
   const navigate = useNavigate();
 
   const projectClient = useClient(ProjectService);
@@ -69,31 +70,13 @@ export function CommandPalette() {
   });
 
   const threadsByProject = useMemo(() => {
-    const groups: { project: { id: string; name: string }; threads: Thread[] }[] = [];
+    const groups: { project: { id: string; name: string }; threads: ThreadConfig[] }[] = [];
     for (let i = 0; i < fetchedProjects.length; i++) {
       const p = fetchedProjects[i];
       const q = threadQueries[i];
-      const threads: Thread[] = [];
-      for (const t of q?.data?.threads ?? []) {
-        threads.push({
-          id: t.id,
-          topic: t.topic || "Untitled",
-          description: "",
-          status: "pending",
-          taskCount: 0,
-          completedTasks: 0,
-          createdAt: t.createdAt ?? "",
-          updatedAt: t.updatedAt ?? "",
-          overseer: { id: "overseer", name: "Overseer" },
-          projectId: t.projectId,
-          mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
-          model: t.model,
-          harness: t.agent,
-          archived: t.archived,
-        });
-      }
+      const threads = q?.data?.threads ?? [];
       if (threads.length > 0) {
-        groups.push({ project: p, threads });
+        groups.push({ project: p, threads: [...threads] });
       }
     }
     return groups;
@@ -109,8 +92,10 @@ export function CommandPalette() {
     };
 
     document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+    return () => {
+      document.removeEventListener("keydown", down);
+    };
+  }, [setOpen]);
 
   const handleSelect = (path: string) => {
     setOpen(false);
@@ -163,32 +148,16 @@ export function CommandPalette() {
             <React.Fragment key={project.id}>
               <CommandSeparator />
               <CommandGroup heading={project.name}>
-                {threads.map((thread) => {
-                  const StatusIcon = threadStatusConfig[thread.status].icon;
-                  const progress =
-                    thread.taskCount > 0
-                      ? Math.round((thread.completedTasks / thread.taskCount) * 100)
-                      : 0;
-
-                  return (
+                {threads.map((thread) => (
                     <CommandItem
                       key={thread.id}
                       value={`thread-${thread.id}-${thread.topic}`}
                       onSelect={() => handleSelect(`/app/threads/${thread.id}`)}
                     >
-                      <StatusIcon className={cn("shrink-0", threadStatusConfig[thread.status].color)} />
-                      <span className="flex-1 truncate">{thread.topic}</span>
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {thread.completedTasks}/{thread.taskCount}
-                      </span>
-                      {thread.status === "in_progress" && (
-                        <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
-                          {progress}%
-                        </span>
-                      )}
+                      <GitBranch className="shrink-0 text-muted-foreground" />
+                      <span className="flex-1 truncate">{thread.topic || "Untitled"}</span>
                     </CommandItem>
-                  );
-                })}
+                ))}
               </CommandGroup>
             </React.Fragment>
           ))}

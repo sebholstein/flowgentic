@@ -207,7 +207,11 @@ export function Sidebar({
   );
 }
 
-export function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
+export function SidebarTrigger({
+  className,
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -581,4 +585,3 @@ export function SidebarMenuSubButton({
     />
   );
 }
-

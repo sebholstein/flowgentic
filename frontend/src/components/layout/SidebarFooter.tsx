@@ -85,18 +85,14 @@ export function SidebarFooter() {
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
                     {workerCount} {workerCount === 1 ? "worker" : "workers"}
                   </Badge>
-                  {cp.id === activeControlPlaneId && (
-                    <Check className="size-3.5 shrink-0" />
-                  )}
+                  {cp.id === activeControlPlaneId && <Check className="size-3.5 shrink-0" />}
                 </DropdownMenuItem>
               );
             })}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() =>
-              navigate({ to: "/app/settings", search: { section: "infrastructure" } })
-            }
+            onClick={() => navigate({ to: "/app/settings", search: { section: "infrastructure" } })}
           >
             <Settings className="size-3.5" />
             <span className="text-xs">Settings</span>

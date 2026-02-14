@@ -78,14 +78,12 @@ type ThreadConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Agent         string                 `protobuf:"bytes,3,opt,name=agent,proto3" json:"agent,omitempty"`
-	Model         string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Mode          string                 `protobuf:"bytes,7,opt,name=mode,proto3" json:"mode,omitempty"`
-	Topic         string                 `protobuf:"bytes,8,opt,name=topic,proto3" json:"topic,omitempty"`
-	Archived      bool                   `protobuf:"varint,9,opt,name=archived,proto3" json:"archived,omitempty"`
-	Plan          string                 `protobuf:"bytes,10,opt,name=plan,proto3" json:"plan,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Mode          string                 `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty"`
+	Topic         string                 `protobuf:"bytes,6,opt,name=topic,proto3" json:"topic,omitempty"`
+	Archived      bool                   `protobuf:"varint,7,opt,name=archived,proto3" json:"archived,omitempty"`
+	Plan          string                 `protobuf:"bytes,8,opt,name=plan,proto3" json:"plan,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -130,20 +128,6 @@ func (x *ThreadConfig) GetId() string {
 func (x *ThreadConfig) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *ThreadConfig) GetAgent() string {
-	if x != nil {
-		return x.Agent
-	}
-	return ""
-}
-
-func (x *ThreadConfig) GetModel() string {
-	if x != nil {
-		return x.Model
 	}
 	return ""
 }
@@ -370,16 +354,8 @@ type CreateThreadRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ProjectId string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Agent     string                 `protobuf:"bytes,3,opt,name=agent,proto3" json:"agent,omitempty"`
-	Model     string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
-	// Optional prompt to kick off an agent run immediately.
-	Prompt string `protobuf:"bytes,5,opt,name=prompt,proto3" json:"prompt,omitempty"`
 	// Thread mode (e.g. "single_agent", "orchestrated").
-	Mode string `protobuf:"bytes,6,opt,name=mode,proto3" json:"mode,omitempty"`
-	// Worker to dispatch the initial agent run to.
-	WorkerId string `protobuf:"bytes,7,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
-	// Session mode (e.g. "ask", "architect", "code").
-	SessionMode   string `protobuf:"bytes,8,opt,name=session_mode,json=sessionMode,proto3" json:"session_mode,omitempty"`
+	Mode          string `protobuf:"bytes,3,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -428,44 +404,9 @@ func (x *CreateThreadRequest) GetProjectId() string {
 	return ""
 }
 
-func (x *CreateThreadRequest) GetAgent() string {
-	if x != nil {
-		return x.Agent
-	}
-	return ""
-}
-
-func (x *CreateThreadRequest) GetModel() string {
-	if x != nil {
-		return x.Model
-	}
-	return ""
-}
-
-func (x *CreateThreadRequest) GetPrompt() string {
-	if x != nil {
-		return x.Prompt
-	}
-	return ""
-}
-
 func (x *CreateThreadRequest) GetMode() string {
 	if x != nil {
 		return x.Mode
-	}
-	return ""
-}
-
-func (x *CreateThreadRequest) GetWorkerId() string {
-	if x != nil {
-		return x.WorkerId
-	}
-	return ""
-}
-
-func (x *CreateThreadRequest) GetSessionMode() string {
-	if x != nil {
-		return x.SessionMode
 	}
 	return ""
 }
@@ -514,118 +455,6 @@ func (x *CreateThreadResponse) GetThread() *ThreadConfig {
 	return nil
 }
 
-type UpdateThreadRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Agent         string                 `protobuf:"bytes,2,opt,name=agent,proto3" json:"agent,omitempty"`
-	Model         string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
-	Plan          string                 `protobuf:"bytes,4,opt,name=plan,proto3" json:"plan,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateThreadRequest) Reset() {
-	*x = UpdateThreadRequest{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateThreadRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateThreadRequest) ProtoMessage() {}
-
-func (x *UpdateThreadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateThreadRequest.ProtoReflect.Descriptor instead.
-func (*UpdateThreadRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *UpdateThreadRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *UpdateThreadRequest) GetAgent() string {
-	if x != nil {
-		return x.Agent
-	}
-	return ""
-}
-
-func (x *UpdateThreadRequest) GetModel() string {
-	if x != nil {
-		return x.Model
-	}
-	return ""
-}
-
-func (x *UpdateThreadRequest) GetPlan() string {
-	if x != nil {
-		return x.Plan
-	}
-	return ""
-}
-
-type UpdateThreadResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Thread        *ThreadConfig          `protobuf:"bytes,1,opt,name=thread,proto3" json:"thread,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateThreadResponse) Reset() {
-	*x = UpdateThreadResponse{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateThreadResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateThreadResponse) ProtoMessage() {}
-
-func (x *UpdateThreadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateThreadResponse.ProtoReflect.Descriptor instead.
-func (*UpdateThreadResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *UpdateThreadResponse) GetThread() *ThreadConfig {
-	if x != nil {
-		return x.Thread
-	}
-	return nil
-}
-
 type DeleteThreadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -635,7 +464,7 @@ type DeleteThreadRequest struct {
 
 func (x *DeleteThreadRequest) Reset() {
 	*x = DeleteThreadRequest{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -647,7 +476,7 @@ func (x *DeleteThreadRequest) String() string {
 func (*DeleteThreadRequest) ProtoMessage() {}
 
 func (x *DeleteThreadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[9]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -660,7 +489,7 @@ func (x *DeleteThreadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteThreadRequest.ProtoReflect.Descriptor instead.
 func (*DeleteThreadRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{9}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteThreadRequest) GetId() string {
@@ -678,7 +507,7 @@ type DeleteThreadResponse struct {
 
 func (x *DeleteThreadResponse) Reset() {
 	*x = DeleteThreadResponse{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +519,7 @@ func (x *DeleteThreadResponse) String() string {
 func (*DeleteThreadResponse) ProtoMessage() {}
 
 func (x *DeleteThreadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[10]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +532,7 @@ func (x *DeleteThreadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteThreadResponse.ProtoReflect.Descriptor instead.
 func (*DeleteThreadResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{10}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{8}
 }
 
 type ArchiveThreadRequest struct {
@@ -716,7 +545,7 @@ type ArchiveThreadRequest struct {
 
 func (x *ArchiveThreadRequest) Reset() {
 	*x = ArchiveThreadRequest{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[11]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -728,7 +557,7 @@ func (x *ArchiveThreadRequest) String() string {
 func (*ArchiveThreadRequest) ProtoMessage() {}
 
 func (x *ArchiveThreadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[11]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -741,7 +570,7 @@ func (x *ArchiveThreadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveThreadRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveThreadRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{11}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ArchiveThreadRequest) GetId() string {
@@ -767,7 +596,7 @@ type ArchiveThreadResponse struct {
 
 func (x *ArchiveThreadResponse) Reset() {
 	*x = ArchiveThreadResponse{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[12]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -779,7 +608,7 @@ func (x *ArchiveThreadResponse) String() string {
 func (*ArchiveThreadResponse) ProtoMessage() {}
 
 func (x *ArchiveThreadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[12]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -792,7 +621,7 @@ func (x *ArchiveThreadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveThreadResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveThreadResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{12}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ArchiveThreadResponse) GetThread() *ThreadConfig {
@@ -810,7 +639,7 @@ type WatchThreadUpdatesRequest struct {
 
 func (x *WatchThreadUpdatesRequest) Reset() {
 	*x = WatchThreadUpdatesRequest{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +651,7 @@ func (x *WatchThreadUpdatesRequest) String() string {
 func (*WatchThreadUpdatesRequest) ProtoMessage() {}
 
 func (x *WatchThreadUpdatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[13]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +664,7 @@ func (x *WatchThreadUpdatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchThreadUpdatesRequest.ProtoReflect.Descriptor instead.
 func (*WatchThreadUpdatesRequest) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{13}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{11}
 }
 
 type WatchThreadUpdatesResponse struct {
@@ -848,7 +677,7 @@ type WatchThreadUpdatesResponse struct {
 
 func (x *WatchThreadUpdatesResponse) Reset() {
 	*x = WatchThreadUpdatesResponse{}
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[14]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -860,7 +689,7 @@ func (x *WatchThreadUpdatesResponse) String() string {
 func (*WatchThreadUpdatesResponse) ProtoMessage() {}
 
 func (x *WatchThreadUpdatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controlplane_v1_thread_service_proto_msgTypes[14]
+	mi := &file_controlplane_v1_thread_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -873,7 +702,7 @@ func (x *WatchThreadUpdatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchThreadUpdatesResponse.ProtoReflect.Descriptor instead.
 func (*WatchThreadUpdatesResponse) Descriptor() ([]byte, []int) {
-	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{14}
+	return file_controlplane_v1_thread_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *WatchThreadUpdatesResponse) GetEventType() ThreadEventType {
@@ -894,22 +723,19 @@ var File_controlplane_v1_thread_service_proto protoreflect.FileDescriptor
 
 const file_controlplane_v1_thread_service_proto_rawDesc = "" +
 	"\n" +
-	"$controlplane/v1/thread_service.proto\x12\x0fcontrolplane.v1\"\x81\x02\n" +
+	"$controlplane/v1/thread_service.proto\x12\x0fcontrolplane.v1\"\xd5\x01\n" +
 	"\fThreadConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x14\n" +
-	"\x05agent\x18\x03 \x01(\tR\x05agent\x12\x14\n" +
-	"\x05model\x18\x04 \x01(\tR\x05model\x12\x1d\n" +
+	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\tR\tupdatedAt\x12\x12\n" +
-	"\x04mode\x18\a \x01(\tR\x04mode\x12\x14\n" +
-	"\x05topic\x18\b \x01(\tR\x05topic\x12\x1a\n" +
-	"\barchived\x18\t \x01(\bR\barchived\x12\x12\n" +
-	"\x04plan\x18\n" +
-	" \x01(\tR\x04plan\"3\n" +
+	"updated_at\x18\x04 \x01(\tR\tupdatedAt\x12\x12\n" +
+	"\x04mode\x18\x05 \x01(\tR\x04mode\x12\x14\n" +
+	"\x05topic\x18\x06 \x01(\tR\x05topic\x12\x1a\n" +
+	"\barchived\x18\a \x01(\bR\barchived\x12\x12\n" +
+	"\x04plan\x18\b \x01(\tR\x04plan\"3\n" +
 	"\x12ListThreadsRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\"N\n" +
@@ -918,25 +744,13 @@ const file_controlplane_v1_thread_service_proto_rawDesc = "" +
 	"\x10GetThreadRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"J\n" +
 	"\x11GetThreadResponse\x125\n" +
-	"\x06thread\x18\x01 \x01(\v2\x1d.controlplane.v1.ThreadConfigR\x06thread\"\xdc\x01\n" +
+	"\x06thread\x18\x01 \x01(\v2\x1d.controlplane.v1.ThreadConfigR\x06thread\"X\n" +
 	"\x13CreateThreadRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x14\n" +
-	"\x05agent\x18\x03 \x01(\tR\x05agent\x12\x14\n" +
-	"\x05model\x18\x04 \x01(\tR\x05model\x12\x16\n" +
-	"\x06prompt\x18\x05 \x01(\tR\x06prompt\x12\x12\n" +
-	"\x04mode\x18\x06 \x01(\tR\x04mode\x12\x1b\n" +
-	"\tworker_id\x18\a \x01(\tR\bworkerId\x12!\n" +
-	"\fsession_mode\x18\b \x01(\tR\vsessionMode\"M\n" +
+	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04mode\x18\x03 \x01(\tR\x04mode\"M\n" +
 	"\x14CreateThreadResponse\x125\n" +
-	"\x06thread\x18\x01 \x01(\v2\x1d.controlplane.v1.ThreadConfigR\x06thread\"e\n" +
-	"\x13UpdateThreadRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05agent\x18\x02 \x01(\tR\x05agent\x12\x14\n" +
-	"\x05model\x18\x03 \x01(\tR\x05model\x12\x12\n" +
-	"\x04plan\x18\x04 \x01(\tR\x04plan\"M\n" +
-	"\x14UpdateThreadResponse\x125\n" +
 	"\x06thread\x18\x01 \x01(\v2\x1d.controlplane.v1.ThreadConfigR\x06thread\"%\n" +
 	"\x13DeleteThreadRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
@@ -955,12 +769,11 @@ const file_controlplane_v1_thread_service_proto_rawDesc = "" +
 	"\x1dTHREAD_EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19THREAD_EVENT_TYPE_CREATED\x10\x01\x12\x1d\n" +
 	"\x19THREAD_EVENT_TYPE_UPDATED\x10\x02\x12\x1d\n" +
-	"\x19THREAD_EVENT_TYPE_REMOVED\x10\x032\xb3\x05\n" +
+	"\x19THREAD_EVENT_TYPE_REMOVED\x10\x032\xd4\x04\n" +
 	"\rThreadService\x12Z\n" +
 	"\vListThreads\x12#.controlplane.v1.ListThreadsRequest\x1a$.controlplane.v1.ListThreadsResponse\"\x00\x12T\n" +
 	"\tGetThread\x12!.controlplane.v1.GetThreadRequest\x1a\".controlplane.v1.GetThreadResponse\"\x00\x12]\n" +
 	"\fCreateThread\x12$.controlplane.v1.CreateThreadRequest\x1a%.controlplane.v1.CreateThreadResponse\"\x00\x12]\n" +
-	"\fUpdateThread\x12$.controlplane.v1.UpdateThreadRequest\x1a%.controlplane.v1.UpdateThreadResponse\"\x00\x12]\n" +
 	"\fDeleteThread\x12$.controlplane.v1.DeleteThreadRequest\x1a%.controlplane.v1.DeleteThreadResponse\"\x00\x12q\n" +
 	"\x12WatchThreadUpdates\x12*.controlplane.v1.WatchThreadUpdatesRequest\x1a+.controlplane.v1.WatchThreadUpdatesResponse\"\x000\x01\x12`\n" +
 	"\rArchiveThread\x12%.controlplane.v1.ArchiveThreadRequest\x1a&.controlplane.v1.ArchiveThreadResponse\"\x00B\xda\x01\n" +
@@ -979,7 +792,7 @@ func file_controlplane_v1_thread_service_proto_rawDescGZIP() []byte {
 }
 
 var file_controlplane_v1_thread_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_controlplane_v1_thread_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_controlplane_v1_thread_service_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_controlplane_v1_thread_service_proto_goTypes = []any{
 	(ThreadEventType)(0),               // 0: controlplane.v1.ThreadEventType
 	(*ThreadConfig)(nil),               // 1: controlplane.v1.ThreadConfig
@@ -989,42 +802,37 @@ var file_controlplane_v1_thread_service_proto_goTypes = []any{
 	(*GetThreadResponse)(nil),          // 5: controlplane.v1.GetThreadResponse
 	(*CreateThreadRequest)(nil),        // 6: controlplane.v1.CreateThreadRequest
 	(*CreateThreadResponse)(nil),       // 7: controlplane.v1.CreateThreadResponse
-	(*UpdateThreadRequest)(nil),        // 8: controlplane.v1.UpdateThreadRequest
-	(*UpdateThreadResponse)(nil),       // 9: controlplane.v1.UpdateThreadResponse
-	(*DeleteThreadRequest)(nil),        // 10: controlplane.v1.DeleteThreadRequest
-	(*DeleteThreadResponse)(nil),       // 11: controlplane.v1.DeleteThreadResponse
-	(*ArchiveThreadRequest)(nil),       // 12: controlplane.v1.ArchiveThreadRequest
-	(*ArchiveThreadResponse)(nil),      // 13: controlplane.v1.ArchiveThreadResponse
-	(*WatchThreadUpdatesRequest)(nil),  // 14: controlplane.v1.WatchThreadUpdatesRequest
-	(*WatchThreadUpdatesResponse)(nil), // 15: controlplane.v1.WatchThreadUpdatesResponse
+	(*DeleteThreadRequest)(nil),        // 8: controlplane.v1.DeleteThreadRequest
+	(*DeleteThreadResponse)(nil),       // 9: controlplane.v1.DeleteThreadResponse
+	(*ArchiveThreadRequest)(nil),       // 10: controlplane.v1.ArchiveThreadRequest
+	(*ArchiveThreadResponse)(nil),      // 11: controlplane.v1.ArchiveThreadResponse
+	(*WatchThreadUpdatesRequest)(nil),  // 12: controlplane.v1.WatchThreadUpdatesRequest
+	(*WatchThreadUpdatesResponse)(nil), // 13: controlplane.v1.WatchThreadUpdatesResponse
 }
 var file_controlplane_v1_thread_service_proto_depIdxs = []int32{
 	1,  // 0: controlplane.v1.ListThreadsResponse.threads:type_name -> controlplane.v1.ThreadConfig
 	1,  // 1: controlplane.v1.GetThreadResponse.thread:type_name -> controlplane.v1.ThreadConfig
 	1,  // 2: controlplane.v1.CreateThreadResponse.thread:type_name -> controlplane.v1.ThreadConfig
-	1,  // 3: controlplane.v1.UpdateThreadResponse.thread:type_name -> controlplane.v1.ThreadConfig
-	1,  // 4: controlplane.v1.ArchiveThreadResponse.thread:type_name -> controlplane.v1.ThreadConfig
-	0,  // 5: controlplane.v1.WatchThreadUpdatesResponse.event_type:type_name -> controlplane.v1.ThreadEventType
-	1,  // 6: controlplane.v1.WatchThreadUpdatesResponse.thread:type_name -> controlplane.v1.ThreadConfig
-	2,  // 7: controlplane.v1.ThreadService.ListThreads:input_type -> controlplane.v1.ListThreadsRequest
-	4,  // 8: controlplane.v1.ThreadService.GetThread:input_type -> controlplane.v1.GetThreadRequest
-	6,  // 9: controlplane.v1.ThreadService.CreateThread:input_type -> controlplane.v1.CreateThreadRequest
-	8,  // 10: controlplane.v1.ThreadService.UpdateThread:input_type -> controlplane.v1.UpdateThreadRequest
-	10, // 11: controlplane.v1.ThreadService.DeleteThread:input_type -> controlplane.v1.DeleteThreadRequest
-	14, // 12: controlplane.v1.ThreadService.WatchThreadUpdates:input_type -> controlplane.v1.WatchThreadUpdatesRequest
-	12, // 13: controlplane.v1.ThreadService.ArchiveThread:input_type -> controlplane.v1.ArchiveThreadRequest
-	3,  // 14: controlplane.v1.ThreadService.ListThreads:output_type -> controlplane.v1.ListThreadsResponse
-	5,  // 15: controlplane.v1.ThreadService.GetThread:output_type -> controlplane.v1.GetThreadResponse
-	7,  // 16: controlplane.v1.ThreadService.CreateThread:output_type -> controlplane.v1.CreateThreadResponse
-	9,  // 17: controlplane.v1.ThreadService.UpdateThread:output_type -> controlplane.v1.UpdateThreadResponse
-	11, // 18: controlplane.v1.ThreadService.DeleteThread:output_type -> controlplane.v1.DeleteThreadResponse
-	15, // 19: controlplane.v1.ThreadService.WatchThreadUpdates:output_type -> controlplane.v1.WatchThreadUpdatesResponse
-	13, // 20: controlplane.v1.ThreadService.ArchiveThread:output_type -> controlplane.v1.ArchiveThreadResponse
-	14, // [14:21] is the sub-list for method output_type
-	7,  // [7:14] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1,  // 3: controlplane.v1.ArchiveThreadResponse.thread:type_name -> controlplane.v1.ThreadConfig
+	0,  // 4: controlplane.v1.WatchThreadUpdatesResponse.event_type:type_name -> controlplane.v1.ThreadEventType
+	1,  // 5: controlplane.v1.WatchThreadUpdatesResponse.thread:type_name -> controlplane.v1.ThreadConfig
+	2,  // 6: controlplane.v1.ThreadService.ListThreads:input_type -> controlplane.v1.ListThreadsRequest
+	4,  // 7: controlplane.v1.ThreadService.GetThread:input_type -> controlplane.v1.GetThreadRequest
+	6,  // 8: controlplane.v1.ThreadService.CreateThread:input_type -> controlplane.v1.CreateThreadRequest
+	8,  // 9: controlplane.v1.ThreadService.DeleteThread:input_type -> controlplane.v1.DeleteThreadRequest
+	12, // 10: controlplane.v1.ThreadService.WatchThreadUpdates:input_type -> controlplane.v1.WatchThreadUpdatesRequest
+	10, // 11: controlplane.v1.ThreadService.ArchiveThread:input_type -> controlplane.v1.ArchiveThreadRequest
+	3,  // 12: controlplane.v1.ThreadService.ListThreads:output_type -> controlplane.v1.ListThreadsResponse
+	5,  // 13: controlplane.v1.ThreadService.GetThread:output_type -> controlplane.v1.GetThreadResponse
+	7,  // 14: controlplane.v1.ThreadService.CreateThread:output_type -> controlplane.v1.CreateThreadResponse
+	9,  // 15: controlplane.v1.ThreadService.DeleteThread:output_type -> controlplane.v1.DeleteThreadResponse
+	13, // 16: controlplane.v1.ThreadService.WatchThreadUpdates:output_type -> controlplane.v1.WatchThreadUpdatesResponse
+	11, // 17: controlplane.v1.ThreadService.ArchiveThread:output_type -> controlplane.v1.ArchiveThreadResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_controlplane_v1_thread_service_proto_init() }
@@ -1038,7 +846,7 @@ func file_controlplane_v1_thread_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controlplane_v1_thread_service_proto_rawDesc), len(file_controlplane_v1_thread_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

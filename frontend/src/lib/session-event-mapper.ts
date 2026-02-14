@@ -3,10 +3,7 @@ import type {
   ToolCall,
   ToolCallUpdate,
 } from "@/proto/gen/controlplane/v1/session_service_pb";
-import {
-  ToolCallKind,
-  ToolCallStatus,
-} from "@/proto/gen/controlplane/v1/session_service_pb";
+import { ToolCallKind, ToolCallStatus } from "@/proto/gen/controlplane/v1/session_service_pb";
 import type { ToolType, ToolStatus } from "@/components/chat/ToolCallBlock";
 
 /**
@@ -93,7 +90,9 @@ export function mapToolCallStatus(status: ToolCallStatus): ToolStatus {
 
 export function mapToolCallStartToMessage(tc: ToolCall, timestamp: string): ToolMessage {
   const parsedInput = tc.rawInput ? safeParseJSON<Record<string, unknown>>(tc.rawInput) : undefined;
-  const toolType = isMcpToolCall(tc.title, parsedInput ?? undefined) ? "mcp" : mapToolCallKind(tc.kind);
+  const toolType = isMcpToolCall(tc.title, parsedInput ?? undefined)
+    ? "mcp"
+    : mapToolCallKind(tc.kind);
   return {
     id: `tool-${tc.toolCallId}`,
     type: "tool",
@@ -124,27 +123,39 @@ export function applyToolCallUpdate(existing: ToolMessage, update: ToolCallUpdat
 
 // --- Live event type narrowing helpers ---
 
-export function isAgentMessageChunk(evt: SessionEvent): evt is SessionEvent & { payload: { case: "agentMessageChunk" } } {
+export function isAgentMessageChunk(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "agentMessageChunk" } } {
   return evt.payload.case === "agentMessageChunk";
 }
 
-export function isAgentThoughtChunk(evt: SessionEvent): evt is SessionEvent & { payload: { case: "agentThoughtChunk" } } {
+export function isAgentThoughtChunk(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "agentThoughtChunk" } } {
   return evt.payload.case === "agentThoughtChunk";
 }
 
-export function isToolCallStart(evt: SessionEvent): evt is SessionEvent & { payload: { case: "toolCall" } } {
+export function isToolCallStart(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "toolCall" } } {
   return evt.payload.case === "toolCall";
 }
 
-export function isToolCallUpdate(evt: SessionEvent): evt is SessionEvent & { payload: { case: "toolCallUpdate" } } {
+export function isToolCallUpdate(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "toolCallUpdate" } } {
   return evt.payload.case === "toolCallUpdate";
 }
 
-export function isStatusChange(evt: SessionEvent): evt is SessionEvent & { payload: { case: "statusChange" } } {
+export function isStatusChange(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "statusChange" } } {
   return evt.payload.case === "statusChange";
 }
 
-export function isUserMessage(evt: SessionEvent): evt is SessionEvent & { payload: { case: "userMessage" } } {
+export function isUserMessage(
+  evt: SessionEvent,
+): evt is SessionEvent & { payload: { case: "userMessage" } } {
   return evt.payload.case === "userMessage";
 }
 
@@ -158,7 +169,11 @@ function safeParseJSON<T>(raw: string): T | null {
   }
 }
 
-function formatToolSubtitle(kind: ToolCallKind, rawInput: string | undefined, title?: string): string | undefined {
+function formatToolSubtitle(
+  kind: ToolCallKind,
+  rawInput: string | undefined,
+  title?: string,
+): string | undefined {
   if (rawInput) {
     const input = safeParseJSON<Record<string, unknown>>(rawInput);
     if (input) {
@@ -197,7 +212,12 @@ function formatToolSubtitle(kind: ToolCallKind, rawInput: string | undefined, ti
   }
 
   if (title) {
-    if (kind === ToolCallKind.READ || kind === ToolCallKind.EDIT || kind === ToolCallKind.DELETE || kind === ToolCallKind.MOVE) {
+    if (
+      kind === ToolCallKind.READ ||
+      kind === ToolCallKind.EDIT ||
+      kind === ToolCallKind.DELETE ||
+      kind === ToolCallKind.MOVE
+    ) {
       const match = title.match(/^(?:Read|Write|Edit|Create|Delete|Move)\s+(.+)$/i);
       if (match) {
         const parts = match[1].split("/");
@@ -239,7 +259,10 @@ function extractOutputText(rawOutput: string | undefined): string | undefined {
   return rawOutput;
 }
 
-function extractWrittenContent(kind: ToolCallKind, rawInput: string | undefined): string | undefined {
+function extractWrittenContent(
+  kind: ToolCallKind,
+  rawInput: string | undefined,
+): string | undefined {
   if (!rawInput) return undefined;
   const input = safeParseJSON<Record<string, unknown>>(rawInput);
   if (!input) return undefined;

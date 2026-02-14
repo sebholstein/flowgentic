@@ -23,8 +23,6 @@ export interface Thread {
   vcs?: ThreadVCSContext;
   projectId: string;
   mode: "plan" | "build";
-  model?: string;
-  harness?: string;
   controlPlaneId?: string;
   archived?: boolean;
   plan?: string;

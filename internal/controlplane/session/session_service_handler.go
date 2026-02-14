@@ -13,10 +13,56 @@ import (
 	"github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1/workerv1connect"
 )
 
+// ThreadTopicUpdater updates a thread's topic (used after session creation).
+type ThreadTopicUpdater interface {
+	UpdateTopic(ctx context.Context, id, topic string) error
+}
+
 type sessionServiceHandler struct {
-	log   *slog.Logger
-	svc   *SessionService
-	store Store
+	log                *slog.Logger
+	svc                *SessionService
+	store              Store
+	threadTopicUpdater ThreadTopicUpdater
+}
+
+func (h *sessionServiceHandler) CreateSession(
+	ctx context.Context,
+	req *connect.Request[controlplanev1.CreateSessionRequest],
+) (*connect.Response[controlplanev1.CreateSessionResponse], error) {
+	msg := req.Msg
+	if msg.ThreadId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("thread_id is required"))
+	}
+	if msg.WorkerId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("worker_id is required"))
+	}
+	if msg.Prompt == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("prompt is required"))
+	}
+	if msg.Agent == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("agent is required"))
+	}
+
+	sessionID, err := h.svc.CreateSessionForThread(ctx, msg.ThreadId, msg.WorkerId, msg.Prompt, msg.Agent, msg.Model, msg.Mode, msg.SessionMode)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("creating session: %w", err))
+	}
+
+	// Derive topic from prompt and update thread.
+	if topic := deriveInitialTopic(msg.Prompt); topic != "" {
+		if err := h.threadTopicUpdater.UpdateTopic(ctx, msg.ThreadId, topic); err != nil {
+			h.log.Error("failed to update thread topic", "thread_id", msg.ThreadId, "error", err)
+		}
+	}
+
+	sess, err := h.svc.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("fetching created session: %w", err))
+	}
+
+	return connect.NewResponse(&controlplanev1.CreateSessionResponse{
+		Session: sessionToProto(sess),
+	}), nil
 }
 
 func (h *sessionServiceHandler) GetSession(

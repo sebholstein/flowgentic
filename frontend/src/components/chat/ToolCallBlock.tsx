@@ -100,7 +100,12 @@ const toolIconColors: Record<ToolType, string> = {
  */
 function getDisplayDetail(tool: ToolCall): string {
   // For file tools: show the file path
-  if (tool.type === "read_file" || tool.type === "write_file" || tool.type === "edit_file" || tool.type === "create_file") {
+  if (
+    tool.type === "read_file" ||
+    tool.type === "write_file" ||
+    tool.type === "edit_file" ||
+    tool.type === "create_file"
+  ) {
     // Try input.filePath or input.path first
     if (tool.input) {
       const path = tool.input.filePath ?? tool.input.path ?? tool.input.file_path;
@@ -161,7 +166,12 @@ export function ToolCallBlock({ tool, className }: ToolCallBlockProps) {
   const iconColor = toolIconColors[tool.type];
   const label = tool.status === "running" ? runningLabels[tool.type] : toolLabels[tool.type];
   const detail = getDisplayDetail(tool);
-  const isFileTool = tool.type === "read_file" || tool.type === "write_file" || tool.type === "edit_file" || tool.type === "create_file" || tool.type === "list_directory";
+  const isFileTool =
+    tool.type === "read_file" ||
+    tool.type === "write_file" ||
+    tool.type === "edit_file" ||
+    tool.type === "create_file" ||
+    tool.type === "list_directory";
 
   const hasExpandableContent = tool.output || tool.error || tool.content;
   const isExpandable = !!hasExpandableContent;
@@ -191,10 +201,16 @@ export function ToolCallBlock({ tool, className }: ToolCallBlockProps) {
         <span className="text-xs text-muted-foreground shrink-0">{label}</span>
 
         {/* Detail: file path, command, or search pattern */}
-        <code className={cn(
-          "text-xs font-mono truncate",
-          isFileTool ? "text-blue-300/80" : tool.type === "bash" ? "text-foreground/80" : "text-cyan-300/80",
-        )}>
+        <code
+          className={cn(
+            "text-xs font-mono truncate",
+            isFileTool
+              ? "text-blue-300/80"
+              : tool.type === "bash"
+                ? "text-foreground/80"
+                : "text-cyan-300/80",
+          )}
+        >
           {isFileTool ? shortenPath(detail) : detail}
         </code>
 
@@ -214,7 +230,9 @@ export function ToolCallBlock({ tool, className }: ToolCallBlockProps) {
         <div
           className={cn(
             "mt-1 ml-5 rounded-md overflow-hidden border",
-            tool.status === "error" ? "border-red-500/20 bg-red-950/20" : "border-border/40 bg-muted/20",
+            tool.status === "error"
+              ? "border-red-500/20 bg-red-950/20"
+              : "border-border/40 bg-muted/20",
           )}
         >
           {/* Bash: show full command if truncated */}
@@ -253,10 +271,12 @@ export function ToolCallBlock({ tool, className }: ToolCallBlockProps) {
               {tool.status === "error" && (
                 <XCircle className="size-3 text-red-500 shrink-0 mt-0.5" />
               )}
-              <pre className={cn(
-                "text-[11px] font-mono overflow-x-auto max-h-48 overflow-y-auto flex-1 whitespace-pre-wrap break-all",
-                tool.status === "error" ? "text-red-400" : "text-muted-foreground",
-              )}>
+              <pre
+                className={cn(
+                  "text-[11px] font-mono overflow-x-auto max-h-48 overflow-y-auto flex-1 whitespace-pre-wrap break-all",
+                  tool.status === "error" ? "text-red-400" : "text-muted-foreground",
+                )}
+              >
                 {tool.error ?? tool.output}
               </pre>
             </div>

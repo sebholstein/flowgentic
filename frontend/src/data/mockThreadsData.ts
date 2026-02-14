@@ -242,7 +242,6 @@ Response headers should include \`X-RateLimit-Remaining\` and \`X-RateLimit-Rese
     projectId: "3",
     mode: "build",
     controlPlaneId: "cp-embedded",
-    model: "claude-opus-4",
     title: "User Settings Page",
     description: `Create a comprehensive user settings page with multiple sections:
 

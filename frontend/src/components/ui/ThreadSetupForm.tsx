@@ -1,14 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
-import {
-  Bot,
-  Cpu,
-  Folder,
-  Shield,
-  ShieldOff,
-  User,
-  Users,
-} from "lucide-react";
+import { Bot, Cpu, Folder, Shield, ShieldOff, User, Users } from "lucide-react";
 import { Agent } from "@/proto/gen/worker/v1/agent_pb";
 import type { Project } from "@/types/project";
 import type { Worker } from "@/types/server";
@@ -168,9 +160,7 @@ export function ThreadSetupForm({
             className="h-7 w-full rounded-md border border-input bg-input/20 dark:bg-input/30 px-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         )}
-        {modelsError && (
-          <span className="text-[11px] text-muted-foreground">{modelsError}</span>
-        )}
+        {modelsError && <span className="text-[11px] text-muted-foreground">{modelsError}</span>}
       </ConfigField>
     </div>
   );

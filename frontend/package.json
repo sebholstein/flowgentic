@@ -13,7 +13,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "oxfmt": "oxfmt",
-    "dev": "node scripts/set-app-name.cjs && electron-forge start",
+    "dev": "electron-forge start",
     "package": "electron-forge package",
     "electron:make": "electron-forge make",
     "proto": "npx buf generate"

@@ -1,6 +1,9 @@
 import { app, BrowserWindow } from "electron";
 import path from "node:path";
 
+// Set app name for macOS dock tooltip
+app.setName("Flowgentic");
+
 // Handle Windows Squirrel installer events
 if (process.platform === "win32") {
   try {
@@ -24,7 +27,7 @@ function createWindow(): void {
       sandbox: true,
     },
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
-    trafficLightPosition: { x: 10, y: 11 },
+    trafficLightPosition: { x: 16, y: 11 },
   });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

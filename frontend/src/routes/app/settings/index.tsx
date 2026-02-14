@@ -478,9 +478,7 @@ function ControlPlanesAndWorkersSettings() {
           <div className="flex items-center justify-between gap-4 px-4 py-3">
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-foreground">Embedded Control Plane</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {embeddedCP.url}
-              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{embeddedCP.url}</div>
             </div>
             <div className="flex items-center gap-2">
               <ServerStatusDot status="connected" />
@@ -488,7 +486,9 @@ function ControlPlanesAndWorkersSettings() {
             </div>
           </div>
           <div className="border-t border-border-card px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Workers</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Workers
+            </span>
           </div>
           {embeddedWorkers.map((worker) => (
             <EmbeddedWorkerItem
@@ -516,7 +516,10 @@ function ControlPlanesAndWorkersSettings() {
       {remoteControlPlanes.map((cp) => {
         const cpWorkers = allWorkers.filter((w) => w.controlPlaneId === cp.id);
         return (
-          <div key={cp.id} className="mb-6 rounded-lg border border-border-card bg-card overflow-hidden">
+          <div
+            key={cp.id}
+            className="mb-6 rounded-lg border border-border-card bg-card overflow-hidden"
+          >
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-foreground">{cp.name}</div>
@@ -540,7 +543,9 @@ function ControlPlanesAndWorkersSettings() {
               </div>
             </div>
             <div className="border-t border-border-card px-4 py-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Workers</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Workers
+              </span>
             </div>
             {cpWorkers.map((worker) => (
               <WorkerWithAgents
@@ -592,7 +597,10 @@ function useEmbeddedWorkerStatus() {
     const controller = new AbortController();
     (async () => {
       try {
-        for await (const msg of client.watchEmbeddedWorkerStatus({}, { signal: controller.signal })) {
+        for await (const msg of client.watchEmbeddedWorkerStatus(
+          {},
+          { signal: controller.signal },
+        )) {
           setData(msg);
         }
       } catch (err) {
@@ -655,7 +663,8 @@ function EmbeddedWorkerControls() {
     mutationFn: () => client.restartEmbeddedWorker({}),
   });
 
-  const anyMutating = startMutation.isPending || stopMutation.isPending || restartMutation.isPending;
+  const anyMutating =
+    startMutation.isPending || stopMutation.isPending || restartMutation.isPending;
 
   const handleToggle = (checked: boolean) => {
     if (checked) {
@@ -679,11 +688,7 @@ function EmbeddedWorkerControls() {
       {isRunning && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={anyMutating}
-            >
+            <Button variant="outline" size="sm" disabled={anyMutating}>
               <RotateCcw />
               Restart
             </Button>
@@ -692,7 +697,8 @@ function EmbeddedWorkerControls() {
             <AlertDialogHeader>
               <AlertDialogTitle>Restart embedded worker?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will restart the embedded worker and stop all running workloads. Any in-progress tasks will be interrupted.
+                This will restart the embedded worker and stop all running workloads. Any
+                in-progress tasks will be interrupted.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -759,7 +765,9 @@ function EmbeddedWorkerItem({
             <span className={streamData?.listenAddr ? undefined : "invisible"}>
               {streamData?.listenAddr || "127.0.0.1:00000"}
             </span>
-          ) : worker.url
+          ) : (
+            worker.url
+          )
         }
       >
         <div className="flex items-center gap-2">
@@ -911,9 +919,7 @@ function WorkerWithAgents({
       <div className="flex items-center justify-between gap-4 px-4 py-2.5">
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-foreground">{worker.name}</div>
-          {worker.url && (
-            <div className="mt-0.5 text-xs text-muted-foreground">{worker.url}</div>
-          )}
+          {worker.url && <div className="mt-0.5 text-xs text-muted-foreground">{worker.url}</div>}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
@@ -925,12 +931,7 @@ function WorkerWithAgents({
           <ServerStatusDot status={worker.status} />
           <span className="text-xs text-muted-foreground capitalize">{worker.status}</span>
           {worker.status === "connected" && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => refetch()}
-              disabled={isFetching}
-            >
+            <Button variant="ghost" size="icon-xs" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={isFetching ? "animate-spin" : ""} />
             </Button>
           )}
@@ -1011,9 +1012,7 @@ function AddEditControlPlaneDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {controlPlane ? "Edit Control Plane" : "Add Control Plane"}
-          </DialogTitle>
+          <DialogTitle>{controlPlane ? "Edit Control Plane" : "Add Control Plane"}</DialogTitle>
           <DialogDescription>
             {controlPlane
               ? "Update the remote control plane configuration."
@@ -1117,7 +1116,10 @@ function AddEditWorkerDialog({
   };
 
   const idValid = isEditing || workerId === "" || K8S_NAME_RE.test(workerId);
-  const canSubmit = name.trim() !== "" && url.trim() !== "" && (isEditing || (workerId !== "" && K8S_NAME_RE.test(workerId)));
+  const canSubmit =
+    name.trim() !== "" &&
+    url.trim() !== "" &&
+    (isEditing || (workerId !== "" && K8S_NAME_RE.test(workerId)));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1163,7 +1165,8 @@ function AddEditWorkerDialog({
               />
               {!idValid && (
                 <p className="text-xs text-destructive">
-                  Must be lowercase alphanumeric with hyphens, starting with a letter (max 63 chars).
+                  Must be lowercase alphanumeric with hyphens, starting with a letter (max 63
+                  chars).
                 </p>
               )}
             </div>

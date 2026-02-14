@@ -8,16 +8,10 @@ import (
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
 )
 
-// SessionCreator creates sessions as a side effect of thread creation.
-type SessionCreator interface {
-	CreateSessionForThread(ctx context.Context, threadID, workerID, prompt, agent, model, mode, sessionMode string) (string, error)
-}
-
 // threadServiceHandler implements controlplanev1connect.ThreadServiceHandler.
 type threadServiceHandler struct {
-	log             *slog.Logger
-	svc             *ThreadService
-	sessionCreator SessionCreator
+	log *slog.Logger
+	svc *ThreadService
 }
 
 func (h *threadServiceHandler) ListThreads(
@@ -63,8 +57,6 @@ func (h *threadServiceHandler) CreateThread(
 ) (*connect.Response[controlplanev1.CreateThreadResponse], error) {
 	t := Thread{
 		ProjectID: req.Msg.ProjectId,
-		Agent:     req.Msg.Agent,
-		Model:     req.Msg.Model,
 		Mode:      req.Msg.Mode,
 	}
 
@@ -73,48 +65,8 @@ func (h *threadServiceHandler) CreateThread(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	// Initialize the thread topic from the first user prompt when available.
-	if topic := deriveInitialTopic(req.Msg.Prompt); topic != "" {
-		if err := h.svc.UpdateTopic(ctx, created.ID, topic); err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-		created.Topic = topic
-	}
-
-	// If a prompt was provided, create an agent run for this thread.
-	if req.Msg.Prompt != "" && h.sessionCreator != nil {
-		if _, err := h.sessionCreator.CreateSessionForThread(ctx, created.ID, req.Msg.WorkerId, req.Msg.Prompt, req.Msg.Agent, req.Msg.Model, req.Msg.Mode, req.Msg.SessionMode); err != nil {
-			h.log.Error("failed to create session for thread", "thread_id", created.ID, "error", err)
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-	}
-
 	return connect.NewResponse(&controlplanev1.CreateThreadResponse{
 		Thread: threadToProto(created),
-	}), nil
-}
-
-func (h *threadServiceHandler) UpdateThread(
-	ctx context.Context,
-	req *connect.Request[controlplanev1.UpdateThreadRequest],
-) (*connect.Response[controlplanev1.UpdateThreadResponse], error) {
-	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
-	}
-
-	t := Thread{
-		ID:    req.Msg.Id,
-		Agent: req.Msg.Agent,
-		Model: req.Msg.Model,
-	}
-
-	updated, err := h.svc.UpdateThread(ctx, t)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-
-	return connect.NewResponse(&controlplanev1.UpdateThreadResponse{
-		Thread: threadToProto(updated),
 	}), nil
 }
 
@@ -191,8 +143,6 @@ func threadToProto(t Thread) *controlplanev1.ThreadConfig {
 	return &controlplanev1.ThreadConfig{
 		Id:        t.ID,
 		ProjectId: t.ProjectID,
-		Agent:     t.Agent,
-		Model:     t.Model,
 		Mode:      t.Mode,
 		Topic:     t.Topic,
 		Plan:      t.Plan,

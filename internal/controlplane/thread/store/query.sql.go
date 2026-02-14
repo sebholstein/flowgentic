@@ -11,15 +11,13 @@ import (
 )
 
 const createThread = `-- name: CreateThread :exec
-INSERT INTO threads (id, project_id, agent, model, mode, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO threads (id, project_id, mode, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
 `
 
 type CreateThreadParams struct {
 	ID        string
 	ProjectID string
-	Agent     string
-	Model     string
 	Mode      string
 	CreatedAt string
 	UpdatedAt string
@@ -29,8 +27,6 @@ func (q *Queries) CreateThread(ctx context.Context, arg CreateThreadParams) erro
 	_, err := q.db.ExecContext(ctx, createThread,
 		arg.ID,
 		arg.ProjectID,
-		arg.Agent,
-		arg.Model,
 		arg.Mode,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -47,7 +43,7 @@ func (q *Queries) DeleteThread(ctx context.Context, id string) (sql.Result, erro
 }
 
 const getThread = `-- name: GetThread :one
-SELECT id, project_id, agent, model, created_at, updated_at, mode, topic, archived, "plan" FROM threads
+SELECT id, project_id, created_at, updated_at, mode, topic, archived, "plan" FROM threads
 WHERE id = ?
 `
 
@@ -57,8 +53,6 @@ func (q *Queries) GetThread(ctx context.Context, id string) (Thread, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
-		&i.Agent,
-		&i.Model,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Mode,
@@ -70,7 +64,7 @@ func (q *Queries) GetThread(ctx context.Context, id string) (Thread, error) {
 }
 
 const listThreads = `-- name: ListThreads :many
-SELECT id, project_id, agent, model, created_at, updated_at, mode, topic, archived, "plan" FROM threads
+SELECT id, project_id, created_at, updated_at, mode, topic, archived, "plan" FROM threads
 WHERE project_id = ?
 ORDER BY created_at DESC
 `
@@ -87,8 +81,6 @@ func (q *Queries) ListThreads(ctx context.Context, projectID string) ([]Thread, 
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
-			&i.Agent,
-			&i.Model,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Mode,
@@ -107,28 +99,6 @@ func (q *Queries) ListThreads(ctx context.Context, projectID string) ([]Thread, 
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateThread = `-- name: UpdateThread :execresult
-UPDATE threads
-SET agent = ?, model = ?, updated_at = ?
-WHERE id = ?
-`
-
-type UpdateThreadParams struct {
-	Agent     string
-	Model     string
-	UpdatedAt string
-	ID        string
-}
-
-func (q *Queries) UpdateThread(ctx context.Context, arg UpdateThreadParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateThread,
-		arg.Agent,
-		arg.Model,
-		arg.UpdatedAt,
-		arg.ID,
-	)
 }
 
 const updateThreadArchived = `-- name: UpdateThreadArchived :execresult

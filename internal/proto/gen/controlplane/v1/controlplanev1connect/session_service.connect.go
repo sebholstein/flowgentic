@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// SessionServiceCreateSessionProcedure is the fully-qualified name of the SessionService's
+	// CreateSession RPC.
+	SessionServiceCreateSessionProcedure = "/controlplane.v1.SessionService/CreateSession"
 	// SessionServiceGetSessionProcedure is the fully-qualified name of the SessionService's GetSession
 	// RPC.
 	SessionServiceGetSessionProcedure = "/controlplane.v1.SessionService/GetSession"
@@ -52,6 +55,8 @@ const (
 
 // SessionServiceClient is a client for the controlplane.v1.SessionService service.
 type SessionServiceClient interface {
+	// CreateSession creates a new agent session for a thread.
+	CreateSession(context.Context, *connect.Request[v1.CreateSessionRequest]) (*connect.Response[v1.CreateSessionResponse], error)
 	// GetSession returns a single session by ID.
 	GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error)
 	// ListSessions returns all sessions for a given thread.
@@ -75,6 +80,12 @@ func NewSessionServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	sessionServiceMethods := v1.File_controlplane_v1_session_service_proto.Services().ByName("SessionService").Methods()
 	return &sessionServiceClient{
+		createSession: connect.NewClient[v1.CreateSessionRequest, v1.CreateSessionResponse](
+			httpClient,
+			baseURL+SessionServiceCreateSessionProcedure,
+			connect.WithSchema(sessionServiceMethods.ByName("CreateSession")),
+			connect.WithClientOptions(opts...),
+		),
 		getSession: connect.NewClient[v1.GetSessionRequest, v1.GetSessionResponse](
 			httpClient,
 			baseURL+SessionServiceGetSessionProcedure,
@@ -110,11 +121,17 @@ func NewSessionServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // sessionServiceClient implements SessionServiceClient.
 type sessionServiceClient struct {
+	createSession      *connect.Client[v1.CreateSessionRequest, v1.CreateSessionResponse]
 	getSession         *connect.Client[v1.GetSessionRequest, v1.GetSessionResponse]
 	listSessions       *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
 	setSessionMode     *connect.Client[v1.SetSessionModeRequest, v1.SetSessionModeResponse]
 	watchSessionEvents *connect.Client[v1.WatchSessionEventsRequest, v1.WatchSessionEventsResponse]
 	promptSession      *connect.Client[v1.PromptSessionRequest, v1.PromptSessionResponse]
+}
+
+// CreateSession calls controlplane.v1.SessionService.CreateSession.
+func (c *sessionServiceClient) CreateSession(ctx context.Context, req *connect.Request[v1.CreateSessionRequest]) (*connect.Response[v1.CreateSessionResponse], error) {
+	return c.createSession.CallUnary(ctx, req)
 }
 
 // GetSession calls controlplane.v1.SessionService.GetSession.
@@ -144,6 +161,8 @@ func (c *sessionServiceClient) PromptSession(ctx context.Context, req *connect.R
 
 // SessionServiceHandler is an implementation of the controlplane.v1.SessionService service.
 type SessionServiceHandler interface {
+	// CreateSession creates a new agent session for a thread.
+	CreateSession(context.Context, *connect.Request[v1.CreateSessionRequest]) (*connect.Response[v1.CreateSessionResponse], error)
 	// GetSession returns a single session by ID.
 	GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error)
 	// ListSessions returns all sessions for a given thread.
@@ -163,6 +182,12 @@ type SessionServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSessionServiceHandler(svc SessionServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	sessionServiceMethods := v1.File_controlplane_v1_session_service_proto.Services().ByName("SessionService").Methods()
+	sessionServiceCreateSessionHandler := connect.NewUnaryHandler(
+		SessionServiceCreateSessionProcedure,
+		svc.CreateSession,
+		connect.WithSchema(sessionServiceMethods.ByName("CreateSession")),
+		connect.WithHandlerOptions(opts...),
+	)
 	sessionServiceGetSessionHandler := connect.NewUnaryHandler(
 		SessionServiceGetSessionProcedure,
 		svc.GetSession,
@@ -195,6 +220,8 @@ func NewSessionServiceHandler(svc SessionServiceHandler, opts ...connect.Handler
 	)
 	return "/controlplane.v1.SessionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case SessionServiceCreateSessionProcedure:
+			sessionServiceCreateSessionHandler.ServeHTTP(w, r)
 		case SessionServiceGetSessionProcedure:
 			sessionServiceGetSessionHandler.ServeHTTP(w, r)
 		case SessionServiceListSessionsProcedure:
@@ -213,6 +240,10 @@ func NewSessionServiceHandler(svc SessionServiceHandler, opts ...connect.Handler
 
 // UnimplementedSessionServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedSessionServiceHandler struct{}
+
+func (UnimplementedSessionServiceHandler) CreateSession(context.Context, *connect.Request[v1.CreateSessionRequest]) (*connect.Response[v1.CreateSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.SessionService.CreateSession is not implemented"))
+}
 
 func (UnimplementedSessionServiceHandler) GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.SessionService.GetSession is not implemented"))

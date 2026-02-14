@@ -45,7 +45,10 @@ function getObject(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
-function parseMcpOutput(rawOutput: string | undefined): { structured: Record<string, unknown> | null; text: string | null } {
+function parseMcpOutput(rawOutput: string | undefined): {
+  structured: Record<string, unknown> | null;
+  text: string | null;
+} {
   if (!rawOutput) return { structured: null, text: null };
 
   const parsed = tryParseJSON(rawOutput);
@@ -122,12 +125,16 @@ export function McpToolCallBlock({ tool, className }: McpToolCallBlockProps) {
         <div
           className={cn(
             "ml-5 mt-1 overflow-hidden rounded-md border",
-            tool.status === "error" ? "border-red-500/20 bg-red-950/20" : "border-border/40 bg-muted/20",
+            tool.status === "error"
+              ? "border-red-500/20 bg-red-950/20"
+              : "border-border/40 bg-muted/20",
           )}
         >
           {parsedInput && (
             <div className="border-b border-border/30 px-3 py-2">
-              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Arguments</div>
+              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                Arguments
+              </div>
               <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
                 {JSON.stringify(parsedInput, null, 2)}
               </pre>
@@ -139,11 +146,15 @@ export function McpToolCallBlock({ tool, className }: McpToolCallBlockProps) {
               <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                 {tool.error ? "Error" : "Result"}
               </div>
-              <pre className={cn(
-                "max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]",
-                tool.error ? "text-red-400" : "text-muted-foreground",
-              )}>
-                {tool.error ?? parsedOutput.text ?? JSON.stringify(parsedOutput.structured, null, 2)}
+              <pre
+                className={cn(
+                  "max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px]",
+                  tool.error ? "text-red-400" : "text-muted-foreground",
+                )}
+              >
+                {tool.error ??
+                  parsedOutput.text ??
+                  JSON.stringify(parsedOutput.structured, null, 2)}
               </pre>
             </div>
           )}

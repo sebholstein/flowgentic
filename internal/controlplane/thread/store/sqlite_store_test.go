@@ -36,12 +36,11 @@ func TestSQLiteStore(t *testing.T) {
 		s := newTestStore(t)
 		ctx := context.Background()
 
-		th := thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code"}
+		th := thread.Thread{ID: "t1", ProjectID: "test-project"}
 		created, err := s.CreateThread(ctx, th)
 		require.NoError(t, err)
 		assert.Equal(t, "t1", created.ID)
 		assert.Equal(t, "test-project", created.ProjectID)
-		assert.Equal(t, "claude-code", created.Agent)
 		assert.NotEmpty(t, created.CreatedAt)
 
 		threads, err := s.ListThreads(ctx, "test-project")
@@ -50,25 +49,11 @@ func TestSQLiteStore(t *testing.T) {
 		assert.Equal(t, "t1", threads[0].ID)
 	})
 
-	t.Run("create with model", func(t *testing.T) {
-		s := newTestStore(t)
-		ctx := context.Background()
-
-		th := thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code", Model: "opus"}
-		created, err := s.CreateThread(ctx, th)
-		require.NoError(t, err)
-		assert.Equal(t, "opus", created.Model)
-
-		got, err := s.GetThread(ctx, "t1")
-		require.NoError(t, err)
-		assert.Equal(t, "opus", got.Model)
-	})
-
 	t.Run("list filters by project", func(t *testing.T) {
 		s := newTestStore(t)
 		ctx := context.Background()
 
-		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code"})
+		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project"})
 		require.NoError(t, err)
 
 		threads, err := s.ListThreads(ctx, "other-project")
@@ -76,34 +61,11 @@ func TestSQLiteStore(t *testing.T) {
 		assert.Empty(t, threads)
 	})
 
-	t.Run("update", func(t *testing.T) {
-		s := newTestStore(t)
-		ctx := context.Background()
-
-		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code"})
-		require.NoError(t, err)
-
-		updated, err := s.UpdateThread(ctx, thread.Thread{ID: "t1", Agent: "codex", Model: "gpt-4"})
-		require.NoError(t, err)
-		assert.Equal(t, "codex", updated.Agent)
-		assert.Equal(t, "gpt-4", updated.Model)
-		assert.Equal(t, "test-project", updated.ProjectID) // project_id unchanged
-	})
-
-	t.Run("update not found", func(t *testing.T) {
-		s := newTestStore(t)
-		ctx := context.Background()
-
-		_, err := s.UpdateThread(ctx, thread.Thread{ID: "nonexistent", Agent: "claude-code"})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not found")
-	})
-
 	t.Run("delete", func(t *testing.T) {
 		s := newTestStore(t)
 		ctx := context.Background()
 
-		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code"})
+		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project"})
 		require.NoError(t, err)
 
 		err = s.DeleteThread(ctx, "t1")
@@ -127,11 +89,11 @@ func TestSQLiteStore(t *testing.T) {
 		s := newTestStore(t)
 		ctx := context.Background()
 
-		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project", Agent: "claude-code"})
+		_, err := s.CreateThread(ctx, thread.Thread{ID: "t1", ProjectID: "test-project"})
 		require.NoError(t, err)
 
 		got, err := s.GetThread(ctx, "t1")
 		require.NoError(t, err)
-		assert.Equal(t, "claude-code", got.Agent)
+		assert.Equal(t, "t1", got.ID)
 	})
 }

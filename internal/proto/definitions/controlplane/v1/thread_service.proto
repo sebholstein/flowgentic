@@ -16,9 +16,6 @@ service ThreadService {
   // CreateThread registers a new thread.
   rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {}
 
-  // UpdateThread modifies an existing thread configuration.
-  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse) {}
-
   // DeleteThread removes a thread by ID.
   rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse) {}
 
@@ -33,14 +30,12 @@ service ThreadService {
 message ThreadConfig {
   string id = 1;
   string project_id = 2;
-  string agent = 3;
-  string model = 4;
-  string created_at = 5;
-  string updated_at = 6;
-  string mode = 7;
-  string topic = 8;
-  bool archived = 9;
-  string plan = 10;
+  string created_at = 3;
+  string updated_at = 4;
+  string mode = 5;
+  string topic = 6;
+  bool archived = 7;
+  string plan = 8;
 }
 
 message ListThreadsRequest {
@@ -62,30 +57,11 @@ message GetThreadResponse {
 message CreateThreadRequest {
   string id = 1;
   string project_id = 2;
-  string agent = 3;
-  string model = 4;
-  // Optional prompt to kick off an agent run immediately.
-  string prompt = 5;
   // Thread mode (e.g. "single_agent", "orchestrated").
-  string mode = 6;
-  // Worker to dispatch the initial agent run to.
-  string worker_id = 7;
-  // Session mode (e.g. "ask", "architect", "code").
-  string session_mode = 8;
+  string mode = 3;
 }
 
 message CreateThreadResponse {
-  ThreadConfig thread = 1;
-}
-
-message UpdateThreadRequest {
-  string id = 1;
-  string agent = 2;
-  string model = 3;
-  string plan = 4;
-}
-
-message UpdateThreadResponse {
   ThreadConfig thread = 1;
 }
 

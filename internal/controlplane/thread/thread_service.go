@@ -28,8 +28,6 @@ type ThreadEvent struct {
 type Thread struct {
 	ID        string
 	ProjectID string
-	Agent     string
-	Model     string
 	Mode      string
 	Topic     string
 	Plan      string
@@ -43,7 +41,6 @@ type Store interface {
 	ListThreads(ctx context.Context, projectID string) ([]Thread, error)
 	GetThread(ctx context.Context, id string) (Thread, error)
 	CreateThread(ctx context.Context, t Thread) (Thread, error)
-	UpdateThread(ctx context.Context, t Thread) (Thread, error)
 	DeleteThread(ctx context.Context, id string) error
 	UpdateThreadTopic(ctx context.Context, id, topic string) error
 	UpdateThreadPlan(ctx context.Context, id, plan string) error
@@ -141,9 +138,6 @@ func (s *ThreadService) CreateThread(ctx context.Context, t Thread) (Thread, err
 	if t.ProjectID == "" {
 		return Thread{}, fmt.Errorf("project_id is required")
 	}
-	if t.Agent == "" {
-		return Thread{}, fmt.Errorf("agent is required")
-	}
 
 	created, err := s.store.CreateThread(ctx, t)
 	if err != nil {
@@ -151,23 +145,6 @@ func (s *ThreadService) CreateThread(ctx context.Context, t Thread) (Thread, err
 	}
 	s.broadcast(ThreadEvent{Type: EventCreated, Thread: created})
 	return created, nil
-}
-
-// UpdateThread validates and updates an existing thread.
-func (s *ThreadService) UpdateThread(ctx context.Context, t Thread) (Thread, error) {
-	if t.ID == "" {
-		return Thread{}, fmt.Errorf("thread id is required")
-	}
-	if t.Agent == "" {
-		return Thread{}, fmt.Errorf("agent is required")
-	}
-
-	updated, err := s.store.UpdateThread(ctx, t)
-	if err != nil {
-		return Thread{}, fmt.Errorf("updating thread: %w", err)
-	}
-	s.broadcast(ThreadEvent{Type: EventUpdated, Thread: updated})
-	return updated, nil
 }
 
 // ArchiveThread sets or clears the archived flag on a thread.

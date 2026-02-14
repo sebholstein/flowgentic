@@ -42,7 +42,11 @@ function getSummary(toolName: string, result: Record<string, unknown> | null): s
   return null;
 }
 
-export function FlowgenticPlanToolResult({ toolName, status, result }: FlowgenticPlanToolResultProps) {
+export function FlowgenticPlanToolResult({
+  toolName,
+  status,
+  result,
+}: FlowgenticPlanToolResultProps) {
   const actionLabel = toolActionLabels[toolName] ?? toolName;
   const summary = getSummary(toolName, result);
 

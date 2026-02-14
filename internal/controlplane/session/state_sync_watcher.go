@@ -16,6 +16,7 @@ type StateSyncHandler interface {
 	HandleSessionUpdate(workerID string, session *workerv1.SessionState)
 	HandleSessionRemoved(workerID string, removed *workerv1.SessionRemoved)
 	HandleSessionEvent(workerID string, event *workerv1.SessionEvent)
+	FlushAll()
 }
 
 type StateSyncWatcher struct {
@@ -70,6 +71,7 @@ func (w *StateSyncWatcher) watch(ctx context.Context) error {
 	stream := client.StateSync(ctx)
 	defer stream.CloseResponse()
 	defer stream.CloseRequest()
+	defer w.handler.FlushAll()
 
 	if err := stream.Send(&workerv1.StateSyncRequest{}); err != nil {
 		w.log.Error("state sync send initial request failed", "error", err)

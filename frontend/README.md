@@ -16,16 +16,16 @@ pnpm dev
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev:browser` | Start Vite dev server on `:3000` |
-| `pnpm dev` | Launch Electron app with hot reload |
-| `pnpm build` | Production build |
-| `pnpm test` | Run tests (Vitest) |
-| `pnpm fmt` | Format code (oxfmt) |
-| `pnpm proto` | Generate protobuf types |
-| `pnpm package` | Package Electron app |
-| `pnpm electron:make` | Create distributable installers |
+| Command              | Description                         |
+| -------------------- | ----------------------------------- |
+| `pnpm dev:browser`   | Start Vite dev server on `:3000`    |
+| `pnpm dev`           | Launch Electron app with hot reload |
+| `pnpm build`         | Production build                    |
+| `pnpm test`          | Run tests (Vitest)                  |
+| `pnpm fmt`           | Format code (oxfmt)                 |
+| `pnpm proto`         | Generate protobuf types             |
+| `pnpm package`       | Package Electron app                |
+| `pnpm electron:make` | Create distributable installers     |
 
 ## Tech Stack
 
@@ -61,33 +61,33 @@ src/
 
 ### Routes
 
-| Route | Description |
-|-------|-------------|
-| `/` | Welcome / splash |
-| `/app` | Main dashboard |
-| `/app/threads` | Thread list |
-| `/app/threads/new` | Create thread |
-| `/app/threads/$threadId` | Thread detail (overview, tasks, check-ins, resources, memory) |
-| `/app/tasks/$threadId/$taskId` | Task detail (overview, progress, context, changes, memory) |
-| `/app/settings` | Application settings |
-| `/app/overseer` | Overseer interface |
+| Route                          | Description                                                   |
+| ------------------------------ | ------------------------------------------------------------- |
+| `/`                            | Welcome / splash                                              |
+| `/app`                         | Main dashboard                                                |
+| `/app/threads`                 | Thread list                                                   |
+| `/app/threads/new`             | Create thread                                                 |
+| `/app/threads/$threadId`       | Thread detail (overview, tasks, check-ins, resources, memory) |
+| `/app/tasks/$threadId/$taskId` | Task detail (overview, progress, context, changes, memory)    |
+| `/app/settings`                | Application settings                                          |
+| `/app/overseer`                | Overseer interface                                            |
 
 ### Components
 
-| Directory | Purpose |
-|-----------|---------|
-| `ui/` | shadcn/ui primitives + custom components |
-| `threads/` | Thread management, task details, feedback lists |
-| `chat/` | Agent chat panels, thinking blocks, tool calls |
-| `inbox/` | Feedback items, plan approvals, decision escalations |
-| `code-review/` | Diff viewer, file tree, comment threads |
-| `layout/` | App sidebar, main layout, window chrome |
-| `terminal/` | Integrated terminal (Ghostty) |
-| `command-palette/` | Command palette |
-| `vcs/` | Git/branch visualization |
-| `resources/` | Resource management |
-| `settings/` | Settings UI |
-| `servers/` | Server/control plane configuration |
+| Directory          | Purpose                                              |
+| ------------------ | ---------------------------------------------------- |
+| `ui/`              | shadcn/ui primitives + custom components             |
+| `threads/`         | Thread management, task details, feedback lists      |
+| `chat/`            | Agent chat panels, thinking blocks, tool calls       |
+| `inbox/`           | Feedback items, plan approvals, decision escalations |
+| `code-review/`     | Diff viewer, file tree, comment threads              |
+| `layout/`          | App sidebar, main layout, window chrome              |
+| `terminal/`        | Integrated terminal (Ghostty)                        |
+| `command-palette/` | Command palette                                      |
+| `vcs/`             | Git/branch visualization                             |
+| `resources/`       | Resource management                                  |
+| `settings/`        | Settings UI                                          |
+| `servers/`         | Server/control plane configuration                   |
 
 ## Domain Model
 

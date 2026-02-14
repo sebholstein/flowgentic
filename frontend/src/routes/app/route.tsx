@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { AppSidebar } from "@/components/layout/AppSidebar";
+import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
@@ -35,11 +35,13 @@ function RouteComponent() {
   return (
     <MainLayout>
       <div className="flex h-full min-h-0 flex-1">
-        {visible && <AppSidebar />}
-        <div className={cn(
-          "relative min-w-0 flex-1 overflow-auto bg-background",
-          !visible && isMacOS && "pl-24"
-        )}>
+        {visible && <SidebarWrapper />}
+        <div
+          className={cn(
+            "relative min-w-0 flex-1 overflow-auto bg-background",
+            !visible && isMacOS && "pl-24",
+          )}
+        >
           <Outlet context={{ sidebarVisible: visible, isMacOS }} />
           {!visible && (
             <Button
@@ -49,7 +51,7 @@ function RouteComponent() {
               style={noDragStyle}
               className={cn(
                 "absolute z-50 size-6 p-0 text-muted-foreground hover:text-foreground",
-                isMacOS ? "left-[66px] top-2" : "left-2 top-2"
+                isMacOS ? "left-[80px] top-2" : "left-2 top-2",
               )}
             >
               <PanelLeft className="size-3.5" />

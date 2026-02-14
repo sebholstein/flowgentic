@@ -47,18 +47,6 @@ func (m *memStore) CreateThread(_ context.Context, t Thread) (Thread, error) {
 	return t, nil
 }
 
-func (m *memStore) UpdateThread(_ context.Context, t Thread) (Thread, error) {
-	existing, ok := m.threads[t.ID]
-	if !ok {
-		return Thread{}, fmt.Errorf("thread %q not found", t.ID)
-	}
-	existing.Agent = t.Agent
-	existing.Model = t.Model
-	existing.UpdatedAt = time.Date(2025, 1, 1, 0, 0, 1, 0, time.UTC)
-	m.threads[t.ID] = existing
-	return existing, nil
-}
-
 func (m *memStore) UpdateThreadTopic(_ context.Context, id, topic string) error {
 	t, ok := m.threads[id]
 	if !ok {
@@ -105,30 +93,14 @@ func TestThreadService(t *testing.T) {
 
 		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
-			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 		assert.NotEmpty(t, created.ID)
 		assert.Equal(t, "my-project", created.ProjectID)
-		assert.Equal(t, "claude-code", created.Agent)
 
 		threads, err := svc.ListThreads(ctx, "my-project")
 		require.NoError(t, err)
 		assert.Len(t, threads, 1)
-	})
-
-	t.Run("create with model", func(t *testing.T) {
-		store := newMemStore()
-		svc := NewThreadService(store)
-		ctx := context.Background()
-
-		created, err := svc.CreateThread(ctx, Thread{
-			ProjectID: "my-project",
-			Agent:     "claude-code",
-			Model:     "opus",
-		})
-		require.NoError(t, err)
-		assert.Equal(t, "opus", created.Model)
 	})
 
 	t.Run("create rejects empty project id", func(t *testing.T) {
@@ -136,23 +108,9 @@ func TestThreadService(t *testing.T) {
 		svc := NewThreadService(store)
 		ctx := context.Background()
 
-		_, err := svc.CreateThread(ctx, Thread{
-			Agent: "claude-code",
-		})
+		_, err := svc.CreateThread(ctx, Thread{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "project_id is required")
-	})
-
-	t.Run("create rejects empty agent", func(t *testing.T) {
-		store := newMemStore()
-		svc := NewThreadService(store)
-		ctx := context.Background()
-
-		_, err := svc.CreateThread(ctx, Thread{
-			ProjectID: "my-project",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "agent is required")
 	})
 
 	t.Run("list requires project id", func(t *testing.T) {
@@ -165,39 +123,6 @@ func TestThreadService(t *testing.T) {
 		assert.Contains(t, err.Error(), "project_id is required")
 	})
 
-	t.Run("update", func(t *testing.T) {
-		store := newMemStore()
-		svc := NewThreadService(store)
-		ctx := context.Background()
-
-		created, err := svc.CreateThread(ctx, Thread{
-			ProjectID: "my-project",
-			Agent:     "claude-code",
-		})
-		require.NoError(t, err)
-
-		updated, err := svc.UpdateThread(ctx, Thread{
-			ID:    created.ID,
-			Agent: "codex",
-			Model: "gpt-4",
-		})
-		require.NoError(t, err)
-		assert.Equal(t, "codex", updated.Agent)
-		assert.Equal(t, "gpt-4", updated.Model)
-	})
-
-	t.Run("update rejects empty agent", func(t *testing.T) {
-		store := newMemStore()
-		svc := NewThreadService(store)
-		ctx := context.Background()
-
-		_, err := svc.UpdateThread(ctx, Thread{
-			ID: "some-id",
-		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "agent is required")
-	})
-
 	t.Run("delete", func(t *testing.T) {
 		store := newMemStore()
 		svc := NewThreadService(store)
@@ -205,7 +130,6 @@ func TestThreadService(t *testing.T) {
 
 		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
-			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 
@@ -224,7 +148,6 @@ func TestThreadService(t *testing.T) {
 
 		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
-			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 		assert.False(t, created.Archived)
@@ -255,12 +178,11 @@ func TestThreadService(t *testing.T) {
 
 		created, err := svc.CreateThread(ctx, Thread{
 			ProjectID: "my-project",
-			Agent:     "claude-code",
 		})
 		require.NoError(t, err)
 
 		got, err := svc.GetThread(ctx, created.ID)
 		require.NoError(t, err)
-		assert.Equal(t, "claude-code", got.Agent)
+		assert.Equal(t, created.ID, got.ID)
 	})
 }

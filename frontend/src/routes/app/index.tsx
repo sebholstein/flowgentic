@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Workflow, Command, Plus, Settings, Search, MessageSquarePlus, LayoutGrid } from "lucide-react";
+import {
+  Workflow,
+  Command,
+  Plus,
+  Settings,
+  Search,
+  MessageSquarePlus,
+  LayoutGrid,
+} from "lucide-react";
 import { useIsMacOS } from "@/hooks/use-electron";
 
 export const Route = createFileRoute("/app/")({

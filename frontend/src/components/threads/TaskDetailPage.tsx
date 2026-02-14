@@ -50,9 +50,7 @@ export function TaskDetailPage() {
       />
 
       <TaskThreePanelLayout
-        leftPanel={
-          chatTarget && <AgentChatPanel target={chatTarget} />
-        }
+        leftPanel={chatTarget && <AgentChatPanel target={chatTarget} />}
         rightPanel={
           <CodeReviewView
             execution={mockExecutionDiff}

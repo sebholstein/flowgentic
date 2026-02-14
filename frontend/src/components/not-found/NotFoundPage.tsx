@@ -30,10 +30,7 @@ export function NotFoundPage() {
 
       <div className="relative mx-auto flex min-h-svh w-full max-w-5xl flex-col justify-center gap-10 px-6 py-16">
         <div className="flex items-center gap-3">
-          <Badge
-            variant="outline"
-            className="uppercase tracking-[0.35em] text-[0.55rem] px-3"
-          >
+          <Badge variant="outline" className="uppercase tracking-[0.35em] text-[0.55rem] px-3">
             Signal Lost
           </Badge>
           <span className="text-xs text-muted-foreground">404</span>
@@ -84,9 +81,7 @@ export function NotFoundPage() {
             <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm backdrop-blur">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Status
-                  </p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Status</p>
                   <p className="text-lg font-semibold">Route not found</p>
                 </div>
                 <Badge variant="secondary">404</Badge>

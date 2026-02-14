@@ -19,10 +19,9 @@ func RegisterStoreFactory(f func(db *sql.DB) Store) {
 
 // StartDeps holds the dependencies needed by the thread feature.
 type StartDeps struct {
-	Mux             *http.ServeMux
-	Log             *slog.Logger
-	DB              *sql.DB
-	SessionCreator SessionCreator
+	Mux *http.ServeMux
+	Log *slog.Logger
+	DB  *sql.DB
 }
 
 // Start registers the ThreadService RPC handler on the mux and returns the
@@ -30,7 +29,7 @@ type StartDeps struct {
 func Start(d StartDeps) *ThreadService {
 	st := storeFactory(d.DB)
 	svc := NewThreadService(st)
-	h := &threadServiceHandler{log: d.Log, svc: svc, sessionCreator: d.SessionCreator}
+	h := &threadServiceHandler{log: d.Log, svc: svc}
 	d.Mux.Handle(controlplanev1connect.NewThreadServiceHandler(h))
 	return svc
 }

@@ -6,9 +6,11 @@ import "buf/validate/validate.proto";
 
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
 
-// SessionService provides read access to session records.
-// Sessions are created as a side effect of CreateThread (not via a dedicated RPC).
+// SessionService manages session lifecycle and provides read access to session records.
 service SessionService {
+  // CreateSession creates a new agent session for a thread.
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {}
+
   // GetSession returns a single session by ID.
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
 
@@ -158,6 +160,20 @@ message WatchSessionEventsResponse {
   SessionEvent event = 1;
   // True for DB history replay, false for live — lets frontend know when catch-up is done.
   bool is_history = 2;
+}
+
+message CreateSessionRequest {
+  string thread_id = 1;
+  string worker_id = 2;
+  string prompt = 3;
+  string agent = 4;
+  string model = 5;
+  string mode = 6;
+  string session_mode = 7;
+}
+
+message CreateSessionResponse {
+  SessionConfig session = 1;
 }
 
 message PromptSessionRequest {

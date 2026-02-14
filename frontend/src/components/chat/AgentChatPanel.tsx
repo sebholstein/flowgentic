@@ -220,7 +220,7 @@ export function AgentChatPanel({
       >
         <div
           className={cn(
-            "py-4 space-y-4 max-w-2xl mx-auto w-full px-4",
+            "py-4 space-y-4 w-full px-6 lg:px-10",
             showSetupForm && "flex-1 flex flex-col justify-center",
           )}
         >
@@ -269,6 +269,7 @@ export function AgentChatPanel({
 
             if (message.type === "tool") {
               if (message.tool.type === "mcp") {
+                if (/flowgentic[._]+set_topic/.test(message.tool.title)) return null;
                 return <McpToolCallBlock key={message.id} tool={message.tool} />;
               }
               return <ToolCallBlock key={message.id} tool={message.tool} />;
@@ -326,7 +327,7 @@ export function AgentChatPanel({
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-3 pt-2">
+      <div className="px-6 lg:px-10 pb-3 pt-2">
         <input
           ref={fileInputRef}
           type="file"
