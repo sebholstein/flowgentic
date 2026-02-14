@@ -150,6 +150,12 @@ export function ChatInput({
             setSelectedIndex((prev) => (prev >= filteredFiles.length - 1 ? 0 : prev + 1));
             return;
           case "Enter":
+            if (e.shiftKey) break;
+            e.preventDefault();
+            if (filteredFiles[selectedIndex]) {
+              selectFile(filteredFiles[selectedIndex]);
+            }
+            return;
           case "Tab":
             e.preventDefault();
             if (filteredFiles[selectedIndex]) {
@@ -163,7 +169,7 @@ export function ChatInput({
         }
       }
 
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
         e.preventDefault();
         handleSend();
       }
@@ -200,8 +206,8 @@ export function ChatInput({
       // Get the query after @
       const queryText = textBeforeCursor.slice(lastAtIndex + 1);
 
-      // If there's a space in the query, close the mention
-      if (queryText.includes(" ")) {
+      // If there's whitespace in the query, close the mention
+      if (/\s/.test(queryText)) {
         if (mentionOpen) closeMention();
         return;
       }

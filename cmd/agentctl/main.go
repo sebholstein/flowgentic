@@ -10,10 +10,10 @@ import (
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "agentctl",
-		Short: "CLI for reporting status and submitting plans",
+		Short: "MCP server for Flowgentic agent communication",
 	}
 
-	rootCmd.AddCommand(setTopicCmd())
+	rootCmd.AddCommand(mcpCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

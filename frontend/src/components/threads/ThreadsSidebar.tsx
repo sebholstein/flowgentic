@@ -47,6 +47,7 @@ import { WindowDragHeader } from "@/components/layout/WindowDragHeader";
 import { useIsMacOS } from "@/hooks/use-electron";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { useClient } from "@/lib/connect";
+import { useTypewriter } from "@/hooks/use-typewriter";
 import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
 import { WorkerService } from "@/proto/gen/controlplane/v1/worker_service_pb";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
@@ -171,6 +172,7 @@ function ThreadRow({
   onToggleArchive: () => void;
 }) {
   const StatusIcon = threadStatusConfig[thread.status].icon;
+  const animatedTopic = useTypewriter(thread.topic);
 
   return (
     <div
@@ -203,7 +205,7 @@ function ThreadRow({
         )}
       >
         <StatusIcon className={cn("size-3.5 shrink-0", threadStatusConfig[thread.status].color)} />
-        <span className="truncate flex-1 text-xs font-medium">{thread.title}</span>
+        <span className="truncate flex-1 text-xs font-medium">{animatedTopic}</span>
       </Link>
       <div
         className={cn(
@@ -431,18 +433,19 @@ export function ThreadsSidebar({
       for (const t of q.data?.threads ?? []) {
         result.push({
           id: t.id,
-          title: t.id.slice(0, 8),
+          topic: t.topic || "Untitled",
           description: "",
           status: "pending",
           taskCount: 0,
           completedTasks: 0,
-          createdAt: t.createdAt,
-          updatedAt: t.updatedAt,
+          createdAt: t.createdAt ?? "",
+          updatedAt: t.updatedAt ?? "",
           overseer: { id: "overseer", name: "Overseer" },
           projectId: t.projectId,
           mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
           model: t.model,
           harness: t.agent,
+          archived: t.archived,
         });
       }
     }
@@ -475,7 +478,10 @@ export function ThreadsSidebar({
     return new Set();
   });
   const [pinnedThreads, setPinnedThreads] = useState<Set<string>>(() => new Set());
-  const [archivedThreads, setArchivedThreads] = useState<Set<string>>(() => new Set());
+  const archivedThreads = useMemo(
+    () => new Set(backendThreads.filter((t) => t.archived).map((t) => t.id)),
+    [backendThreads],
+  );
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
   // showArchived is now derived from activeTab
   const showArchived = activeTab === "archived";
@@ -547,7 +553,7 @@ export function ThreadsSidebar({
   // Group threads by project
   const threadsByProject = useMemo(() => {
     const filtered = searchQuery
-      ? backendThreads.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? backendThreads.filter((t) => t.topic.toLowerCase().includes(searchQuery.toLowerCase()))
       : backendThreads;
 
     // When on archived tab, only show archived. Otherwise, only show non-archived.
@@ -706,23 +712,25 @@ export function ThreadsSidebar({
     });
   };
 
+  const archiveThreadMutation = useMutation({
+    mutationFn: (data: { id: string; archived: boolean }) =>
+      threadClient.archiveThread({ id: data.id, archived: data.archived }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["threads"] });
+    },
+  });
+
   const toggleArchive = (id: string) => {
-    setArchivedThreads((prev) => {
-      const next = new Set(prev);
-      const isArchived = next.has(id);
-      if (isArchived) {
+    const newArchived = !archivedThreads.has(id);
+    archiveThreadMutation.mutate({ id, archived: newArchived });
+    if (newArchived) {
+      setPinnedThreads((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
         next.delete(id);
-      } else {
-        next.add(id);
-        setPinnedThreads((pinnedPrev) => {
-          if (!pinnedPrev.has(id)) return pinnedPrev;
-          const pinnedNext = new Set(pinnedPrev);
-          pinnedNext.delete(id);
-          return pinnedNext;
-        });
-      }
-      return next;
-    });
+        return next;
+      });
+    }
   };
 
   const handleAddThread = (projectId: string) => {

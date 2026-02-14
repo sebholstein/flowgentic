@@ -36,6 +36,9 @@ const (
 	// SystemServiceListAgentsProcedure is the fully-qualified name of the SystemService's ListAgents
 	// RPC.
 	SystemServiceListAgentsProcedure = "/worker.v1.SystemService/ListAgents"
+	// SystemServiceGetAgentModelsProcedure is the fully-qualified name of the SystemService's
+	// GetAgentModels RPC.
+	SystemServiceGetAgentModelsProcedure = "/worker.v1.SystemService/GetAgentModels"
 	// SystemServicePingProcedure is the fully-qualified name of the SystemService's Ping RPC.
 	SystemServicePingProcedure = "/worker.v1.SystemService/Ping"
 )
@@ -45,6 +48,8 @@ type SystemServiceClient interface {
 	// ListAgents returns the coding agents installed on this worker
 	// along with their version and whether they are enabled by config.
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
+	// GetAgentModels returns available models and default model for one agent.
+	GetAgentModels(context.Context, *connect.Request[v1.GetAgentModelsRequest]) (*connect.Response[v1.GetAgentModelsResponse], error)
 	// Ping is a lightweight health-check that confirms the worker is reachable.
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
 }
@@ -66,6 +71,12 @@ func NewSystemServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(systemServiceMethods.ByName("ListAgents")),
 			connect.WithClientOptions(opts...),
 		),
+		getAgentModels: connect.NewClient[v1.GetAgentModelsRequest, v1.GetAgentModelsResponse](
+			httpClient,
+			baseURL+SystemServiceGetAgentModelsProcedure,
+			connect.WithSchema(systemServiceMethods.ByName("GetAgentModels")),
+			connect.WithClientOptions(opts...),
+		),
 		ping: connect.NewClient[v1.PingRequest, v1.PingResponse](
 			httpClient,
 			baseURL+SystemServicePingProcedure,
@@ -77,13 +88,19 @@ func NewSystemServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // systemServiceClient implements SystemServiceClient.
 type systemServiceClient struct {
-	listAgents *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
-	ping       *connect.Client[v1.PingRequest, v1.PingResponse]
+	listAgents     *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
+	getAgentModels *connect.Client[v1.GetAgentModelsRequest, v1.GetAgentModelsResponse]
+	ping           *connect.Client[v1.PingRequest, v1.PingResponse]
 }
 
 // ListAgents calls worker.v1.SystemService.ListAgents.
 func (c *systemServiceClient) ListAgents(ctx context.Context, req *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error) {
 	return c.listAgents.CallUnary(ctx, req)
+}
+
+// GetAgentModels calls worker.v1.SystemService.GetAgentModels.
+func (c *systemServiceClient) GetAgentModels(ctx context.Context, req *connect.Request[v1.GetAgentModelsRequest]) (*connect.Response[v1.GetAgentModelsResponse], error) {
+	return c.getAgentModels.CallUnary(ctx, req)
 }
 
 // Ping calls worker.v1.SystemService.Ping.
@@ -96,6 +113,8 @@ type SystemServiceHandler interface {
 	// ListAgents returns the coding agents installed on this worker
 	// along with their version and whether they are enabled by config.
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
+	// GetAgentModels returns available models and default model for one agent.
+	GetAgentModels(context.Context, *connect.Request[v1.GetAgentModelsRequest]) (*connect.Response[v1.GetAgentModelsResponse], error)
 	// Ping is a lightweight health-check that confirms the worker is reachable.
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
 }
@@ -113,6 +132,12 @@ func NewSystemServiceHandler(svc SystemServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(systemServiceMethods.ByName("ListAgents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	systemServiceGetAgentModelsHandler := connect.NewUnaryHandler(
+		SystemServiceGetAgentModelsProcedure,
+		svc.GetAgentModels,
+		connect.WithSchema(systemServiceMethods.ByName("GetAgentModels")),
+		connect.WithHandlerOptions(opts...),
+	)
 	systemServicePingHandler := connect.NewUnaryHandler(
 		SystemServicePingProcedure,
 		svc.Ping,
@@ -123,6 +148,8 @@ func NewSystemServiceHandler(svc SystemServiceHandler, opts ...connect.HandlerOp
 		switch r.URL.Path {
 		case SystemServiceListAgentsProcedure:
 			systemServiceListAgentsHandler.ServeHTTP(w, r)
+		case SystemServiceGetAgentModelsProcedure:
+			systemServiceGetAgentModelsHandler.ServeHTTP(w, r)
 		case SystemServicePingProcedure:
 			systemServicePingHandler.ServeHTTP(w, r)
 		default:
@@ -136,6 +163,10 @@ type UnimplementedSystemServiceHandler struct{}
 
 func (UnimplementedSystemServiceHandler) ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.SystemService.ListAgents is not implemented"))
+}
+
+func (UnimplementedSystemServiceHandler) GetAgentModels(context.Context, *connect.Request[v1.GetAgentModelsRequest]) (*connect.Response[v1.GetAgentModelsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.SystemService.GetAgentModels is not implemented"))
 }
 
 func (UnimplementedSystemServiceHandler) Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error) {

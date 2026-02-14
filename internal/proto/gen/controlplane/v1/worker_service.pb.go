@@ -9,7 +9,6 @@ package controlplanev1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -29,8 +28,8 @@ type WorkerConfig struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
 	Secret        string                 `protobuf:"bytes,4,opt,name=secret,proto3" json:"secret,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -93,18 +92,18 @@ func (x *WorkerConfig) GetSecret() string {
 	return ""
 }
 
-func (x *WorkerConfig) GetCreatedAt() *timestamppb.Timestamp {
+func (x *WorkerConfig) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return nil
+	return ""
 }
 
-func (x *WorkerConfig) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *WorkerConfig) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return nil
+	return ""
 }
 
 type ListWorkersRequest struct {
@@ -583,16 +582,16 @@ var File_controlplane_v1_worker_service_proto protoreflect.FileDescriptor
 
 const file_controlplane_v1_worker_service_proto_rawDesc = "" +
 	"\n" +
-	"$controlplane/v1/worker_service.proto\x12\x0fcontrolplane.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd2\x01\n" +
+	"$controlplane/v1/worker_service.proto\x12\x0fcontrolplane.v1\"\x9a\x01\n" +
 	"\fWorkerConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x16\n" +
-	"\x06secret\x18\x04 \x01(\tR\x06secret\x129\n" +
+	"\x06secret\x18\x04 \x01(\tR\x06secret\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x14\n" +
+	"updated_at\x18\x06 \x01(\tR\tupdatedAt\"\x14\n" +
 	"\x12ListWorkersRequest\"N\n" +
 	"\x13ListWorkersResponse\x127\n" +
 	"\aworkers\x18\x01 \x03(\v2\x1d.controlplane.v1.WorkerConfigR\aworkers\"c\n" +
@@ -640,40 +639,37 @@ func file_controlplane_v1_worker_service_proto_rawDescGZIP() []byte {
 
 var file_controlplane_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_controlplane_v1_worker_service_proto_goTypes = []any{
-	(*WorkerConfig)(nil),          // 0: controlplane.v1.WorkerConfig
-	(*ListWorkersRequest)(nil),    // 1: controlplane.v1.ListWorkersRequest
-	(*ListWorkersResponse)(nil),   // 2: controlplane.v1.ListWorkersResponse
-	(*CreateWorkerRequest)(nil),   // 3: controlplane.v1.CreateWorkerRequest
-	(*CreateWorkerResponse)(nil),  // 4: controlplane.v1.CreateWorkerResponse
-	(*UpdateWorkerRequest)(nil),   // 5: controlplane.v1.UpdateWorkerRequest
-	(*UpdateWorkerResponse)(nil),  // 6: controlplane.v1.UpdateWorkerResponse
-	(*DeleteWorkerRequest)(nil),   // 7: controlplane.v1.DeleteWorkerRequest
-	(*DeleteWorkerResponse)(nil),  // 8: controlplane.v1.DeleteWorkerResponse
-	(*PingWorkerRequest)(nil),     // 9: controlplane.v1.PingWorkerRequest
-	(*PingWorkerResponse)(nil),    // 10: controlplane.v1.PingWorkerResponse
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*WorkerConfig)(nil),         // 0: controlplane.v1.WorkerConfig
+	(*ListWorkersRequest)(nil),   // 1: controlplane.v1.ListWorkersRequest
+	(*ListWorkersResponse)(nil),  // 2: controlplane.v1.ListWorkersResponse
+	(*CreateWorkerRequest)(nil),  // 3: controlplane.v1.CreateWorkerRequest
+	(*CreateWorkerResponse)(nil), // 4: controlplane.v1.CreateWorkerResponse
+	(*UpdateWorkerRequest)(nil),  // 5: controlplane.v1.UpdateWorkerRequest
+	(*UpdateWorkerResponse)(nil), // 6: controlplane.v1.UpdateWorkerResponse
+	(*DeleteWorkerRequest)(nil),  // 7: controlplane.v1.DeleteWorkerRequest
+	(*DeleteWorkerResponse)(nil), // 8: controlplane.v1.DeleteWorkerResponse
+	(*PingWorkerRequest)(nil),    // 9: controlplane.v1.PingWorkerRequest
+	(*PingWorkerResponse)(nil),   // 10: controlplane.v1.PingWorkerResponse
 }
 var file_controlplane_v1_worker_service_proto_depIdxs = []int32{
-	11, // 0: controlplane.v1.WorkerConfig.created_at:type_name -> google.protobuf.Timestamp
-	11, // 1: controlplane.v1.WorkerConfig.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 2: controlplane.v1.ListWorkersResponse.workers:type_name -> controlplane.v1.WorkerConfig
-	0,  // 3: controlplane.v1.CreateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
-	0,  // 4: controlplane.v1.UpdateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
-	1,  // 5: controlplane.v1.WorkerService.ListWorkers:input_type -> controlplane.v1.ListWorkersRequest
-	3,  // 6: controlplane.v1.WorkerService.CreateWorker:input_type -> controlplane.v1.CreateWorkerRequest
-	5,  // 7: controlplane.v1.WorkerService.UpdateWorker:input_type -> controlplane.v1.UpdateWorkerRequest
-	7,  // 8: controlplane.v1.WorkerService.DeleteWorker:input_type -> controlplane.v1.DeleteWorkerRequest
-	9,  // 9: controlplane.v1.WorkerService.PingWorker:input_type -> controlplane.v1.PingWorkerRequest
-	2,  // 10: controlplane.v1.WorkerService.ListWorkers:output_type -> controlplane.v1.ListWorkersResponse
-	4,  // 11: controlplane.v1.WorkerService.CreateWorker:output_type -> controlplane.v1.CreateWorkerResponse
-	6,  // 12: controlplane.v1.WorkerService.UpdateWorker:output_type -> controlplane.v1.UpdateWorkerResponse
-	8,  // 13: controlplane.v1.WorkerService.DeleteWorker:output_type -> controlplane.v1.DeleteWorkerResponse
-	10, // 14: controlplane.v1.WorkerService.PingWorker:output_type -> controlplane.v1.PingWorkerResponse
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	0,  // 0: controlplane.v1.ListWorkersResponse.workers:type_name -> controlplane.v1.WorkerConfig
+	0,  // 1: controlplane.v1.CreateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
+	0,  // 2: controlplane.v1.UpdateWorkerResponse.worker:type_name -> controlplane.v1.WorkerConfig
+	1,  // 3: controlplane.v1.WorkerService.ListWorkers:input_type -> controlplane.v1.ListWorkersRequest
+	3,  // 4: controlplane.v1.WorkerService.CreateWorker:input_type -> controlplane.v1.CreateWorkerRequest
+	5,  // 5: controlplane.v1.WorkerService.UpdateWorker:input_type -> controlplane.v1.UpdateWorkerRequest
+	7,  // 6: controlplane.v1.WorkerService.DeleteWorker:input_type -> controlplane.v1.DeleteWorkerRequest
+	9,  // 7: controlplane.v1.WorkerService.PingWorker:input_type -> controlplane.v1.PingWorkerRequest
+	2,  // 8: controlplane.v1.WorkerService.ListWorkers:output_type -> controlplane.v1.ListWorkersResponse
+	4,  // 9: controlplane.v1.WorkerService.CreateWorker:output_type -> controlplane.v1.CreateWorkerResponse
+	6,  // 10: controlplane.v1.WorkerService.UpdateWorker:output_type -> controlplane.v1.UpdateWorkerResponse
+	8,  // 11: controlplane.v1.WorkerService.DeleteWorker:output_type -> controlplane.v1.DeleteWorkerResponse
+	10, // 12: controlplane.v1.WorkerService.PingWorker:output_type -> controlplane.v1.PingWorkerResponse
+	8,  // [8:13] is the sub-list for method output_type
+	3,  // [3:8] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_controlplane_v1_worker_service_proto_init() }

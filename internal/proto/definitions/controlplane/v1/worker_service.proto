@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package controlplane.v1;
 
-import "google/protobuf/timestamp.proto";
-
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
 
 // WorkerService provides CRUD operations for managing worker
@@ -32,8 +30,8 @@ message WorkerConfig {
   string name = 2;
   string url = 3;
   string secret = 4;
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp updated_at = 6;
+  string created_at = 5;
+  string updated_at = 6;
 }
 
 message ListWorkersRequest {}

@@ -4,24 +4,27 @@ import {
   Link,
   useParams,
   useRouterState,
-  useSearch,
 } from "@tanstack/react-router";
 import { dragStyle, noDragStyle } from "@/components/layout/WindowDragRegion";
-import { useState, useCallback, useMemo, createContext, use, useRef } from "react";
+import { useState, useCallback, useMemo, createContext, use, useRef, useEffect } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { GitBranch, Activity, Workflow, Inbox, Brain, User, Server, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { inboxItems } from "@/data/mockInboxData";
 import { threadStatusConfig } from "@/constants/threadStatusConfig";
 import { useClient } from "@/lib/connect";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
+import { TaskService } from "@/proto/gen/controlplane/v1/task_service_pb";
+import { SessionService } from "@/proto/gen/controlplane/v1/session_service_pb";
+import { tasksQueryOptions } from "@/lib/queries/tasks";
+import { sessionsQueryOptions } from "@/lib/queries/sessions";
 import { ThreadGraphView } from "@/components/threads/ThreadGraphView";
 import { TaskDetailSidebar } from "@/components/threads/TaskDetailSidebar";
-import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
+import { AgentChatPanel, type ChatMessage } from "@/components/chat/AgentChatPanel";
+import { useSessionEvents } from "@/hooks/use-session-events";
 
 const availableModels = [
   { id: "claude-opus-4", name: "Claude Opus 4" },
@@ -30,16 +33,19 @@ const availableModels = [
   { id: "gpt-4o", name: "GPT-4o" },
   { id: "gemini-pro", name: "Gemini Pro" },
 ];
-import { useTaskSimulation } from "@/hooks/useTaskSimulation";
 import { useInfrastructureStore, selectControlPlaneById } from "@/stores/serverStore";
 import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
 import type { Thread } from "@/types/thread";
 import type { Task } from "@/types/task";
-import type { InboxItem, InboxItemPriority } from "@/types/inbox";
+import type { TaskConfig } from "@/proto/gen/controlplane/v1/task_service_pb";
 
 type SearchParams = {
   taskId?: string;
-  feedback?: string;
+};
+
+type ThreadBootstrapState = {
+  initialPrompt: string;
+  createdAt: number;
 };
 
 export const Route = createFileRoute("/app/threads/$threadId")({
@@ -47,17 +53,9 @@ export const Route = createFileRoute("/app/threads/$threadId")({
   validateSearch: (search: Record<string, unknown>): SearchParams => {
     return {
       taskId: typeof search.taskId === "string" ? search.taskId : undefined,
-      feedback: typeof search.feedback === "string" ? search.feedback : undefined,
     };
   },
 });
-
-// Priority order for sorting feedback items
-const priorityOrder: Record<InboxItemPriority, number> = {
-  high: 3,
-  medium: 2,
-  low: 1,
-};
 
 // Context for sharing thread data with child routes
 interface ThreadContextValue {
@@ -78,10 +76,25 @@ export function useThreadContext() {
   return context;
 }
 
+function mapBackendTask(t: TaskConfig): Task {
+  return {
+    id: t.id,
+    name: t.description,
+    description: t.description,
+    status: (t.status || "pending") as Task["status"],
+    subtasks: t.subtasks.map((s, i) => ({
+      id: `${t.id}-sub-${i}`,
+      name: s,
+      completed: false,
+    })),
+    dependencies: [],
+  };
+}
+
 function ThreadLayout() {
   const { threadId } = useParams({ from: "/app/threads/$threadId" });
-  const search = useSearch({ from: "/app/threads/$threadId" });
   const routerState = useRouterState();
+  const queryClient = useQueryClient();
   const [view, setView] = useState<"page" | "graph">("page");
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
   const [leftPanelPercent, setLeftPanelPercent] = useState(50);
@@ -98,59 +111,113 @@ function ThreadLayout() {
     if (!t) return undefined;
     return {
       id: t.id,
-      title: t.id.slice(0, 8),
+      topic: t.topic || "Untitled",
       description: "",
       status: "pending",
       taskCount: 0,
       completedTasks: 0,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
+      createdAt: t.createdAt ?? "",
+      updatedAt: t.updatedAt ?? "",
       overseer: { id: "overseer", name: "Overseer" },
       projectId: t.projectId,
       mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
       model: t.model,
       harness: t.agent,
+      plan: t.plan || undefined,
     };
   }, [threadData]);
+
+  // Task and session queries
+  const taskClient = useClient(TaskService);
+  const sessionClient = useClient(SessionService);
+  const { data: tasksData } = useQuery(tasksQueryOptions(taskClient, threadId));
+  const { data: sessionsData } = useQuery(sessionsQueryOptions(sessionClient, threadId));
+
+  const tasks = useMemo<Task[]>(() => {
+    return (tasksData?.tasks ?? []).map(mapBackendTask);
+  }, [tasksData]);
 
   const controlPlane = useInfrastructureStore((s) =>
     thread?.controlPlaneId ? selectControlPlaneById(s, thread.controlPlaneId) : undefined,
   );
   const [threadMode, setThreadMode] = useState<"plan" | "build">("plan");
   const [threadModel, setThreadModel] = useState("claude-opus-4");
-  const initialTasks = useMemo<Task[]>(() => [], []);
   const isBuildMode = threadMode === "build";
 
-  // Find pending feedback for this thread
-  const pendingFeedback = useMemo<InboxItem | null>(() => {
-    // Get all pending items for this thread
-    const threadItems = inboxItems.filter(
-      (item) => item.threadId === threadId && item.status === "pending",
-    );
+  // Stream session events for the thread chat
+  const {
+    messages: sessionMessages,
+    pendingAgentText,
+    pendingThoughtText,
+    isResponding: isSessionResponding,
+    hasReceivedUpdate: hasReceivedSessionUpdate,
+    addOptimisticUserMessage,
+  } = useSessionEvents({ threadId });
 
-    if (threadItems.length === 0) return null;
+  const bootstrapState = queryClient.getQueryData<ThreadBootstrapState>([
+    "thread-bootstrap",
+    threadId,
+  ]);
 
-    // If specific feedback requested via search param, prioritize that
-    if (search.feedback) {
-      const requested = threadItems.find((item) => item.id === search.feedback);
-      if (requested) return requested;
+  const hasRealUserMessage = useMemo(
+    () => sessionMessages.some((message) => message.type === "user"),
+    [sessionMessages],
+  );
+
+  const displayMessages = useMemo<ChatMessage[]>(() => {
+    if (!bootstrapState || hasRealUserMessage) {
+      return sessionMessages;
     }
 
-    // Otherwise return highest priority pending item
-    return (
-      threadItems.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])[0] ?? null
-    );
-  }, [threadId, search.feedback]);
+    const bootstrapMessage: ChatMessage = {
+      id: `bootstrap-user-${threadId}`,
+      type: "user",
+      content: bootstrapState.initialPrompt,
+      timestamp: new Date(bootstrapState.createdAt).toISOString(),
+    };
 
-  // Handle feedback submission
-  const handleFeedbackSubmit = useCallback((itemId: string, data: unknown) => {
-    // In a real app, this would update the inbox item status via API
-    console.log("Feedback submitted:", { itemId, data });
-    // For now, we just log it - the actual state update would happen via a mutation
-  }, []);
+    return [bootstrapMessage, ...sessionMessages];
+  }, [bootstrapState, hasRealUserMessage, sessionMessages, threadId]);
 
-  const { tasks, isSimulating, startSimulation, pauseSimulation, resetTasks } =
-    useTaskSimulation(initialTasks);
+  useEffect(() => {
+    if (bootstrapState && hasRealUserMessage) {
+      queryClient.removeQueries({ queryKey: ["thread-bootstrap", threadId], exact: true });
+    }
+  }, [bootstrapState, hasRealUserMessage, queryClient, threadId]);
+
+  const [hasPrimingWindowExpired, setHasPrimingWindowExpired] = useState(false);
+  useEffect(() => {
+    setHasPrimingWindowExpired(false);
+    const timer = window.setTimeout(() => {
+      setHasPrimingWindowExpired(true);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [threadId]);
+
+  const isAwaitingBootstrapResponse =
+    Boolean(bootstrapState) &&
+    sessionMessages.length === 0 &&
+    !pendingAgentText &&
+    !pendingThoughtText;
+  const hasAnySession = (sessionsData?.sessions?.length ?? 0) > 0;
+  const isPrimingExistingSession =
+    hasAnySession && !hasReceivedSessionUpdate && !hasPrimingWindowExpired;
+  const isPanelStreaming =
+    isSessionResponding || isAwaitingBootstrapResponse || isPrimingExistingSession;
+
+  // Follow-up message mutation
+  const promptMutation = useMutation({
+    mutationFn: (text: string) =>
+      sessionClient.promptSession({ threadId, text }),
+  });
+
+  const handleSendFollowUp = useCallback(
+    (text: string) => {
+      addOptimisticUserMessage(text);
+      promptMutation.mutate(text);
+    },
+    [addOptimisticUserMessage, promptMutation],
+  );
 
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : undefined;
 
@@ -161,6 +228,7 @@ function ThreadLayout() {
   const handleCloseTaskDetail = useCallback(() => {
     setSelectedTaskId(undefined);
   }, []);
+
 
   // Resize handle for left panel (chat)
   const handleMouseDown = useCallback(
@@ -188,10 +256,7 @@ function ThreadLayout() {
     [leftPanelPercent],
   );
 
-  // Get tasks with pending check-ins
-  const pendingCheckInsCount = useMemo(() => {
-    return tasks.filter((task) => task.checkIn).length;
-  }, [tasks]);
+  const pendingCheckInsCount = 0;
 
   if (isLoading) {
     return (
@@ -264,8 +329,7 @@ function ThreadLayout() {
               <StatusIcon
                 className={cn("size-4 shrink-0", threadStatusConfig[thread.status].color)}
               />
-              <span className="text-xs text-muted-foreground">#{thread.id}</span>
-              <span className="font-medium text-sm truncate">{thread.title}</span>
+              <span className="font-medium text-sm truncate">{thread.topic}</span>
               {controlPlane && (
                 <Badge
                   variant="outline"
@@ -375,17 +439,16 @@ function ThreadLayout() {
                   agentName: threadModel
                     ? (availableModels.find((m) => m.id === threadModel)?.name ?? "Agent")
                     : "Agent",
-                  title: thread.title,
+                  title: thread.topic,
                   agentColor: "bg-violet-500",
                 }}
                 hideHeader
-                enableSimulation
-                pendingFeedback={pendingFeedback}
-                onFeedbackSubmit={handleFeedbackSubmit}
-                threadMode={threadMode}
-                onModeChange={setThreadMode}
-                threadModel={threadModel}
-                onModelChange={setThreadModel}
+                showSetupOnEmpty={false}
+                externalMessages={displayMessages}
+                pendingAgentText={pendingAgentText}
+                pendingThoughtText={pendingThoughtText}
+                isStreaming={isPanelStreaming}
+                onSend={handleSendFollowUp}
               />
             </div>
           ) : (
@@ -402,15 +465,15 @@ function ThreadLayout() {
                         type: "thread_overseer",
                         entityId: thread.id,
                         agentName: "Overseer",
-                        title: thread.title,
+                        title: thread.topic,
                         agentColor: "bg-violet-500",
                       }}
-                      pendingFeedback={pendingFeedback}
-                      onFeedbackSubmit={handleFeedbackSubmit}
-                      threadMode={threadMode}
-                      onModeChange={setThreadMode}
-                      threadModel={threadModel}
-                      onModelChange={setThreadModel}
+                      showSetupOnEmpty={false}
+                      externalMessages={displayMessages}
+                      pendingAgentText={pendingAgentText}
+                      pendingThoughtText={pendingThoughtText}
+                      isStreaming={isPanelStreaming}
+                      onSend={handleSendFollowUp}
                     />
                   </div>
                   {/* Resize handle - wide hit area, thin visual line */}
@@ -436,10 +499,10 @@ function ThreadLayout() {
                       <ThreadGraphView
                         tasks={tasks}
                         selectedTaskId={selectedTaskId}
-                        isSimulating={isSimulating}
-                        onStart={startSimulation}
-                        onPause={pauseSimulation}
-                        onReset={resetTasks}
+                        isSimulating={false}
+                        onStart={() => {}}
+                        onPause={() => {}}
+                        onReset={() => {}}
                         onNodeClick={handleSelectTask}
                       />
                     </ReactFlowProvider>

@@ -22,7 +22,6 @@ function TaskLayout() {
   const { threadId, taskId } = useParams({ from: "/app/tasks/$threadId/$taskId" });
   const routerState = useRouterState();
   const [chatPanelPercent, setChatPanelPercent] = useState(50);
-  const [threadModel, setThreadModel] = useState("claude-opus-4");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const thread = threads.find((t) => t.id === threadId);
@@ -199,9 +198,6 @@ function TaskLayout() {
                     }
                   : undefined
               }
-              enableSimulation
-              threadModel={threadModel}
-              onModelChange={setThreadModel}
             />
           </div>
           {/* Resize handle - wide hit area, thin visual line */}

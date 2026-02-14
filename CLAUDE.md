@@ -21,6 +21,11 @@
 - To verify go code changes, always run `make build` in the root dir. 
 - Proto files live in `internal/proto/definitions/`, generated code in `internal/proto/gen/`. Run `make proto` to regenerate.
 
+# ACP (Agent Client Protocol)
+
+For communication with the agents, we use ACP.
+Read the ACP docs for more details: https://agentclientprotocol.com/get-started/introduction.md
+
 ## Feature Pattern
 
 Each feature (e.g. `systeminfo`, `workload`) lives in its own package under `internal/<binary>/` (e.g. `internal/worker/systeminfo`, `internal/controlplane/`) and follows this structure:
@@ -35,6 +40,11 @@ Shared concerns like auth interceptors live in `internal/<binary>/interceptors/`
 ### gRPC Reflection
 
 When adding a new Connect RPC service, register its `ServiceName` in the static reflector in the corresponding `server/server.go`. Both worker and control plane use `grpcreflect.NewStaticReflector(...)` — add the new `<pkg>connect.<Service>ServiceName` constant there, otherwise the service won't be discoverable via gRPC reflection.
+
+### agent drivers (see internal/worker/driver)
+
+#### Codex
+For the codex driver and questions regarding the RPC protocol, fetch this page: https://github.com/openai/codex/tree/main/codex-rs/app-server#protocol
 
 ## Testing
 

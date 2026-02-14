@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package controlplane.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
+
+// SessionService provides read access to session records.
+// Sessions are created as a side effect of CreateThread (not via a dedicated RPC).
+service SessionService {
+  // GetSession returns a single session by ID.
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse) {}
+
+  // ListSessions returns all sessions for a given thread.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+
+  // SetSessionMode changes the permission mode of a running agent session.
+  rpc SetSessionMode(SetSessionModeRequest) returns (SetSessionModeResponse) {}
+
+  // WatchSessionEvents streams history first, then live events via pub-sub.
+  rpc WatchSessionEvents(WatchSessionEventsRequest) returns (stream WatchSessionEventsResponse) {}
+
+  // PromptSession sends a follow-up message to the active session for a thread.
+  rpc PromptSession(PromptSessionRequest) returns (PromptSessionResponse) {}
+}
+
+// SessionConfig describes a session record.
+message SessionConfig {
+  string id = 1;
+  string thread_id = 2;
+  string worker_id = 3;
+  string prompt = 4;
+  string status = 5;
+  string agent = 6;
+  string model = 7;
+  string mode = 8;
+  string session_mode = 9;
+  string agent_session_id = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  // Optional task ID — null means thread-level session, set means task session.
+  string task_id = 13;
+}
+
+message GetSessionRequest {
+  string id = 1;
+}
+
+message GetSessionResponse {
+  SessionConfig session = 1;
+}
+
+message ListSessionsRequest {
+  string thread_id = 1;
+}
+
+message ListSessionsResponse {
+  repeated SessionConfig sessions = 1;
+}
+
+message SetSessionModeRequest {
+  // The session whose session mode should change.
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
+  // The new mode ID (e.g. "ask", "architect", "code").
+  string mode_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message SetSessionModeResponse {}
+
+// --- Session Events ---
+
+// Raw event for streaming (CP-side copy of worker SessionEvent).
+message SessionEvent {
+  string session_id = 1;
+  int64 sequence = 2;
+  string timestamp = 3;
+  oneof payload {
+    AgentMessageChunk agent_message_chunk = 10;
+    AgentThoughtChunk agent_thought_chunk = 11;
+    ToolCallStart tool_call_start = 12;
+    ToolCallUpdate tool_call_update = 13;
+    StatusChange status_change = 14;
+    ModeChange mode_change = 15;
+    UserMessage user_message = 16;
+  }
+}
+
+// Sub-messages (duplicated from worker proto to keep packages independent).
+message AgentMessageChunk { string text = 1; }
+message AgentThoughtChunk { string text = 1; }
+message UserMessage { string text = 1; }
+
+enum ToolCallStatus {
+  TOOL_CALL_STATUS_UNSPECIFIED = 0;
+  TOOL_CALL_STATUS_RUNNING = 1;
+  TOOL_CALL_STATUS_COMPLETED = 2;
+  TOOL_CALL_STATUS_ERRORED = 3;
+}
+
+enum ToolCallKind {
+  TOOL_CALL_KIND_UNSPECIFIED = 0;
+  TOOL_CALL_KIND_FILE = 1;
+  TOOL_CALL_KIND_SHELL = 2;
+  TOOL_CALL_KIND_SEARCH = 3;
+  TOOL_CALL_KIND_OTHER = 4;
+}
+
+message ToolCallStart {
+  string tool_call_id = 1;
+  string title = 2;
+  ToolCallKind kind = 3;
+  string raw_input = 4;
+  repeated ToolCallLocation locations = 5;
+  ToolCallStatus status = 6;
+}
+
+message ToolCallUpdate {
+  string tool_call_id = 1;
+  string title = 2;
+  ToolCallStatus status = 3;
+  string raw_output = 4;
+  repeated ToolCallLocation locations = 5;
+}
+
+message ToolCallLocation { string path = 1; int64 line = 2; }
+message StatusChange { string status = 1; }
+message ModeChange { string mode_id = 1; }
+
+// --- RPC Messages ---
+
+message WatchSessionEventsRequest {
+  // Identify what to watch — one of these must be set.
+  string session_id = 1;     // watch a specific session
+  string thread_id = 2;      // watch all sessions for a thread
+  string task_id = 3;        // watch sessions for a specific task
+  int64 after_sequence = 4;  // 0 = include all history
+}
+
+message WatchSessionEventsResponse {
+  // Unified: both history replay and live events are sent as SessionEvent.
+  SessionEvent event = 1;
+  // True for DB history replay, false for live — lets frontend know when catch-up is done.
+  bool is_history = 2;
+}
+
+message PromptSessionRequest {
+  string thread_id = 1 [(buf.validate.field).string.min_len = 1];
+  string text = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message PromptSessionResponse {}

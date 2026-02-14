@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package worker.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// ProjectService provides project-level utilities on worker nodes,
+// such as browsing the file tree of a working directory.
+service ProjectService {
+  // WatchFileTree streams the full recursive file tree under cwd,
+  // then sends real-time create/remove events as the filesystem changes.
+  rpc WatchFileTree(WatchFileTreeRequest) returns (stream WatchFileTreeResponse) {}
+}
+
+message WatchFileTreeRequest {
+  // Absolute path to the project root.
+  string cwd = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message WatchFileTreeResponse {
+  oneof update {
+    FileTreeSnapshot snapshot = 1;
+    FileTreeEvent event = 2;
+  }
+}
+
+message FileTreeSnapshot {
+  // Full recursive tree, sorted: directories first, then alphabetical at each level.
+  repeated FileEntry entries = 1;
+}
+
+message FileTreeEvent {
+  FileEventType type = 1;
+  FileEntry entry = 2;
+}
+
+enum FileEventType {
+  FILE_EVENT_TYPE_UNSPECIFIED = 0;
+  FILE_EVENT_TYPE_CREATED = 1;
+  FILE_EVENT_TYPE_REMOVED = 2;
+}
+
+message FileEntry {
+  // Filename only (no path separators).
+  string name = 1;
+  // Path relative to cwd.
+  string path = 2;
+  bool is_dir = 3;
+  // Size in bytes (0 for directories).
+  int64 size = 4;
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Command,
@@ -23,10 +24,14 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Import threads data
-import { threads } from "@/data/mockThreadsData";
+import { useQuery, useQueries } from "@tanstack/react-query";
+import { useClient } from "@/lib/connect";
+import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
+import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
+import { projectsQueryOptions } from "@/lib/queries/projects";
+import { threadsQueryOptions } from "@/lib/queries/threads";
 import { threadStatusConfig } from "@/constants/threadStatusConfig";
+import type { Thread } from "@/types/thread";
 
 // Import inbox data
 import { inboxItems } from "@/data/mockInboxData";
@@ -46,6 +51,53 @@ const inboxTypeIcons: Record<InboxItemType, typeof GitCompare> = {
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
+
+  const projectClient = useClient(ProjectService);
+  const threadClient = useClient(ThreadService);
+
+  const { data: projectsData } = useQuery(projectsQueryOptions(projectClient));
+  const fetchedProjects = useMemo(
+    () => (projectsData?.projects ?? []).map((p) => ({ id: p.id, name: p.name })),
+    [projectsData],
+  );
+
+  const threadQueries = useQueries({
+    queries: fetchedProjects.map((p) => ({
+      ...threadsQueryOptions(threadClient, p.id),
+      enabled: open,
+    })),
+  });
+
+  const threadsByProject = useMemo(() => {
+    const groups: { project: { id: string; name: string }; threads: Thread[] }[] = [];
+    for (let i = 0; i < fetchedProjects.length; i++) {
+      const p = fetchedProjects[i];
+      const q = threadQueries[i];
+      const threads: Thread[] = [];
+      for (const t of q?.data?.threads ?? []) {
+        threads.push({
+          id: t.id,
+          topic: t.topic || "Untitled",
+          description: "",
+          status: "pending",
+          taskCount: 0,
+          completedTasks: 0,
+          createdAt: t.createdAt ?? "",
+          updatedAt: t.updatedAt ?? "",
+          overseer: { id: "overseer", name: "Overseer" },
+          projectId: t.projectId,
+          mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
+          model: t.model,
+          harness: t.agent,
+          archived: t.archived,
+        });
+      }
+      if (threads.length > 0) {
+        groups.push({ project: p, threads });
+      }
+    }
+    return groups;
+  }, [fetchedProjects, threadQueries]);
 
   // Handle keyboard shortcut
   React.useEffect(() => {
@@ -106,38 +158,40 @@ export function CommandPalette() {
             </CommandItem>
           </CommandGroup>
 
-          <CommandSeparator />
+          {/* Threads grouped by project */}
+          {threadsByProject.map(({ project, threads }) => (
+            <React.Fragment key={project.id}>
+              <CommandSeparator />
+              <CommandGroup heading={project.name}>
+                {threads.map((thread) => {
+                  const StatusIcon = threadStatusConfig[thread.status].icon;
+                  const progress =
+                    thread.taskCount > 0
+                      ? Math.round((thread.completedTasks / thread.taskCount) * 100)
+                      : 0;
 
-          {/* Threads */}
-          <CommandGroup heading="Threads">
-            {threads.map((thread) => {
-              const StatusIcon = threadStatusConfig[thread.status].icon;
-              const progress =
-                thread.taskCount > 0
-                  ? Math.round((thread.completedTasks / thread.taskCount) * 100)
-                  : 0;
-
-              return (
-                <CommandItem
-                  key={thread.id}
-                  value={`thread-${thread.id}-${thread.title}`}
-                  onSelect={() => handleSelect(`/app/threads/${thread.id}`)}
-                >
-                  <StatusIcon className={cn("shrink-0", threadStatusConfig[thread.status].color)} />
-                  <span className="text-muted-foreground tabular-nums">#{thread.id}</span>
-                  <span className="flex-1 truncate">{thread.title}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {thread.completedTasks}/{thread.taskCount}
-                  </span>
-                  {thread.status === "in_progress" && (
-                    <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
-                      {progress}%
-                    </span>
-                  )}
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
+                  return (
+                    <CommandItem
+                      key={thread.id}
+                      value={`thread-${thread.id}-${thread.topic}`}
+                      onSelect={() => handleSelect(`/app/threads/${thread.id}`)}
+                    >
+                      <StatusIcon className={cn("shrink-0", threadStatusConfig[thread.status].color)} />
+                      <span className="flex-1 truncate">{thread.topic}</span>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {thread.completedTasks}/{thread.taskCount}
+                      </span>
+                      {thread.status === "in_progress" && (
+                        <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
+                          {progress}%
+                        </span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </React.Fragment>
+          ))}
 
           <CommandSeparator />
 

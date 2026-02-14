@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package controlplane.v1;
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1";
+
+// TaskService provides CRUD operations for tasks within a thread.
+service TaskService {
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {}
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {}
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse) {}
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse) {}
+  rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse) {}
+}
+
+// TaskConfig describes a task record.
+message TaskConfig {
+  string id = 1;
+  string thread_id = 2;
+  string description = 3;
+  repeated string subtasks = 4;
+  string memory = 5;
+  string status = 6;
+  int32 sort_index = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateTaskRequest {
+  string thread_id = 1;
+  string description = 2;
+  repeated string subtasks = 3;
+  int32 sort_index = 4;
+}
+
+message CreateTaskResponse {
+  TaskConfig task = 1;
+}
+
+message GetTaskRequest {
+  string id = 1;
+}
+
+message GetTaskResponse {
+  TaskConfig task = 1;
+}
+
+message ListTasksRequest {
+  string thread_id = 1;
+}
+
+message ListTasksResponse {
+  repeated TaskConfig tasks = 1;
+}
+
+message UpdateTaskRequest {
+  string id = 1;
+  string description = 2;
+  repeated string subtasks = 3;
+  string memory = 4;
+  string status = 5;
+  int32 sort_index = 6;
+}
+
+message UpdateTaskResponse {
+  TaskConfig task = 1;
+}
+
+message DeleteTaskRequest {
+  string id = 1;
+}
+
+message DeleteTaskResponse {}

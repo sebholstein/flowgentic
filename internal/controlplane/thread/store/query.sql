@@ -1,7 +1,7 @@
 -- name: ListThreads :many
 SELECT * FROM threads
 WHERE project_id = ?
-ORDER BY created_at;
+ORDER BY created_at DESC;
 
 -- name: GetThread :one
 SELECT * FROM threads
@@ -14,6 +14,21 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 -- name: UpdateThread :execresult
 UPDATE threads
 SET agent = ?, model = ?, updated_at = ?
+WHERE id = ?;
+
+-- name: UpdateThreadTopic :execresult
+UPDATE threads
+SET topic = ?, updated_at = ?
+WHERE id = ?;
+
+-- name: UpdateThreadArchived :execresult
+UPDATE threads
+SET archived = ?, updated_at = ?
+WHERE id = ?;
+
+-- name: UpdateThreadPlan :execresult
+UPDATE threads
+SET plan = ?, updated_at = ?
 WHERE id = ?;
 
 -- name: DeleteThread :execresult

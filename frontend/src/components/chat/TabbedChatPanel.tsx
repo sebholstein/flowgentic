@@ -17,18 +17,12 @@ interface TabbedChatPanelProps {
   pendingFeedback?: InboxItem | null;
   /** Callback when feedback is submitted */
   onFeedbackSubmit?: (itemId: string, data: unknown) => void;
-  /** Enable simulation mode */
-  enableSimulation?: boolean;
   /** Current step the worker is working on */
   currentStep?: {
     name: string;
     current: number;
     total: number;
   };
-  /** Selected model */
-  threadModel?: string;
-  /** Callback when model changes */
-  onModelChange?: (model: string) => void;
   className?: string;
 }
 
@@ -38,10 +32,7 @@ export function TabbedChatPanel({
   entityTitle,
   pendingFeedback,
   onFeedbackSubmit,
-  enableSimulation = false,
   currentStep,
-  threadModel,
-  onModelChange,
   className,
 }: TabbedChatPanelProps) {
   const [activeTab, setActiveTab] = useState<ChatTab>("planner");
@@ -104,17 +95,10 @@ export function TabbedChatPanel({
             hideHeader
             pendingFeedback={pendingFeedback}
             onFeedbackSubmit={onFeedbackSubmit}
-            threadModel={threadModel}
-            onModelChange={onModelChange}
           />
         </div>
         <div className={cn("absolute inset-0", activeTab !== "worker" && "hidden")}>
-          <AgentChatPanel
-            target={workerTarget}
-            enableSimulation={enableSimulation}
-            threadModel={threadModel}
-            onModelChange={onModelChange}
-          />
+          <AgentChatPanel target={workerTarget} />
         </div>
       </div>
     </div>

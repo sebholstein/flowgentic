@@ -6,19 +6,18 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// AgentRunCreator creates agent runs as a side effect of thread creation.
-type AgentRunCreator interface {
-	CreateAgentRunForThread(ctx context.Context, threadID, workerID, prompt, agent, model, mode string, yolo bool) (string, error)
+// SessionCreator creates sessions as a side effect of thread creation.
+type SessionCreator interface {
+	CreateSessionForThread(ctx context.Context, threadID, workerID, prompt, agent, model, mode, sessionMode string) (string, error)
 }
 
 // threadServiceHandler implements controlplanev1connect.ThreadServiceHandler.
 type threadServiceHandler struct {
 	log             *slog.Logger
 	svc             *ThreadService
-	agentRunCreator AgentRunCreator
+	sessionCreator SessionCreator
 }
 
 func (h *threadServiceHandler) ListThreads(
@@ -74,10 +73,18 @@ func (h *threadServiceHandler) CreateThread(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	// Initialize the thread topic from the first user prompt when available.
+	if topic := deriveInitialTopic(req.Msg.Prompt); topic != "" {
+		if err := h.svc.UpdateTopic(ctx, created.ID, topic); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		created.Topic = topic
+	}
+
 	// If a prompt was provided, create an agent run for this thread.
-	if req.Msg.Prompt != "" && h.agentRunCreator != nil {
-		if _, err := h.agentRunCreator.CreateAgentRunForThread(ctx, created.ID, req.Msg.WorkerId, req.Msg.Prompt, req.Msg.Agent, req.Msg.Model, req.Msg.Mode, req.Msg.Yolo); err != nil {
-			h.log.Error("failed to create agent run for thread", "thread_id", created.ID, "error", err)
+	if req.Msg.Prompt != "" && h.sessionCreator != nil {
+		if _, err := h.sessionCreator.CreateSessionForThread(ctx, created.ID, req.Msg.WorkerId, req.Msg.Prompt, req.Msg.Agent, req.Msg.Model, req.Msg.Mode, req.Msg.SessionMode); err != nil {
+			h.log.Error("failed to create session for thread", "thread_id", created.ID, "error", err)
 			return nil, connect.NewError(connect.CodeInternal, err)
 		}
 	}
@@ -126,6 +133,60 @@ func (h *threadServiceHandler) DeleteThread(
 	return connect.NewResponse(&controlplanev1.DeleteThreadResponse{}), nil
 }
 
+func (h *threadServiceHandler) ArchiveThread(
+	ctx context.Context,
+	req *connect.Request[controlplanev1.ArchiveThreadRequest],
+) (*connect.Response[controlplanev1.ArchiveThreadResponse], error) {
+	if req.Msg.Id == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, nil)
+	}
+
+	t, err := h.svc.ArchiveThread(ctx, req.Msg.Id, req.Msg.Archived)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&controlplanev1.ArchiveThreadResponse{
+		Thread: threadToProto(t),
+	}), nil
+}
+
+func (h *threadServiceHandler) WatchThreadUpdates(
+	ctx context.Context,
+	_ *connect.Request[controlplanev1.WatchThreadUpdatesRequest],
+	stream *connect.ServerStream[controlplanev1.WatchThreadUpdatesResponse],
+) error {
+	ch := h.svc.Subscribe()
+	defer h.svc.Unsubscribe(ch)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case evt := <-ch:
+			if err := stream.Send(&controlplanev1.WatchThreadUpdatesResponse{
+				EventType: eventTypeToProto(evt.Type),
+				Thread:    threadToProto(evt.Thread),
+			}); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func eventTypeToProto(t EventType) controlplanev1.ThreadEventType {
+	switch t {
+	case EventCreated:
+		return controlplanev1.ThreadEventType_THREAD_EVENT_TYPE_CREATED
+	case EventUpdated:
+		return controlplanev1.ThreadEventType_THREAD_EVENT_TYPE_UPDATED
+	case EventRemoved:
+		return controlplanev1.ThreadEventType_THREAD_EVENT_TYPE_REMOVED
+	default:
+		return controlplanev1.ThreadEventType_THREAD_EVENT_TYPE_UNSPECIFIED
+	}
+}
+
 func threadToProto(t Thread) *controlplanev1.ThreadConfig {
 	return &controlplanev1.ThreadConfig{
 		Id:        t.ID,
@@ -133,7 +194,10 @@ func threadToProto(t Thread) *controlplanev1.ThreadConfig {
 		Agent:     t.Agent,
 		Model:     t.Model,
 		Mode:      t.Mode,
-		CreatedAt: timestamppb.New(t.CreatedAt),
-		UpdatedAt: timestamppb.New(t.UpdatedAt),
+		Topic:     t.Topic,
+		Plan:      t.Plan,
+		Archived:  t.Archived,
+		CreatedAt: t.CreatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
+		UpdatedAt: t.UpdatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
 	}
 }

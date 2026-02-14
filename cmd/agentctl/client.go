@@ -12,7 +12,7 @@ import (
 func newAgentCtlClient() workerv1connect.AgentCtlServiceClient {
 	workerURL := os.Getenv("AGENTCTL_WORKER_URL")
 	var opts []connect.ClientOption
-	if secret := os.Getenv("AGENTCTL_WROKER_SECRET"); secret != "" {
+	if secret := os.Getenv("AGENTCTL_WORKER_SECRET"); secret != "" {
 		opts = append(opts, connect.WithInterceptors(interceptors.NewAuth(secret)))
 	}
 	return workerv1connect.NewAgentCtlServiceClient(http.DefaultClient, workerURL, opts...)

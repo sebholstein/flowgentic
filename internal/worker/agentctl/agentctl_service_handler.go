@@ -17,13 +17,18 @@ type agentCtlServiceHandler struct {
 }
 
 // SetTopic implements workerv1connect.AgentCtlServiceHandler.
-func (h *agentCtlServiceHandler) SetTopic(_ context.Context, r *connect.Request[workerv1.SetTopicRequest]) (*connect.Response[workerv1.SetTopicResponse], error) {
+func (h *agentCtlServiceHandler) SetTopic(ctx context.Context, r *connect.Request[workerv1.SetTopicRequest]) (*connect.Response[workerv1.SetTopicResponse], error) {
+	h.log.Info("SetTopic RPC called", "agent_run_id", r.Msg.AgentRunId, "topic", r.Msg.Topic)
 	topic := []rune(r.Msg.Topic)
 	if len(topic) > 140 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("topic too long (max 140 chars)"))
 	}
-	h.log.Info("agent wants to set topic", "topic", topic)
-	return &connect.Response[workerv1.SetTopicResponse]{}, nil
+
+	if err := h.handler.HandleSetTopic(ctx, r.Msg.AgentRunId, string(topic)); err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+
+	return connect.NewResponse(&workerv1.SetTopicResponse{}), nil
 }
 
 func (h *agentCtlServiceHandler) ReportStatus(

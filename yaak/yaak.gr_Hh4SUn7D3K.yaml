@@ -1,0 +1,18 @@
+type: grpc_request
+model: grpc_request
+id: gr_Hh4SUn7D3K
+createdAt: 2026-02-10T22:30:09.708801
+updatedAt: 2026-02-10T22:30:09.708802
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_pQ4pznSF9y
+authenticationType: bearer
+authentication:
+  token: dev-secret
+description: ''
+message: ''
+metadata: []
+method: ListAgentRuns
+name: WorkerService/ListAgentRuns Copy 2
+service: worker.v1.WorkerService
+sortPriority: -1770734092111.999
+url: localhost:8081

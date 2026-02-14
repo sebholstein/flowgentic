@@ -22,7 +22,7 @@ func TestCapabilities_Has(t *testing.T) {
 
 	t.Run("returns false for unsupported capability", func(t *testing.T) {
 		assert.False(t, caps.Has(CapSessionResume))
-		assert.False(t, caps.Has(CapYolo))
+		assert.False(t, caps.Has(CapPermissionRequest))
 	})
 }
 

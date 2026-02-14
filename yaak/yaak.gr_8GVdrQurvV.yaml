@@ -1,0 +1,21 @@
+type: grpc_request
+model: grpc_request
+id: gr_8GVdrQurvV
+createdAt: 2026-02-11T09:39:21.668233
+updatedAt: 2026-02-11T09:45:17.380851
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_pQ4pznSF9y
+authenticationType: bearer
+authentication:
+  token: dev-secret
+description: ''
+message: |-
+  {
+    "cwd": "/Users/sebastian/projects/flowgentic"
+  }
+metadata: []
+method: WatchFileTree
+name: WorkerService/StateSync Copy
+service: worker.v1.ProjectService
+sortPriority: -1770734092111.999
+url: localhost:8081

@@ -10,5 +10,6 @@ export function threadsQueryOptions(
     queryKey: ["threads", projectId],
     queryFn: () => client.listThreads({ projectId }),
     enabled: !!projectId,
+    refetchInterval: 2000,
   });
 }

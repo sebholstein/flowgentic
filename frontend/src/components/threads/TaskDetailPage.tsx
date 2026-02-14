@@ -12,7 +12,6 @@ import { TaskThreePanelLayout } from "./TaskThreePanelLayout";
 export function TaskDetailPage() {
   const { threadId, taskId } = useParams({ from: "/app/tasks/$threadId/$taskId/" });
   const [leftPanelWidth, setLeftPanelWidth] = useState(360);
-  const [threadModel, setThreadModel] = useState("claude-opus-4");
 
   const thread = threads.find((i) => i.id === threadId);
   const tasks = useMemo(() => threadTasks[threadId] ?? [], [threadId]);
@@ -46,19 +45,13 @@ export function TaskDetailPage() {
       <TaskHeader
         task={task}
         threadId={threadId}
-        threadTitle={thread.title}
+        threadTitle={thread.topic}
         progressSteps={progressSteps}
       />
 
       <TaskThreePanelLayout
         leftPanel={
-          chatTarget && (
-            <AgentChatPanel
-              target={chatTarget}
-              threadModel={threadModel}
-              onModelChange={setThreadModel}
-            />
-          )
+          chatTarget && <AgentChatPanel target={chatTarget} />
         }
         rightPanel={
           <CodeReviewView

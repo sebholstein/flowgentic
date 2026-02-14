@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Markdown } from "@/components/ui/markdown";
-import { Clock, Calendar, Layers, Activity, Zap, Hash, Users, User, Server } from "lucide-react";
+import { Clock, Calendar, Layers, Activity, Zap, Users, User, Server } from "lucide-react";
 import { useThreadContext } from "./route";
 import { ThreadVCSBanner } from "@/components/vcs/ThreadVCSBanner";
 import { useInfrastructureStore, selectControlPlaneById } from "@/stores/serverStore";
@@ -61,9 +61,6 @@ function ThreadOverviewTab() {
         {/* Thread Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-            <Hash className="size-4" />
-            <span>{thread.id}</span>
-            <span className="mx-2">·</span>
             <Badge className={cn("text-xs", threadStatus.bgColor, threadStatus.color)}>
               {threadStatus.label}
             </Badge>
@@ -84,7 +81,7 @@ function ThreadOverviewTab() {
               {thread.mode === "build" ? "Build" : "Plan"}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">{thread.title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-3">{thread.topic}</h1>
           <Markdown>{thread.description}</Markdown>
         </div>
 

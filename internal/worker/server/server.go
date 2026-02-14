@@ -14,17 +14,18 @@ import (
 	"connectrpc.com/grpcreflect"
 	"connectrpc.com/validate"
 	"github.com/sebastianm/flowgentic/internal/config"
+	"github.com/sebastianm/flowgentic/internal/connectutil"
 	workerv1connect "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1/workerv1connect"
 	"github.com/sebastianm/flowgentic/internal/tsnetutil"
 	"github.com/sebastianm/flowgentic/internal/worker/agentctl"
-	"github.com/sebastianm/flowgentic/internal/worker/driver"
-	"github.com/sebastianm/flowgentic/internal/worker/driver/claude"
-	"github.com/sebastianm/flowgentic/internal/worker/driver/codex"
-	"github.com/sebastianm/flowgentic/internal/worker/driver/gemini"
-	"github.com/sebastianm/flowgentic/internal/worker/driver/opencode"
+	claudeacp "github.com/sebastianm/flowgentic/internal/worker/driver/claude/acp"
+	codexacp "github.com/sebastianm/flowgentic/internal/worker/driver/codex/acp"
+	v2 "github.com/sebastianm/flowgentic/internal/worker/driver/v2"
 	"github.com/sebastianm/flowgentic/internal/worker/interceptors"
+	"github.com/sebastianm/flowgentic/internal/worker/project"
 	"github.com/sebastianm/flowgentic/internal/worker/systeminfo"
 	"github.com/sebastianm/flowgentic/internal/worker/systeminfo/agentinfo"
+	"github.com/sebastianm/flowgentic/internal/worker/terminal"
 	"github.com/sebastianm/flowgentic/internal/worker/workload"
 )
 
@@ -86,11 +87,44 @@ func (s *Server) Start() error {
 
 	publicMux := http.NewServeMux()
 
+	// Build V2 driver configs with adapter factories.
+	claudeConfig := v2.ClaudeCodeConfig
+	claudeConfig.AdapterFactory = claudeacp.NewAdapter
+
+	codexConfig := v2.CodexConfig
+	codexConfig.AdapterFactory = codexacp.NewAdapter
+
+	drivers := []v2.Driver{
+		v2.NewDriver(s.log, claudeConfig),
+		v2.NewDriver(s.log, codexConfig),
+		v2.NewDriver(s.log, v2.OpenCodeConfig),
+		v2.NewDriver(s.log, v2.GeminiConfig),
+	}
+
+	modelProbeCwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get working directory: %w", err)
+	}
+
 	systeminfo.Start(systeminfo.StartDeps{
+		Mux:           publicMux,
+		Log:           s.log,
+		Interceptors:  publicAuth,
+		Agents:        agentinfo.NewDiscoverer(),
+		Drivers:       drivers,
+		ModelProbeCwd: modelProbeCwd,
+	})
+
+	project.Start(project.StartDeps{
 		Mux:          publicMux,
 		Log:          s.log,
 		Interceptors: publicAuth,
-		Agents:       agentinfo.NewDiscoverer(),
+	})
+
+	terminal.Start(terminal.StartDeps{
+		Mux:          publicMux,
+		Log:          s.log,
+		Interceptors: publicAuth,
 	})
 
 	// --- Private CTL listener (localhost-only) ---
@@ -112,22 +146,17 @@ func (s *Server) Start() error {
 
 	ctlURL := fmt.Sprintf("http://%s", ctlLn.Addr().String())
 
-	// Create drivers and the AgentRunManager via workload.Start().
+	// Create drivers and the SessionManager via workload.Start().
 	mgr := workload.Start(workload.StartDeps{
 		Mux:          publicMux,
 		Log:          s.log,
 		Interceptors: publicAuth,
-		Drivers: []driver.Driver{
-			claude.NewDriver(claude.DriverDeps{Log: s.log}),
-			codex.NewDriver(codex.DriverDeps{Log: s.log}),
-			opencode.NewDriver(opencode.DriverDeps{Log: s.log}),
-			gemini.NewDriver(gemini.DriverDeps{Log: s.log}),
-		},
-		CtlURL:    ctlURL,
-		CtlSecret: ctlSecret,
+		Drivers:      drivers,
+		CtlURL:       ctlURL,
+		CtlSecret:    ctlSecret,
 	})
 
-	// Wire agentctl RPC handlers, passing the AgentRunManager as EventHandler.
+	// Wire agentctl RPC handlers, passing the SessionManager as EventHandler.
 	agentctl.Start(agentctl.StartDeps{
 		Mux:          ctlMux,
 		Log:          s.log,
@@ -138,6 +167,8 @@ func (s *Server) Start() error {
 	publicReflector := grpcreflect.NewStaticReflector(
 		workerv1connect.SystemServiceName,
 		workerv1connect.WorkerServiceName,
+		workerv1connect.ProjectServiceName,
+		workerv1connect.TerminalServiceName,
 	)
 	publicMux.Handle(grpcreflect.NewHandlerV1(publicReflector))
 	publicMux.Handle(grpcreflect.NewHandlerV1Alpha(publicReflector))
@@ -151,9 +182,7 @@ func (s *Server) Start() error {
 
 	// --- Start both servers ---
 
-	protocols := new(http.Protocols)
-	protocols.SetHTTP1(true)
-	protocols.SetUnencryptedHTTP2(true)
+	protocols := connectutil.H2CServerProtocols()
 
 	s.log.Info("HTTP server listening",
 		"public_addr", s.ln.Addr().String(),

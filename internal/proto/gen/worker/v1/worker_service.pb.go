@@ -22,117 +22,543 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type AgentRunStatus int32
+type SessionStatus int32
 
 const (
-	AgentRunStatus_AGENT_RUN_STATUS_UNSPECIFIED AgentRunStatus = 0
-	AgentRunStatus_AGENT_RUN_STATUS_STARTING    AgentRunStatus = 1
-	AgentRunStatus_AGENT_RUN_STATUS_RUNNING     AgentRunStatus = 2
-	AgentRunStatus_AGENT_RUN_STATUS_IDLE        AgentRunStatus = 3
-	AgentRunStatus_AGENT_RUN_STATUS_STOPPING    AgentRunStatus = 4
-	AgentRunStatus_AGENT_RUN_STATUS_STOPPED     AgentRunStatus = 5
-	AgentRunStatus_AGENT_RUN_STATUS_ERRORED     AgentRunStatus = 6
+	SessionStatus_SESSION_STATUS_UNSPECIFIED SessionStatus = 0
+	SessionStatus_SESSION_STATUS_STARTING    SessionStatus = 1
+	SessionStatus_SESSION_STATUS_RUNNING     SessionStatus = 2
+	SessionStatus_SESSION_STATUS_IDLE        SessionStatus = 3
+	SessionStatus_SESSION_STATUS_STOPPING    SessionStatus = 4
+	SessionStatus_SESSION_STATUS_STOPPED     SessionStatus = 5
+	SessionStatus_SESSION_STATUS_ERRORED     SessionStatus = 6
 )
 
-// Enum value maps for AgentRunStatus.
+// Enum value maps for SessionStatus.
 var (
-	AgentRunStatus_name = map[int32]string{
-		0: "AGENT_RUN_STATUS_UNSPECIFIED",
-		1: "AGENT_RUN_STATUS_STARTING",
-		2: "AGENT_RUN_STATUS_RUNNING",
-		3: "AGENT_RUN_STATUS_IDLE",
-		4: "AGENT_RUN_STATUS_STOPPING",
-		5: "AGENT_RUN_STATUS_STOPPED",
-		6: "AGENT_RUN_STATUS_ERRORED",
+	SessionStatus_name = map[int32]string{
+		0: "SESSION_STATUS_UNSPECIFIED",
+		1: "SESSION_STATUS_STARTING",
+		2: "SESSION_STATUS_RUNNING",
+		3: "SESSION_STATUS_IDLE",
+		4: "SESSION_STATUS_STOPPING",
+		5: "SESSION_STATUS_STOPPED",
+		6: "SESSION_STATUS_ERRORED",
 	}
-	AgentRunStatus_value = map[string]int32{
-		"AGENT_RUN_STATUS_UNSPECIFIED": 0,
-		"AGENT_RUN_STATUS_STARTING":    1,
-		"AGENT_RUN_STATUS_RUNNING":     2,
-		"AGENT_RUN_STATUS_IDLE":        3,
-		"AGENT_RUN_STATUS_STOPPING":    4,
-		"AGENT_RUN_STATUS_STOPPED":     5,
-		"AGENT_RUN_STATUS_ERRORED":     6,
+	SessionStatus_value = map[string]int32{
+		"SESSION_STATUS_UNSPECIFIED": 0,
+		"SESSION_STATUS_STARTING":    1,
+		"SESSION_STATUS_RUNNING":     2,
+		"SESSION_STATUS_IDLE":        3,
+		"SESSION_STATUS_STOPPING":    4,
+		"SESSION_STATUS_STOPPED":     5,
+		"SESSION_STATUS_ERRORED":     6,
 	}
 )
 
-func (x AgentRunStatus) Enum() *AgentRunStatus {
-	p := new(AgentRunStatus)
+func (x SessionStatus) Enum() *SessionStatus {
+	p := new(SessionStatus)
 	*p = x
 	return p
 }
 
-func (x AgentRunStatus) String() string {
+func (x SessionStatus) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (AgentRunStatus) Descriptor() protoreflect.EnumDescriptor {
+func (SessionStatus) Descriptor() protoreflect.EnumDescriptor {
 	return file_worker_v1_worker_service_proto_enumTypes[0].Descriptor()
 }
 
-func (AgentRunStatus) Type() protoreflect.EnumType {
+func (SessionStatus) Type() protoreflect.EnumType {
 	return &file_worker_v1_worker_service_proto_enumTypes[0]
 }
 
-func (x AgentRunStatus) Number() protoreflect.EnumNumber {
+func (x SessionStatus) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use AgentRunStatus.Descriptor instead.
-func (AgentRunStatus) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use SessionStatus.Descriptor instead.
+func (SessionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
 }
 
-type AgentRunMode int32
+type SessionMode int32
 
 const (
-	AgentRunMode_AGENT_RUN_MODE_UNSPECIFIED AgentRunMode = 0
-	AgentRunMode_AGENT_RUN_MODE_HEADLESS    AgentRunMode = 1
+	SessionMode_SESSION_MODE_UNSPECIFIED SessionMode = 0
+	SessionMode_SESSION_MODE_HEADLESS    SessionMode = 1
 )
 
-// Enum value maps for AgentRunMode.
+// Enum value maps for SessionMode.
 var (
-	AgentRunMode_name = map[int32]string{
-		0: "AGENT_RUN_MODE_UNSPECIFIED",
-		1: "AGENT_RUN_MODE_HEADLESS",
+	SessionMode_name = map[int32]string{
+		0: "SESSION_MODE_UNSPECIFIED",
+		1: "SESSION_MODE_HEADLESS",
 	}
-	AgentRunMode_value = map[string]int32{
-		"AGENT_RUN_MODE_UNSPECIFIED": 0,
-		"AGENT_RUN_MODE_HEADLESS":    1,
+	SessionMode_value = map[string]int32{
+		"SESSION_MODE_UNSPECIFIED": 0,
+		"SESSION_MODE_HEADLESS":    1,
 	}
 )
 
-func (x AgentRunMode) Enum() *AgentRunMode {
-	p := new(AgentRunMode)
+func (x SessionMode) Enum() *SessionMode {
+	p := new(SessionMode)
 	*p = x
 	return p
 }
 
-func (x AgentRunMode) String() string {
+func (x SessionMode) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (AgentRunMode) Descriptor() protoreflect.EnumDescriptor {
+func (SessionMode) Descriptor() protoreflect.EnumDescriptor {
 	return file_worker_v1_worker_service_proto_enumTypes[1].Descriptor()
 }
 
-func (AgentRunMode) Type() protoreflect.EnumType {
+func (SessionMode) Type() protoreflect.EnumType {
 	return &file_worker_v1_worker_service_proto_enumTypes[1]
 }
 
-func (x AgentRunMode) Number() protoreflect.EnumNumber {
+func (x SessionMode) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use AgentRunMode.Descriptor instead.
-func (AgentRunMode) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use SessionMode.Descriptor instead.
+func (SessionMode) EnumDescriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{1}
 }
 
-type NewAgentRunRequest struct {
+type ToolCallStatus int32
+
+const (
+	ToolCallStatus_TOOL_CALL_STATUS_UNSPECIFIED ToolCallStatus = 0
+	ToolCallStatus_TOOL_CALL_STATUS_RUNNING     ToolCallStatus = 1
+	ToolCallStatus_TOOL_CALL_STATUS_COMPLETED   ToolCallStatus = 2
+	ToolCallStatus_TOOL_CALL_STATUS_ERRORED     ToolCallStatus = 3
+)
+
+// Enum value maps for ToolCallStatus.
+var (
+	ToolCallStatus_name = map[int32]string{
+		0: "TOOL_CALL_STATUS_UNSPECIFIED",
+		1: "TOOL_CALL_STATUS_RUNNING",
+		2: "TOOL_CALL_STATUS_COMPLETED",
+		3: "TOOL_CALL_STATUS_ERRORED",
+	}
+	ToolCallStatus_value = map[string]int32{
+		"TOOL_CALL_STATUS_UNSPECIFIED": 0,
+		"TOOL_CALL_STATUS_RUNNING":     1,
+		"TOOL_CALL_STATUS_COMPLETED":   2,
+		"TOOL_CALL_STATUS_ERRORED":     3,
+	}
+)
+
+func (x ToolCallStatus) Enum() *ToolCallStatus {
+	p := new(ToolCallStatus)
+	*p = x
+	return p
+}
+
+func (x ToolCallStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ToolCallStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_worker_v1_worker_service_proto_enumTypes[2].Descriptor()
+}
+
+func (ToolCallStatus) Type() protoreflect.EnumType {
+	return &file_worker_v1_worker_service_proto_enumTypes[2]
+}
+
+func (x ToolCallStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ToolCallStatus.Descriptor instead.
+func (ToolCallStatus) EnumDescriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{2}
+}
+
+type ToolCallKind int32
+
+const (
+	ToolCallKind_TOOL_CALL_KIND_UNSPECIFIED ToolCallKind = 0
+	ToolCallKind_TOOL_CALL_KIND_FILE        ToolCallKind = 1
+	ToolCallKind_TOOL_CALL_KIND_SHELL       ToolCallKind = 2
+	ToolCallKind_TOOL_CALL_KIND_SEARCH      ToolCallKind = 3
+	ToolCallKind_TOOL_CALL_KIND_OTHER       ToolCallKind = 4
+)
+
+// Enum value maps for ToolCallKind.
+var (
+	ToolCallKind_name = map[int32]string{
+		0: "TOOL_CALL_KIND_UNSPECIFIED",
+		1: "TOOL_CALL_KIND_FILE",
+		2: "TOOL_CALL_KIND_SHELL",
+		3: "TOOL_CALL_KIND_SEARCH",
+		4: "TOOL_CALL_KIND_OTHER",
+	}
+	ToolCallKind_value = map[string]int32{
+		"TOOL_CALL_KIND_UNSPECIFIED": 0,
+		"TOOL_CALL_KIND_FILE":        1,
+		"TOOL_CALL_KIND_SHELL":       2,
+		"TOOL_CALL_KIND_SEARCH":      3,
+		"TOOL_CALL_KIND_OTHER":       4,
+	}
+)
+
+func (x ToolCallKind) Enum() *ToolCallKind {
+	p := new(ToolCallKind)
+	*p = x
+	return p
+}
+
+func (x ToolCallKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ToolCallKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_worker_v1_worker_service_proto_enumTypes[3].Descriptor()
+}
+
+func (ToolCallKind) Type() protoreflect.EnumType {
+	return &file_worker_v1_worker_service_proto_enumTypes[3]
+}
+
+func (x ToolCallKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ToolCallKind.Descriptor instead.
+func (ToolCallKind) EnumDescriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{3}
+}
+
+type PromptSessionRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// The prompt content blocks to send.
+	ContentBlocks []*ContentBlock `protobuf:"bytes,2,rep,name=content_blocks,json=contentBlocks,proto3" json:"content_blocks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PromptSessionRequest) Reset() {
+	*x = PromptSessionRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PromptSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PromptSessionRequest) ProtoMessage() {}
+
+func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PromptSessionRequest.ProtoReflect.Descriptor instead.
+func (*PromptSessionRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *PromptSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *PromptSessionRequest) GetContentBlocks() []*ContentBlock {
+	if x != nil {
+		return x.ContentBlocks
+	}
+	return nil
+}
+
+type ContentBlock struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"` // "text"
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContentBlock) Reset() {
+	*x = ContentBlock{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContentBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContentBlock) ProtoMessage() {}
+
+func (x *ContentBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContentBlock.ProtoReflect.Descriptor instead.
+func (*ContentBlock) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ContentBlock) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ContentBlock) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type PromptSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StopReason    string                 `protobuf:"bytes,1,opt,name=stop_reason,json=stopReason,proto3" json:"stop_reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PromptSessionResponse) Reset() {
+	*x = PromptSessionResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PromptSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PromptSessionResponse) ProtoMessage() {}
+
+func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PromptSessionResponse.ProtoReflect.Descriptor instead.
+func (*PromptSessionResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *PromptSessionResponse) GetStopReason() string {
+	if x != nil {
+		return x.StopReason
+	}
+	return ""
+}
+
+type CancelSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSessionRequest) Reset() {
+	*x = CancelSessionRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSessionRequest) ProtoMessage() {}
+
+func (x *CancelSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSessionRequest.ProtoReflect.Descriptor instead.
+func (*CancelSessionRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CancelSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type CancelSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelSessionResponse) Reset() {
+	*x = CancelSessionResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelSessionResponse) ProtoMessage() {}
+
+func (x *CancelSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelSessionResponse.ProtoReflect.Descriptor instead.
+func (*CancelSessionResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{4}
+}
+
+type SetSessionModeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for this agent run, assigned by the control plane.
-	AgentRunId string `protobuf:"bytes,1,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	// The session whose session mode should change.
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// The new mode ID (e.g. "ask", "architect", "code").
+	ModeId        string `protobuf:"bytes,2,opt,name=mode_id,json=modeId,proto3" json:"mode_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetSessionModeRequest) Reset() {
+	*x = SetSessionModeRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetSessionModeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetSessionModeRequest) ProtoMessage() {}
+
+func (x *SetSessionModeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetSessionModeRequest.ProtoReflect.Descriptor instead.
+func (*SetSessionModeRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SetSessionModeRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SetSessionModeRequest) GetModeId() string {
+	if x != nil {
+		return x.ModeId
+	}
+	return ""
+}
+
+type SetSessionModeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetSessionModeResponse) Reset() {
+	*x = SetSessionModeResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetSessionModeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetSessionModeResponse) ProtoMessage() {}
+
+func (x *SetSessionModeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetSessionModeResponse.ProtoReflect.Descriptor instead.
+func (*SetSessionModeResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{6}
+}
+
+type NewSessionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique identifier for this session, assigned by the control plane.
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// Agent driver to use.
 	Agent Agent `protobuf:"varint,2,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
 	// Session mode: "headless" or "interactive".
@@ -145,31 +571,31 @@ type NewAgentRunRequest struct {
 	Model string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
 	// Working directory for the agent session.
 	Cwd string `protobuf:"bytes,7,opt,name=cwd,proto3" json:"cwd,omitempty"`
-	// Optional: resume an existing session by ID.
-	SessionId string `protobuf:"bytes,8,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// Whether to run in yolo/auto-approve mode.
-	Yolo bool `protobuf:"varint,9,opt,name=yolo,proto3" json:"yolo,omitempty"`
+	// Optional: resume an existing session by agent session ID.
+	AgentSessionId string `protobuf:"bytes,8,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"`
+	// Session mode (e.g. "ask", "architect", "code").
+	SessionMode string `protobuf:"bytes,9,opt,name=session_mode,json=sessionMode,proto3" json:"session_mode,omitempty"`
 	// Optional list of allowed tools.
 	AllowedTools  []string `protobuf:"bytes,10,rep,name=allowed_tools,json=allowedTools,proto3" json:"allowed_tools,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NewAgentRunRequest) Reset() {
-	*x = NewAgentRunRequest{}
-	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
+func (x *NewSessionRequest) Reset() {
+	*x = NewSessionRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NewAgentRunRequest) String() string {
+func (x *NewSessionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewAgentRunRequest) ProtoMessage() {}
+func (*NewSessionRequest) ProtoMessage() {}
 
-func (x *NewAgentRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
+func (x *NewSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -180,88 +606,88 @@ func (x *NewAgentRunRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewAgentRunRequest.ProtoReflect.Descriptor instead.
-func (*NewAgentRunRequest) Descriptor() ([]byte, []int) {
-	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use NewSessionRequest.ProtoReflect.Descriptor instead.
+func (*NewSessionRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *NewAgentRunRequest) GetAgentRunId() string {
-	if x != nil {
-		return x.AgentRunId
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetAgent() Agent {
-	if x != nil {
-		return x.Agent
-	}
-	return Agent_AGENT_UNSPECIFIED
-}
-
-func (x *NewAgentRunRequest) GetMode() string {
-	if x != nil {
-		return x.Mode
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetPrompt() string {
-	if x != nil {
-		return x.Prompt
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetSystemPrompt() string {
-	if x != nil {
-		return x.SystemPrompt
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetModel() string {
-	if x != nil {
-		return x.Model
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetCwd() string {
-	if x != nil {
-		return x.Cwd
-	}
-	return ""
-}
-
-func (x *NewAgentRunRequest) GetSessionId() string {
+func (x *NewSessionRequest) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *NewAgentRunRequest) GetYolo() bool {
+func (x *NewSessionRequest) GetAgent() Agent {
 	if x != nil {
-		return x.Yolo
+		return x.Agent
 	}
-	return false
+	return Agent_AGENT_UNSPECIFIED
 }
 
-func (x *NewAgentRunRequest) GetAllowedTools() []string {
+func (x *NewSessionRequest) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetPrompt() string {
+	if x != nil {
+		return x.Prompt
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetSystemPrompt() string {
+	if x != nil {
+		return x.SystemPrompt
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetCwd() string {
+	if x != nil {
+		return x.Cwd
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetAgentSessionId() string {
+	if x != nil {
+		return x.AgentSessionId
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetSessionMode() string {
+	if x != nil {
+		return x.SessionMode
+	}
+	return ""
+}
+
+func (x *NewSessionRequest) GetAllowedTools() []string {
 	if x != nil {
 		return x.AllowedTools
 	}
 	return nil
 }
 
-type NewAgentRunResponse struct {
+type NewSessionResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Whether the worker accepted the agent run.
+	// Whether the worker accepted the session.
 	Accepted bool `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
 	// Human-readable message (e.g. reason for rejection).
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// The session ID for the launched agent run.
+	// The session ID for the launched session.
 	SessionId string `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// The agent driver used.
 	Agent Agent `protobuf:"varint,4,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
@@ -275,21 +701,21 @@ type NewAgentRunResponse struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *NewAgentRunResponse) Reset() {
-	*x = NewAgentRunResponse{}
-	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
+func (x *NewSessionResponse) Reset() {
+	*x = NewSessionResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NewAgentRunResponse) String() string {
+func (x *NewSessionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewAgentRunResponse) ProtoMessage() {}
+func (*NewSessionResponse) ProtoMessage() {}
 
-func (x *NewAgentRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_worker_service_proto_msgTypes[1]
+func (x *NewSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,87 +726,87 @@ func (x *NewAgentRunResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewAgentRunResponse.ProtoReflect.Descriptor instead.
-func (*NewAgentRunResponse) Descriptor() ([]byte, []int) {
-	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use NewSessionResponse.ProtoReflect.Descriptor instead.
+func (*NewSessionResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *NewAgentRunResponse) GetAccepted() bool {
+func (x *NewSessionResponse) GetAccepted() bool {
 	if x != nil {
 		return x.Accepted
 	}
 	return false
 }
 
-func (x *NewAgentRunResponse) GetMessage() string {
+func (x *NewSessionResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *NewAgentRunResponse) GetSessionId() string {
+func (x *NewSessionResponse) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *NewAgentRunResponse) GetAgent() Agent {
+func (x *NewSessionResponse) GetAgent() Agent {
 	if x != nil {
 		return x.Agent
 	}
 	return Agent_AGENT_UNSPECIFIED
 }
 
-func (x *NewAgentRunResponse) GetStatus() string {
+func (x *NewSessionResponse) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *NewAgentRunResponse) GetMode() string {
+func (x *NewSessionResponse) GetMode() string {
 	if x != nil {
 		return x.Mode
 	}
 	return ""
 }
 
-func (x *NewAgentRunResponse) GetAgentSessionId() string {
+func (x *NewSessionResponse) GetAgentSessionId() string {
 	if x != nil {
 		return x.AgentSessionId
 	}
 	return ""
 }
 
-type AgentRunInfo struct {
+type SessionInfo struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	AgentRunId     string                 `protobuf:"bytes,1,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	SessionId      string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	Agent          Agent                  `protobuf:"varint,2,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
-	Status         AgentRunStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=worker.v1.AgentRunStatus" json:"status,omitempty"`
-	Mode           AgentRunMode           `protobuf:"varint,4,opt,name=mode,proto3,enum=worker.v1.AgentRunMode" json:"mode,omitempty"`
-	SessionId      string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AgentSessionId string                 `protobuf:"bytes,6,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"`
+	Status         SessionStatus          `protobuf:"varint,3,opt,name=status,proto3,enum=worker.v1.SessionStatus" json:"status,omitempty"`
+	Mode           SessionMode            `protobuf:"varint,4,opt,name=mode,proto3,enum=worker.v1.SessionMode" json:"mode,omitempty"`
+	AgentSessionId string                 `protobuf:"bytes,5,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"`
+	Model          string                 `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *AgentRunInfo) Reset() {
-	*x = AgentRunInfo{}
-	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+func (x *SessionInfo) Reset() {
+	*x = SessionInfo{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AgentRunInfo) String() string {
+func (x *SessionInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AgentRunInfo) ProtoMessage() {}
+func (*SessionInfo) ProtoMessage() {}
 
-func (x *AgentRunInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
+func (x *SessionInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -391,74 +817,74 @@ func (x *AgentRunInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AgentRunInfo.ProtoReflect.Descriptor instead.
-func (*AgentRunInfo) Descriptor() ([]byte, []int) {
-	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use SessionInfo.ProtoReflect.Descriptor instead.
+func (*SessionInfo) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *AgentRunInfo) GetAgentRunId() string {
-	if x != nil {
-		return x.AgentRunId
-	}
-	return ""
-}
-
-func (x *AgentRunInfo) GetAgent() Agent {
-	if x != nil {
-		return x.Agent
-	}
-	return Agent_AGENT_UNSPECIFIED
-}
-
-func (x *AgentRunInfo) GetStatus() AgentRunStatus {
-	if x != nil {
-		return x.Status
-	}
-	return AgentRunStatus_AGENT_RUN_STATUS_UNSPECIFIED
-}
-
-func (x *AgentRunInfo) GetMode() AgentRunMode {
-	if x != nil {
-		return x.Mode
-	}
-	return AgentRunMode_AGENT_RUN_MODE_UNSPECIFIED
-}
-
-func (x *AgentRunInfo) GetSessionId() string {
+func (x *SessionInfo) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *AgentRunInfo) GetAgentSessionId() string {
+func (x *SessionInfo) GetAgent() Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return Agent_AGENT_UNSPECIFIED
+}
+
+func (x *SessionInfo) GetStatus() SessionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return SessionStatus_SESSION_STATUS_UNSPECIFIED
+}
+
+func (x *SessionInfo) GetMode() SessionMode {
+	if x != nil {
+		return x.Mode
+	}
+	return SessionMode_SESSION_MODE_UNSPECIFIED
+}
+
+func (x *SessionInfo) GetAgentSessionId() string {
 	if x != nil {
 		return x.AgentSessionId
 	}
 	return ""
 }
 
-type ListAgentRunsRequest struct {
+func (x *SessionInfo) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+type ListSessionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAgentRunsRequest) Reset() {
-	*x = ListAgentRunsRequest{}
-	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+func (x *ListSessionsRequest) Reset() {
+	*x = ListSessionsRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAgentRunsRequest) String() string {
+func (x *ListSessionsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAgentRunsRequest) ProtoMessage() {}
+func (*ListSessionsRequest) ProtoMessage() {}
 
-func (x *ListAgentRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_worker_service_proto_msgTypes[3]
+func (x *ListSessionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,33 +895,33 @@ func (x *ListAgentRunsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAgentRunsRequest.ProtoReflect.Descriptor instead.
-func (*ListAgentRunsRequest) Descriptor() ([]byte, []int) {
-	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{3}
+// Deprecated: Use ListSessionsRequest.ProtoReflect.Descriptor instead.
+func (*ListSessionsRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{10}
 }
 
-type ListAgentRunsResponse struct {
+type ListSessionsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AgentRuns     []*AgentRunInfo        `protobuf:"bytes,1,rep,name=agent_runs,json=agentRuns,proto3" json:"agent_runs,omitempty"`
+	Sessions      []*SessionInfo         `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAgentRunsResponse) Reset() {
-	*x = ListAgentRunsResponse{}
-	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+func (x *ListSessionsResponse) Reset() {
+	*x = ListSessionsResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAgentRunsResponse) String() string {
+func (x *ListSessionsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAgentRunsResponse) ProtoMessage() {}
+func (*ListSessionsResponse) ProtoMessage() {}
 
-func (x *ListAgentRunsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_worker_service_proto_msgTypes[4]
+func (x *ListSessionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -506,38 +932,1342 @@ func (x *ListAgentRunsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAgentRunsResponse.ProtoReflect.Descriptor instead.
-func (*ListAgentRunsResponse) Descriptor() ([]byte, []int) {
-	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use ListSessionsResponse.ProtoReflect.Descriptor instead.
+func (*ListSessionsResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ListAgentRunsResponse) GetAgentRuns() []*AgentRunInfo {
+func (x *ListSessionsResponse) GetSessions() []*SessionInfo {
 	if x != nil {
-		return x.AgentRuns
+		return x.Sessions
 	}
 	return nil
+}
+
+// CP → Worker (bidi stream).
+type StateSyncRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ACK: CP has processed all events up to and including this sequence for this session.
+	// Worker can drop ACKed events from its queue.
+	AckSessionId  string `protobuf:"bytes,1,opt,name=ack_session_id,json=ackSessionId,proto3" json:"ack_session_id,omitempty"`
+	AckSequence   int64  `protobuf:"varint,2,opt,name=ack_sequence,json=ackSequence,proto3" json:"ack_sequence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StateSyncRequest) Reset() {
+	*x = StateSyncRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StateSyncRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StateSyncRequest) ProtoMessage() {}
+
+func (x *StateSyncRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StateSyncRequest.ProtoReflect.Descriptor instead.
+func (*StateSyncRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *StateSyncRequest) GetAckSessionId() string {
+	if x != nil {
+		return x.AckSessionId
+	}
+	return ""
+}
+
+func (x *StateSyncRequest) GetAckSequence() int64 {
+	if x != nil {
+		return x.AckSequence
+	}
+	return 0
+}
+
+// Worker → CP
+type StateSyncResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Update:
+	//
+	//	*StateSyncResponse_Snapshot
+	//	*StateSyncResponse_SessionUpdate
+	//	*StateSyncResponse_SessionRemoved
+	//	*StateSyncResponse_SessionEvent
+	Update        isStateSyncResponse_Update `protobuf_oneof:"update"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StateSyncResponse) Reset() {
+	*x = StateSyncResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StateSyncResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StateSyncResponse) ProtoMessage() {}
+
+func (x *StateSyncResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StateSyncResponse.ProtoReflect.Descriptor instead.
+func (*StateSyncResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *StateSyncResponse) GetUpdate() isStateSyncResponse_Update {
+	if x != nil {
+		return x.Update
+	}
+	return nil
+}
+
+func (x *StateSyncResponse) GetSnapshot() *SessionStateSnapshot {
+	if x != nil {
+		if x, ok := x.Update.(*StateSyncResponse_Snapshot); ok {
+			return x.Snapshot
+		}
+	}
+	return nil
+}
+
+func (x *StateSyncResponse) GetSessionUpdate() *SessionState {
+	if x != nil {
+		if x, ok := x.Update.(*StateSyncResponse_SessionUpdate); ok {
+			return x.SessionUpdate
+		}
+	}
+	return nil
+}
+
+func (x *StateSyncResponse) GetSessionRemoved() *SessionRemoved {
+	if x != nil {
+		if x, ok := x.Update.(*StateSyncResponse_SessionRemoved); ok {
+			return x.SessionRemoved
+		}
+	}
+	return nil
+}
+
+func (x *StateSyncResponse) GetSessionEvent() *SessionEvent {
+	if x != nil {
+		if x, ok := x.Update.(*StateSyncResponse_SessionEvent); ok {
+			return x.SessionEvent
+		}
+	}
+	return nil
+}
+
+type isStateSyncResponse_Update interface {
+	isStateSyncResponse_Update()
+}
+
+type StateSyncResponse_Snapshot struct {
+	Snapshot *SessionStateSnapshot `protobuf:"bytes,1,opt,name=snapshot,proto3,oneof"`
+}
+
+type StateSyncResponse_SessionUpdate struct {
+	SessionUpdate *SessionState `protobuf:"bytes,2,opt,name=session_update,json=sessionUpdate,proto3,oneof"`
+}
+
+type StateSyncResponse_SessionRemoved struct {
+	SessionRemoved *SessionRemoved `protobuf:"bytes,3,opt,name=session_removed,json=sessionRemoved,proto3,oneof"`
+}
+
+type StateSyncResponse_SessionEvent struct {
+	SessionEvent *SessionEvent `protobuf:"bytes,4,opt,name=session_event,json=sessionEvent,proto3,oneof"`
+}
+
+func (*StateSyncResponse_Snapshot) isStateSyncResponse_Update() {}
+
+func (*StateSyncResponse_SessionUpdate) isStateSyncResponse_Update() {}
+
+func (*StateSyncResponse_SessionRemoved) isStateSyncResponse_Update() {}
+
+func (*StateSyncResponse_SessionEvent) isStateSyncResponse_Update() {}
+
+// A single ACP event from a running session.
+type SessionEvent struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Sequence  int64                  `protobuf:"varint,2,opt,name=sequence,proto3" json:"sequence,omitempty"`  // Monotonic per session, assigned by worker
+	Timestamp string                 `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // RFC 3339
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*SessionEvent_AgentMessageChunk
+	//	*SessionEvent_AgentThoughtChunk
+	//	*SessionEvent_ToolCallStart
+	//	*SessionEvent_ToolCallUpdate
+	//	*SessionEvent_StatusChange
+	//	*SessionEvent_ModeChange
+	//	*SessionEvent_UserMessage
+	Payload       isSessionEvent_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SessionEvent) Reset() {
+	*x = SessionEvent{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionEvent) ProtoMessage() {}
+
+func (x *SessionEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionEvent.ProtoReflect.Descriptor instead.
+func (*SessionEvent) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SessionEvent) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SessionEvent) GetSequence() int64 {
+	if x != nil {
+		return x.Sequence
+	}
+	return 0
+}
+
+func (x *SessionEvent) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+func (x *SessionEvent) GetPayload() isSessionEvent_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetAgentMessageChunk() *AgentMessageChunk {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_AgentMessageChunk); ok {
+			return x.AgentMessageChunk
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetAgentThoughtChunk() *AgentThoughtChunk {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_AgentThoughtChunk); ok {
+			return x.AgentThoughtChunk
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetToolCallStart() *ToolCallStart {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_ToolCallStart); ok {
+			return x.ToolCallStart
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetToolCallUpdate() *ToolCallUpdate {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_ToolCallUpdate); ok {
+			return x.ToolCallUpdate
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetStatusChange() *StatusChange {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_StatusChange); ok {
+			return x.StatusChange
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetModeChange() *ModeChange {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_ModeChange); ok {
+			return x.ModeChange
+		}
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetUserMessage() *UserMessage {
+	if x != nil {
+		if x, ok := x.Payload.(*SessionEvent_UserMessage); ok {
+			return x.UserMessage
+		}
+	}
+	return nil
+}
+
+type isSessionEvent_Payload interface {
+	isSessionEvent_Payload()
+}
+
+type SessionEvent_AgentMessageChunk struct {
+	AgentMessageChunk *AgentMessageChunk `protobuf:"bytes,10,opt,name=agent_message_chunk,json=agentMessageChunk,proto3,oneof"`
+}
+
+type SessionEvent_AgentThoughtChunk struct {
+	AgentThoughtChunk *AgentThoughtChunk `protobuf:"bytes,11,opt,name=agent_thought_chunk,json=agentThoughtChunk,proto3,oneof"`
+}
+
+type SessionEvent_ToolCallStart struct {
+	ToolCallStart *ToolCallStart `protobuf:"bytes,12,opt,name=tool_call_start,json=toolCallStart,proto3,oneof"`
+}
+
+type SessionEvent_ToolCallUpdate struct {
+	ToolCallUpdate *ToolCallUpdate `protobuf:"bytes,13,opt,name=tool_call_update,json=toolCallUpdate,proto3,oneof"`
+}
+
+type SessionEvent_StatusChange struct {
+	StatusChange *StatusChange `protobuf:"bytes,14,opt,name=status_change,json=statusChange,proto3,oneof"`
+}
+
+type SessionEvent_ModeChange struct {
+	ModeChange *ModeChange `protobuf:"bytes,15,opt,name=mode_change,json=modeChange,proto3,oneof"`
+}
+
+type SessionEvent_UserMessage struct {
+	UserMessage *UserMessage `protobuf:"bytes,16,opt,name=user_message,json=userMessage,proto3,oneof"`
+}
+
+func (*SessionEvent_AgentMessageChunk) isSessionEvent_Payload() {}
+
+func (*SessionEvent_AgentThoughtChunk) isSessionEvent_Payload() {}
+
+func (*SessionEvent_ToolCallStart) isSessionEvent_Payload() {}
+
+func (*SessionEvent_ToolCallUpdate) isSessionEvent_Payload() {}
+
+func (*SessionEvent_StatusChange) isSessionEvent_Payload() {}
+
+func (*SessionEvent_ModeChange) isSessionEvent_Payload() {}
+
+func (*SessionEvent_UserMessage) isSessionEvent_Payload() {}
+
+type AgentMessageChunk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentMessageChunk) Reset() {
+	*x = AgentMessageChunk{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentMessageChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentMessageChunk) ProtoMessage() {}
+
+func (x *AgentMessageChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentMessageChunk.ProtoReflect.Descriptor instead.
+func (*AgentMessageChunk) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *AgentMessageChunk) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type AgentThoughtChunk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentThoughtChunk) Reset() {
+	*x = AgentThoughtChunk{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentThoughtChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentThoughtChunk) ProtoMessage() {}
+
+func (x *AgentThoughtChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentThoughtChunk.ProtoReflect.Descriptor instead.
+func (*AgentThoughtChunk) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *AgentThoughtChunk) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type UserMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserMessage) Reset() {
+	*x = UserMessage{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserMessage) ProtoMessage() {}
+
+func (x *UserMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserMessage.ProtoReflect.Descriptor instead.
+func (*UserMessage) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *UserMessage) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type ToolCallStart struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	ToolCallId    string                  `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
+	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Kind          ToolCallKind            `protobuf:"varint,3,opt,name=kind,proto3,enum=worker.v1.ToolCallKind" json:"kind,omitempty"`
+	RawInput      string                  `protobuf:"bytes,4,opt,name=raw_input,json=rawInput,proto3" json:"raw_input,omitempty"`
+	Locations     []*ToolCallLocation     `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
+	Status        ToolCallStatus          `protobuf:"varint,6,opt,name=status,proto3,enum=worker.v1.ToolCallStatus" json:"status,omitempty"`
+	Content       []*ToolCallContentBlock `protobuf:"bytes,7,rep,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallStart) Reset() {
+	*x = ToolCallStart{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallStart) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallStart) ProtoMessage() {}
+
+func (x *ToolCallStart) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallStart.ProtoReflect.Descriptor instead.
+func (*ToolCallStart) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ToolCallStart) GetToolCallId() string {
+	if x != nil {
+		return x.ToolCallId
+	}
+	return ""
+}
+
+func (x *ToolCallStart) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ToolCallStart) GetKind() ToolCallKind {
+	if x != nil {
+		return x.Kind
+	}
+	return ToolCallKind_TOOL_CALL_KIND_UNSPECIFIED
+}
+
+func (x *ToolCallStart) GetRawInput() string {
+	if x != nil {
+		return x.RawInput
+	}
+	return ""
+}
+
+func (x *ToolCallStart) GetLocations() []*ToolCallLocation {
+	if x != nil {
+		return x.Locations
+	}
+	return nil
+}
+
+func (x *ToolCallStart) GetStatus() ToolCallStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ToolCallStatus_TOOL_CALL_STATUS_UNSPECIFIED
+}
+
+func (x *ToolCallStart) GetContent() []*ToolCallContentBlock {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+type ToolCallUpdate struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	ToolCallId    string                  `protobuf:"bytes,1,opt,name=tool_call_id,json=toolCallId,proto3" json:"tool_call_id,omitempty"`
+	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Status        ToolCallStatus          `protobuf:"varint,3,opt,name=status,proto3,enum=worker.v1.ToolCallStatus" json:"status,omitempty"`
+	RawOutput     string                  `protobuf:"bytes,4,opt,name=raw_output,json=rawOutput,proto3" json:"raw_output,omitempty"`
+	Locations     []*ToolCallLocation     `protobuf:"bytes,5,rep,name=locations,proto3" json:"locations,omitempty"`
+	Content       []*ToolCallContentBlock `protobuf:"bytes,6,rep,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallUpdate) Reset() {
+	*x = ToolCallUpdate{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallUpdate) ProtoMessage() {}
+
+func (x *ToolCallUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallUpdate.ProtoReflect.Descriptor instead.
+func (*ToolCallUpdate) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ToolCallUpdate) GetToolCallId() string {
+	if x != nil {
+		return x.ToolCallId
+	}
+	return ""
+}
+
+func (x *ToolCallUpdate) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ToolCallUpdate) GetStatus() ToolCallStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ToolCallStatus_TOOL_CALL_STATUS_UNSPECIFIED
+}
+
+func (x *ToolCallUpdate) GetRawOutput() string {
+	if x != nil {
+		return x.RawOutput
+	}
+	return ""
+}
+
+func (x *ToolCallUpdate) GetLocations() []*ToolCallLocation {
+	if x != nil {
+		return x.Locations
+	}
+	return nil
+}
+
+func (x *ToolCallUpdate) GetContent() []*ToolCallContentBlock {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+type ToolCallContentBlock struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Block:
+	//
+	//	*ToolCallContentBlock_Diff
+	//	*ToolCallContentBlock_Text
+	Block         isToolCallContentBlock_Block `protobuf_oneof:"block"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallContentBlock) Reset() {
+	*x = ToolCallContentBlock{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallContentBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallContentBlock) ProtoMessage() {}
+
+func (x *ToolCallContentBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallContentBlock.ProtoReflect.Descriptor instead.
+func (*ToolCallContentBlock) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ToolCallContentBlock) GetBlock() isToolCallContentBlock_Block {
+	if x != nil {
+		return x.Block
+	}
+	return nil
+}
+
+func (x *ToolCallContentBlock) GetDiff() *ToolCallDiff {
+	if x != nil {
+		if x, ok := x.Block.(*ToolCallContentBlock_Diff); ok {
+			return x.Diff
+		}
+	}
+	return nil
+}
+
+func (x *ToolCallContentBlock) GetText() *ToolCallText {
+	if x != nil {
+		if x, ok := x.Block.(*ToolCallContentBlock_Text); ok {
+			return x.Text
+		}
+	}
+	return nil
+}
+
+type isToolCallContentBlock_Block interface {
+	isToolCallContentBlock_Block()
+}
+
+type ToolCallContentBlock_Diff struct {
+	Diff *ToolCallDiff `protobuf:"bytes,1,opt,name=diff,proto3,oneof"`
+}
+
+type ToolCallContentBlock_Text struct {
+	Text *ToolCallText `protobuf:"bytes,2,opt,name=text,proto3,oneof"`
+}
+
+func (*ToolCallContentBlock_Diff) isToolCallContentBlock_Block() {}
+
+func (*ToolCallContentBlock_Text) isToolCallContentBlock_Block() {}
+
+type ToolCallDiff struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	NewText       string                 `protobuf:"bytes,2,opt,name=new_text,json=newText,proto3" json:"new_text,omitempty"`
+	OldText       string                 `protobuf:"bytes,3,opt,name=old_text,json=oldText,proto3" json:"old_text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallDiff) Reset() {
+	*x = ToolCallDiff{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallDiff) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallDiff) ProtoMessage() {}
+
+func (x *ToolCallDiff) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallDiff.ProtoReflect.Descriptor instead.
+func (*ToolCallDiff) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ToolCallDiff) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ToolCallDiff) GetNewText() string {
+	if x != nil {
+		return x.NewText
+	}
+	return ""
+}
+
+func (x *ToolCallDiff) GetOldText() string {
+	if x != nil {
+		return x.OldText
+	}
+	return ""
+}
+
+type ToolCallText struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallText) Reset() {
+	*x = ToolCallText{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallText) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallText) ProtoMessage() {}
+
+func (x *ToolCallText) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallText.ProtoReflect.Descriptor instead.
+func (*ToolCallText) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ToolCallText) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type ToolCallLocation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Line          int64                  `protobuf:"varint,2,opt,name=line,proto3" json:"line,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToolCallLocation) Reset() {
+	*x = ToolCallLocation{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolCallLocation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolCallLocation) ProtoMessage() {}
+
+func (x *ToolCallLocation) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolCallLocation.ProtoReflect.Descriptor instead.
+func (*ToolCallLocation) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ToolCallLocation) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ToolCallLocation) GetLine() int64 {
+	if x != nil {
+		return x.Line
+	}
+	return 0
+}
+
+type StatusChange struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        SessionStatus          `protobuf:"varint,1,opt,name=status,proto3,enum=worker.v1.SessionStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatusChange) Reset() {
+	*x = StatusChange{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatusChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusChange) ProtoMessage() {}
+
+func (x *StatusChange) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusChange.ProtoReflect.Descriptor instead.
+func (*StatusChange) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *StatusChange) GetStatus() SessionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return SessionStatus_SESSION_STATUS_UNSPECIFIED
+}
+
+type ModeChange struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ModeId        string                 `protobuf:"bytes,1,opt,name=mode_id,json=modeId,proto3" json:"mode_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ModeChange) Reset() {
+	*x = ModeChange{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ModeChange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ModeChange) ProtoMessage() {}
+
+func (x *ModeChange) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ModeChange.ProtoReflect.Descriptor instead.
+func (*ModeChange) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ModeChange) GetModeId() string {
+	if x != nil {
+		return x.ModeId
+	}
+	return ""
+}
+
+// Full snapshot of all sessions on this worker.
+type SessionStateSnapshot struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sessions      []*SessionState        `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SessionStateSnapshot) Reset() {
+	*x = SessionStateSnapshot{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionStateSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionStateSnapshot) ProtoMessage() {}
+
+func (x *SessionStateSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionStateSnapshot.ProtoReflect.Descriptor instead.
+func (*SessionStateSnapshot) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *SessionStateSnapshot) GetSessions() []*SessionState {
+	if x != nil {
+		return x.Sessions
+	}
+	return nil
+}
+
+// Current state of a single session.
+type SessionState struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SessionId      string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Agent          Agent                  `protobuf:"varint,2,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
+	Status         SessionStatus          `protobuf:"varint,3,opt,name=status,proto3,enum=worker.v1.SessionStatus" json:"status,omitempty"`
+	Mode           SessionMode            `protobuf:"varint,4,opt,name=mode,proto3,enum=worker.v1.SessionMode" json:"mode,omitempty"`
+	AgentSessionId string                 `protobuf:"bytes,5,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"`
+	Topic          string                 `protobuf:"bytes,6,opt,name=topic,proto3" json:"topic,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SessionState) Reset() {
+	*x = SessionState{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionState) ProtoMessage() {}
+
+func (x *SessionState) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionState.ProtoReflect.Descriptor instead.
+func (*SessionState) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *SessionState) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SessionState) GetAgent() Agent {
+	if x != nil {
+		return x.Agent
+	}
+	return Agent_AGENT_UNSPECIFIED
+}
+
+func (x *SessionState) GetStatus() SessionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return SessionStatus_SESSION_STATUS_UNSPECIFIED
+}
+
+func (x *SessionState) GetMode() SessionMode {
+	if x != nil {
+		return x.Mode
+	}
+	return SessionMode_SESSION_MODE_UNSPECIFIED
+}
+
+func (x *SessionState) GetAgentSessionId() string {
+	if x != nil {
+		return x.AgentSessionId
+	}
+	return ""
+}
+
+func (x *SessionState) GetTopic() string {
+	if x != nil {
+		return x.Topic
+	}
+	return ""
+}
+
+// Notification that a session has been removed.
+type SessionRemoved struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	FinalStatus   string                 `protobuf:"bytes,2,opt,name=final_status,json=finalStatus,proto3" json:"final_status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SessionRemoved) Reset() {
+	*x = SessionRemoved{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionRemoved) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionRemoved) ProtoMessage() {}
+
+func (x *SessionRemoved) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionRemoved.ProtoReflect.Descriptor instead.
+func (*SessionRemoved) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SessionRemoved) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SessionRemoved) GetFinalStatus() string {
+	if x != nil {
+		return x.FinalStatus
+	}
+	return ""
+}
+
+type CheckSessionResumableRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Agent          string                 `protobuf:"bytes,1,opt,name=agent,proto3" json:"agent,omitempty"`                                           // which agent driver
+	AgentSessionId string                 `protobuf:"bytes,2,opt,name=agent_session_id,json=agentSessionId,proto3" json:"agent_session_id,omitempty"` // the ACP session ID
+	Cwd            string                 `protobuf:"bytes,3,opt,name=cwd,proto3" json:"cwd,omitempty"`                                               // working directory
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *CheckSessionResumableRequest) Reset() {
+	*x = CheckSessionResumableRequest{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckSessionResumableRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckSessionResumableRequest) ProtoMessage() {}
+
+func (x *CheckSessionResumableRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckSessionResumableRequest.ProtoReflect.Descriptor instead.
+func (*CheckSessionResumableRequest) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *CheckSessionResumableRequest) GetAgent() string {
+	if x != nil {
+		return x.Agent
+	}
+	return ""
+}
+
+func (x *CheckSessionResumableRequest) GetAgentSessionId() string {
+	if x != nil {
+		return x.AgentSessionId
+	}
+	return ""
+}
+
+func (x *CheckSessionResumableRequest) GetCwd() string {
+	if x != nil {
+		return x.Cwd
+	}
+	return ""
+}
+
+type CheckSessionResumableResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resumable     bool                   `protobuf:"varint,1,opt,name=resumable,proto3" json:"resumable,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"` // if not resumable, why
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckSessionResumableResponse) Reset() {
+	*x = CheckSessionResumableResponse{}
+	mi := &file_worker_v1_worker_service_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckSessionResumableResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckSessionResumableResponse) ProtoMessage() {}
+
+func (x *CheckSessionResumableResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_worker_service_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckSessionResumableResponse.ProtoReflect.Descriptor instead.
+func (*CheckSessionResumableResponse) Descriptor() ([]byte, []int) {
+	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *CheckSessionResumableResponse) GetResumable() bool {
+	if x != nil {
+		return x.Resumable
+	}
+	return false
+}
+
+func (x *CheckSessionResumableResponse) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
 }
 
 var File_worker_v1_worker_service_proto protoreflect.FileDescriptor
 
 const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"\xb8\x02\n" +
-	"\x12NewAgentRunRequest\x12)\n" +
-	"\fagent_run_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
-	"agentRunId\x12&\n" +
+	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"~\n" +
+	"\x14PromptSessionRequest\x12&\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12>\n" +
+	"\x0econtent_blocks\x18\x02 \x03(\v2\x17.worker.v1.ContentBlockR\rcontentBlocks\"6\n" +
+	"\fContentBlock\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"8\n" +
+	"\x15PromptSessionResponse\x12\x1f\n" +
+	"\vstop_reason\x18\x01 \x01(\tR\n" +
+	"stopReason\">\n" +
+	"\x14CancelSessionRequest\x12&\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\"\x17\n" +
+	"\x15CancelSessionResponse\"a\n" +
+	"\x15SetSessionModeRequest\x12&\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12 \n" +
+	"\amode_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06modeId\"\x18\n" +
+	"\x16SetSessionModeResponse\"\xce\x02\n" +
+	"\x11NewSessionRequest\x12&\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12&\n" +
 	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x12\n" +
 	"\x04mode\x18\x03 \x01(\tR\x04mode\x12\x16\n" +
 	"\x06prompt\x18\x04 \x01(\tR\x06prompt\x12#\n" +
 	"\rsystem_prompt\x18\x05 \x01(\tR\fsystemPrompt\x12\x14\n" +
 	"\x05model\x18\x06 \x01(\tR\x05model\x12\x10\n" +
-	"\x03cwd\x18\a \x01(\tR\x03cwd\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\b \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04yolo\x18\t \x01(\bR\x04yolo\x12#\n" +
+	"\x03cwd\x18\a \x01(\tR\x03cwd\x12(\n" +
+	"\x10agent_session_id\x18\b \x01(\tR\x0eagentSessionId\x12!\n" +
+	"\fsession_mode\x18\t \x01(\tR\vsessionMode\x12#\n" +
 	"\rallowed_tools\x18\n" +
-	" \x03(\tR\fallowedTools\"\xe8\x01\n" +
-	"\x13NewAgentRunResponse\x12\x1a\n" +
+	" \x03(\tR\fallowedTools\"\xe7\x01\n" +
+	"\x12NewSessionResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1d\n" +
 	"\n" +
@@ -545,34 +2275,136 @@ const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\x05agent\x18\x04 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x12\x12\n" +
 	"\x04mode\x18\x06 \x01(\tR\x04mode\x12(\n" +
-	"\x10agent_session_id\x18\v \x01(\tR\x0eagentSessionId\"\x81\x02\n" +
-	"\fAgentRunInfo\x12 \n" +
-	"\fagent_run_id\x18\x01 \x01(\tR\n" +
-	"agentRunId\x12&\n" +
-	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x121\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x19.worker.v1.AgentRunStatusR\x06status\x12+\n" +
-	"\x04mode\x18\x04 \x01(\x0e2\x17.worker.v1.AgentRunModeR\x04mode\x12\x1d\n" +
+	"\x10agent_session_id\x18\v \x01(\tR\x0eagentSessionId\"\xf2\x01\n" +
+	"\vSessionInfo\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x05 \x01(\tR\tsessionId\x12(\n" +
-	"\x10agent_session_id\x18\x06 \x01(\tR\x0eagentSessionId\"\x16\n" +
-	"\x14ListAgentRunsRequest\"O\n" +
-	"\x15ListAgentRunsResponse\x126\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12&\n" +
+	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x120\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x18.worker.v1.SessionStatusR\x06status\x12*\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x16.worker.v1.SessionModeR\x04mode\x12(\n" +
+	"\x10agent_session_id\x18\x05 \x01(\tR\x0eagentSessionId\x12\x14\n" +
+	"\x05model\x18\x06 \x01(\tR\x05model\"\x15\n" +
+	"\x13ListSessionsRequest\"J\n" +
+	"\x14ListSessionsResponse\x122\n" +
+	"\bsessions\x18\x01 \x03(\v2\x16.worker.v1.SessionInfoR\bsessions\"[\n" +
+	"\x10StateSyncRequest\x12$\n" +
+	"\x0eack_session_id\x18\x01 \x01(\tR\fackSessionId\x12!\n" +
+	"\fack_sequence\x18\x02 \x01(\x03R\vackSequence\"\xa4\x02\n" +
+	"\x11StateSyncResponse\x12=\n" +
+	"\bsnapshot\x18\x01 \x01(\v2\x1f.worker.v1.SessionStateSnapshotH\x00R\bsnapshot\x12@\n" +
+	"\x0esession_update\x18\x02 \x01(\v2\x17.worker.v1.SessionStateH\x00R\rsessionUpdate\x12D\n" +
+	"\x0fsession_removed\x18\x03 \x01(\v2\x19.worker.v1.SessionRemovedH\x00R\x0esessionRemoved\x12>\n" +
+	"\rsession_event\x18\x04 \x01(\v2\x17.worker.v1.SessionEventH\x00R\fsessionEventB\b\n" +
+	"\x06update\"\xd4\x04\n" +
+	"\fSessionEvent\x12\x1d\n" +
 	"\n" +
-	"agent_runs\x18\x01 \x03(\v2\x17.worker.v1.AgentRunInfoR\tagentRuns*\xe5\x01\n" +
-	"\x0eAgentRunStatus\x12 \n" +
-	"\x1cAGENT_RUN_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
-	"\x19AGENT_RUN_STATUS_STARTING\x10\x01\x12\x1c\n" +
-	"\x18AGENT_RUN_STATUS_RUNNING\x10\x02\x12\x19\n" +
-	"\x15AGENT_RUN_STATUS_IDLE\x10\x03\x12\x1d\n" +
-	"\x19AGENT_RUN_STATUS_STOPPING\x10\x04\x12\x1c\n" +
-	"\x18AGENT_RUN_STATUS_STOPPED\x10\x05\x12\x1c\n" +
-	"\x18AGENT_RUN_STATUS_ERRORED\x10\x06*K\n" +
-	"\fAgentRunMode\x12\x1e\n" +
-	"\x1aAGENT_RUN_MODE_UNSPECIFIED\x10\x00\x12\x1b\n" +
-	"\x17AGENT_RUN_MODE_HEADLESS\x10\x012\xb5\x01\n" +
-	"\rWorkerService\x12N\n" +
-	"\vNewAgentRun\x12\x1d.worker.v1.NewAgentRunRequest\x1a\x1e.worker.v1.NewAgentRunResponse\"\x00\x12T\n" +
-	"\rListAgentRuns\x12\x1f.worker.v1.ListAgentRunsRequest\x1a .worker.v1.ListAgentRunsResponse\"\x00B\xb0\x01\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bsequence\x18\x02 \x01(\x03R\bsequence\x12\x1c\n" +
+	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\x12N\n" +
+	"\x13agent_message_chunk\x18\n" +
+	" \x01(\v2\x1c.worker.v1.AgentMessageChunkH\x00R\x11agentMessageChunk\x12N\n" +
+	"\x13agent_thought_chunk\x18\v \x01(\v2\x1c.worker.v1.AgentThoughtChunkH\x00R\x11agentThoughtChunk\x12B\n" +
+	"\x0ftool_call_start\x18\f \x01(\v2\x18.worker.v1.ToolCallStartH\x00R\rtoolCallStart\x12E\n" +
+	"\x10tool_call_update\x18\r \x01(\v2\x19.worker.v1.ToolCallUpdateH\x00R\x0etoolCallUpdate\x12>\n" +
+	"\rstatus_change\x18\x0e \x01(\v2\x17.worker.v1.StatusChangeH\x00R\fstatusChange\x128\n" +
+	"\vmode_change\x18\x0f \x01(\v2\x15.worker.v1.ModeChangeH\x00R\n" +
+	"modeChange\x12;\n" +
+	"\fuser_message\x18\x10 \x01(\v2\x16.worker.v1.UserMessageH\x00R\vuserMessageB\t\n" +
+	"\apayload\"'\n" +
+	"\x11AgentMessageChunk\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"'\n" +
+	"\x11AgentThoughtChunk\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"!\n" +
+	"\vUserMessage\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\xba\x02\n" +
+	"\rToolCallStart\x12 \n" +
+	"\ftool_call_id\x18\x01 \x01(\tR\n" +
+	"toolCallId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12+\n" +
+	"\x04kind\x18\x03 \x01(\x0e2\x17.worker.v1.ToolCallKindR\x04kind\x12\x1b\n" +
+	"\traw_input\x18\x04 \x01(\tR\brawInput\x129\n" +
+	"\tlocations\x18\x05 \x03(\v2\x1b.worker.v1.ToolCallLocationR\tlocations\x121\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x19.worker.v1.ToolCallStatusR\x06status\x129\n" +
+	"\acontent\x18\a \x03(\v2\x1f.worker.v1.ToolCallContentBlockR\acontent\"\x90\x02\n" +
+	"\x0eToolCallUpdate\x12 \n" +
+	"\ftool_call_id\x18\x01 \x01(\tR\n" +
+	"toolCallId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x121\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x19.worker.v1.ToolCallStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"raw_output\x18\x04 \x01(\tR\trawOutput\x129\n" +
+	"\tlocations\x18\x05 \x03(\v2\x1b.worker.v1.ToolCallLocationR\tlocations\x129\n" +
+	"\acontent\x18\x06 \x03(\v2\x1f.worker.v1.ToolCallContentBlockR\acontent\"}\n" +
+	"\x14ToolCallContentBlock\x12-\n" +
+	"\x04diff\x18\x01 \x01(\v2\x17.worker.v1.ToolCallDiffH\x00R\x04diff\x12-\n" +
+	"\x04text\x18\x02 \x01(\v2\x17.worker.v1.ToolCallTextH\x00R\x04textB\a\n" +
+	"\x05block\"X\n" +
+	"\fToolCallDiff\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\bnew_text\x18\x02 \x01(\tR\anewText\x12\x19\n" +
+	"\bold_text\x18\x03 \x01(\tR\aoldText\"\"\n" +
+	"\fToolCallText\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\":\n" +
+	"\x10ToolCallLocation\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04line\x18\x02 \x01(\x03R\x04line\"@\n" +
+	"\fStatusChange\x120\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x18.worker.v1.SessionStatusR\x06status\"%\n" +
+	"\n" +
+	"ModeChange\x12\x17\n" +
+	"\amode_id\x18\x01 \x01(\tR\x06modeId\"K\n" +
+	"\x14SessionStateSnapshot\x123\n" +
+	"\bsessions\x18\x01 \x03(\v2\x17.worker.v1.SessionStateR\bsessions\"\xf3\x01\n" +
+	"\fSessionState\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12&\n" +
+	"\x05agent\x18\x02 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x120\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x18.worker.v1.SessionStatusR\x06status\x12*\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x16.worker.v1.SessionModeR\x04mode\x12(\n" +
+	"\x10agent_session_id\x18\x05 \x01(\tR\x0eagentSessionId\x12\x14\n" +
+	"\x05topic\x18\x06 \x01(\tR\x05topic\"R\n" +
+	"\x0eSessionRemoved\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
+	"\ffinal_status\x18\x02 \x01(\tR\vfinalStatus\"p\n" +
+	"\x1cCheckSessionResumableRequest\x12\x14\n" +
+	"\x05agent\x18\x01 \x01(\tR\x05agent\x12(\n" +
+	"\x10agent_session_id\x18\x02 \x01(\tR\x0eagentSessionId\x12\x10\n" +
+	"\x03cwd\x18\x03 \x01(\tR\x03cwd\"U\n" +
+	"\x1dCheckSessionResumableResponse\x12\x1c\n" +
+	"\tresumable\x18\x01 \x01(\bR\tresumable\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason*\xd6\x01\n" +
+	"\rSessionStatus\x12\x1e\n" +
+	"\x1aSESSION_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17SESSION_STATUS_STARTING\x10\x01\x12\x1a\n" +
+	"\x16SESSION_STATUS_RUNNING\x10\x02\x12\x17\n" +
+	"\x13SESSION_STATUS_IDLE\x10\x03\x12\x1b\n" +
+	"\x17SESSION_STATUS_STOPPING\x10\x04\x12\x1a\n" +
+	"\x16SESSION_STATUS_STOPPED\x10\x05\x12\x1a\n" +
+	"\x16SESSION_STATUS_ERRORED\x10\x06*F\n" +
+	"\vSessionMode\x12\x1c\n" +
+	"\x18SESSION_MODE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SESSION_MODE_HEADLESS\x10\x01*\x8e\x01\n" +
+	"\x0eToolCallStatus\x12 \n" +
+	"\x1cTOOL_CALL_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18TOOL_CALL_STATUS_RUNNING\x10\x01\x12\x1e\n" +
+	"\x1aTOOL_CALL_STATUS_COMPLETED\x10\x02\x12\x1c\n" +
+	"\x18TOOL_CALL_STATUS_ERRORED\x10\x03*\x96\x01\n" +
+	"\fToolCallKind\x12\x1e\n" +
+	"\x1aTOOL_CALL_KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13TOOL_CALL_KIND_FILE\x10\x01\x12\x18\n" +
+	"\x14TOOL_CALL_KIND_SHELL\x10\x02\x12\x19\n" +
+	"\x15TOOL_CALL_KIND_SEARCH\x10\x03\x12\x18\n" +
+	"\x14TOOL_CALL_KIND_OTHER\x10\x042\xf0\x04\n" +
+	"\rWorkerService\x12K\n" +
+	"\n" +
+	"NewSession\x12\x1c.worker.v1.NewSessionRequest\x1a\x1d.worker.v1.NewSessionResponse\"\x00\x12Q\n" +
+	"\fListSessions\x12\x1e.worker.v1.ListSessionsRequest\x1a\x1f.worker.v1.ListSessionsResponse\"\x00\x12L\n" +
+	"\tStateSync\x12\x1b.worker.v1.StateSyncRequest\x1a\x1c.worker.v1.StateSyncResponse\"\x00(\x010\x01\x12W\n" +
+	"\x0eSetSessionMode\x12 .worker.v1.SetSessionModeRequest\x1a!.worker.v1.SetSessionModeResponse\"\x00\x12T\n" +
+	"\rPromptSession\x12\x1f.worker.v1.PromptSessionRequest\x1a .worker.v1.PromptSessionResponse\"\x00\x12T\n" +
+	"\rCancelSession\x12\x1f.worker.v1.CancelSessionRequest\x1a .worker.v1.CancelSessionResponse\"\x00\x12l\n" +
+	"\x15CheckSessionResumable\x12'.worker.v1.CheckSessionResumableRequest\x1a(.worker.v1.CheckSessionResumableResponse\"\x00B\xb0\x01\n" +
 	"\rcom.worker.v1B\x12WorkerServiceProtoP\x01ZFgithub.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1\xa2\x02\x03WXX\xaa\x02\tWorker.V1\xca\x02\tWorker\\V1\xe2\x02\x15Worker\\V1\\GPBMetadata\xea\x02\n" +
 	"Worker::V1b\x06proto3"
 
@@ -588,34 +2420,98 @@ func file_worker_v1_worker_service_proto_rawDescGZIP() []byte {
 	return file_worker_v1_worker_service_proto_rawDescData
 }
 
-var file_worker_v1_worker_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_worker_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_worker_v1_worker_service_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_worker_v1_worker_service_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_worker_v1_worker_service_proto_goTypes = []any{
-	(AgentRunStatus)(0),           // 0: worker.v1.AgentRunStatus
-	(AgentRunMode)(0),             // 1: worker.v1.AgentRunMode
-	(*NewAgentRunRequest)(nil),    // 2: worker.v1.NewAgentRunRequest
-	(*NewAgentRunResponse)(nil),   // 3: worker.v1.NewAgentRunResponse
-	(*AgentRunInfo)(nil),          // 4: worker.v1.AgentRunInfo
-	(*ListAgentRunsRequest)(nil),  // 5: worker.v1.ListAgentRunsRequest
-	(*ListAgentRunsResponse)(nil), // 6: worker.v1.ListAgentRunsResponse
-	(Agent)(0),                    // 7: worker.v1.Agent
+	(SessionStatus)(0),                    // 0: worker.v1.SessionStatus
+	(SessionMode)(0),                      // 1: worker.v1.SessionMode
+	(ToolCallStatus)(0),                   // 2: worker.v1.ToolCallStatus
+	(ToolCallKind)(0),                     // 3: worker.v1.ToolCallKind
+	(*PromptSessionRequest)(nil),          // 4: worker.v1.PromptSessionRequest
+	(*ContentBlock)(nil),                  // 5: worker.v1.ContentBlock
+	(*PromptSessionResponse)(nil),         // 6: worker.v1.PromptSessionResponse
+	(*CancelSessionRequest)(nil),          // 7: worker.v1.CancelSessionRequest
+	(*CancelSessionResponse)(nil),         // 8: worker.v1.CancelSessionResponse
+	(*SetSessionModeRequest)(nil),         // 9: worker.v1.SetSessionModeRequest
+	(*SetSessionModeResponse)(nil),        // 10: worker.v1.SetSessionModeResponse
+	(*NewSessionRequest)(nil),             // 11: worker.v1.NewSessionRequest
+	(*NewSessionResponse)(nil),            // 12: worker.v1.NewSessionResponse
+	(*SessionInfo)(nil),                   // 13: worker.v1.SessionInfo
+	(*ListSessionsRequest)(nil),           // 14: worker.v1.ListSessionsRequest
+	(*ListSessionsResponse)(nil),          // 15: worker.v1.ListSessionsResponse
+	(*StateSyncRequest)(nil),              // 16: worker.v1.StateSyncRequest
+	(*StateSyncResponse)(nil),             // 17: worker.v1.StateSyncResponse
+	(*SessionEvent)(nil),                  // 18: worker.v1.SessionEvent
+	(*AgentMessageChunk)(nil),             // 19: worker.v1.AgentMessageChunk
+	(*AgentThoughtChunk)(nil),             // 20: worker.v1.AgentThoughtChunk
+	(*UserMessage)(nil),                   // 21: worker.v1.UserMessage
+	(*ToolCallStart)(nil),                 // 22: worker.v1.ToolCallStart
+	(*ToolCallUpdate)(nil),                // 23: worker.v1.ToolCallUpdate
+	(*ToolCallContentBlock)(nil),          // 24: worker.v1.ToolCallContentBlock
+	(*ToolCallDiff)(nil),                  // 25: worker.v1.ToolCallDiff
+	(*ToolCallText)(nil),                  // 26: worker.v1.ToolCallText
+	(*ToolCallLocation)(nil),              // 27: worker.v1.ToolCallLocation
+	(*StatusChange)(nil),                  // 28: worker.v1.StatusChange
+	(*ModeChange)(nil),                    // 29: worker.v1.ModeChange
+	(*SessionStateSnapshot)(nil),          // 30: worker.v1.SessionStateSnapshot
+	(*SessionState)(nil),                  // 31: worker.v1.SessionState
+	(*SessionRemoved)(nil),                // 32: worker.v1.SessionRemoved
+	(*CheckSessionResumableRequest)(nil),  // 33: worker.v1.CheckSessionResumableRequest
+	(*CheckSessionResumableResponse)(nil), // 34: worker.v1.CheckSessionResumableResponse
+	(Agent)(0),                            // 35: worker.v1.Agent
 }
 var file_worker_v1_worker_service_proto_depIdxs = []int32{
-	7, // 0: worker.v1.NewAgentRunRequest.agent:type_name -> worker.v1.Agent
-	7, // 1: worker.v1.NewAgentRunResponse.agent:type_name -> worker.v1.Agent
-	7, // 2: worker.v1.AgentRunInfo.agent:type_name -> worker.v1.Agent
-	0, // 3: worker.v1.AgentRunInfo.status:type_name -> worker.v1.AgentRunStatus
-	1, // 4: worker.v1.AgentRunInfo.mode:type_name -> worker.v1.AgentRunMode
-	4, // 5: worker.v1.ListAgentRunsResponse.agent_runs:type_name -> worker.v1.AgentRunInfo
-	2, // 6: worker.v1.WorkerService.NewAgentRun:input_type -> worker.v1.NewAgentRunRequest
-	5, // 7: worker.v1.WorkerService.ListAgentRuns:input_type -> worker.v1.ListAgentRunsRequest
-	3, // 8: worker.v1.WorkerService.NewAgentRun:output_type -> worker.v1.NewAgentRunResponse
-	6, // 9: worker.v1.WorkerService.ListAgentRuns:output_type -> worker.v1.ListAgentRunsResponse
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	5,  // 0: worker.v1.PromptSessionRequest.content_blocks:type_name -> worker.v1.ContentBlock
+	35, // 1: worker.v1.NewSessionRequest.agent:type_name -> worker.v1.Agent
+	35, // 2: worker.v1.NewSessionResponse.agent:type_name -> worker.v1.Agent
+	35, // 3: worker.v1.SessionInfo.agent:type_name -> worker.v1.Agent
+	0,  // 4: worker.v1.SessionInfo.status:type_name -> worker.v1.SessionStatus
+	1,  // 5: worker.v1.SessionInfo.mode:type_name -> worker.v1.SessionMode
+	13, // 6: worker.v1.ListSessionsResponse.sessions:type_name -> worker.v1.SessionInfo
+	30, // 7: worker.v1.StateSyncResponse.snapshot:type_name -> worker.v1.SessionStateSnapshot
+	31, // 8: worker.v1.StateSyncResponse.session_update:type_name -> worker.v1.SessionState
+	32, // 9: worker.v1.StateSyncResponse.session_removed:type_name -> worker.v1.SessionRemoved
+	18, // 10: worker.v1.StateSyncResponse.session_event:type_name -> worker.v1.SessionEvent
+	19, // 11: worker.v1.SessionEvent.agent_message_chunk:type_name -> worker.v1.AgentMessageChunk
+	20, // 12: worker.v1.SessionEvent.agent_thought_chunk:type_name -> worker.v1.AgentThoughtChunk
+	22, // 13: worker.v1.SessionEvent.tool_call_start:type_name -> worker.v1.ToolCallStart
+	23, // 14: worker.v1.SessionEvent.tool_call_update:type_name -> worker.v1.ToolCallUpdate
+	28, // 15: worker.v1.SessionEvent.status_change:type_name -> worker.v1.StatusChange
+	29, // 16: worker.v1.SessionEvent.mode_change:type_name -> worker.v1.ModeChange
+	21, // 17: worker.v1.SessionEvent.user_message:type_name -> worker.v1.UserMessage
+	3,  // 18: worker.v1.ToolCallStart.kind:type_name -> worker.v1.ToolCallKind
+	27, // 19: worker.v1.ToolCallStart.locations:type_name -> worker.v1.ToolCallLocation
+	2,  // 20: worker.v1.ToolCallStart.status:type_name -> worker.v1.ToolCallStatus
+	24, // 21: worker.v1.ToolCallStart.content:type_name -> worker.v1.ToolCallContentBlock
+	2,  // 22: worker.v1.ToolCallUpdate.status:type_name -> worker.v1.ToolCallStatus
+	27, // 23: worker.v1.ToolCallUpdate.locations:type_name -> worker.v1.ToolCallLocation
+	24, // 24: worker.v1.ToolCallUpdate.content:type_name -> worker.v1.ToolCallContentBlock
+	25, // 25: worker.v1.ToolCallContentBlock.diff:type_name -> worker.v1.ToolCallDiff
+	26, // 26: worker.v1.ToolCallContentBlock.text:type_name -> worker.v1.ToolCallText
+	0,  // 27: worker.v1.StatusChange.status:type_name -> worker.v1.SessionStatus
+	31, // 28: worker.v1.SessionStateSnapshot.sessions:type_name -> worker.v1.SessionState
+	35, // 29: worker.v1.SessionState.agent:type_name -> worker.v1.Agent
+	0,  // 30: worker.v1.SessionState.status:type_name -> worker.v1.SessionStatus
+	1,  // 31: worker.v1.SessionState.mode:type_name -> worker.v1.SessionMode
+	11, // 32: worker.v1.WorkerService.NewSession:input_type -> worker.v1.NewSessionRequest
+	14, // 33: worker.v1.WorkerService.ListSessions:input_type -> worker.v1.ListSessionsRequest
+	16, // 34: worker.v1.WorkerService.StateSync:input_type -> worker.v1.StateSyncRequest
+	9,  // 35: worker.v1.WorkerService.SetSessionMode:input_type -> worker.v1.SetSessionModeRequest
+	4,  // 36: worker.v1.WorkerService.PromptSession:input_type -> worker.v1.PromptSessionRequest
+	7,  // 37: worker.v1.WorkerService.CancelSession:input_type -> worker.v1.CancelSessionRequest
+	33, // 38: worker.v1.WorkerService.CheckSessionResumable:input_type -> worker.v1.CheckSessionResumableRequest
+	12, // 39: worker.v1.WorkerService.NewSession:output_type -> worker.v1.NewSessionResponse
+	15, // 40: worker.v1.WorkerService.ListSessions:output_type -> worker.v1.ListSessionsResponse
+	17, // 41: worker.v1.WorkerService.StateSync:output_type -> worker.v1.StateSyncResponse
+	10, // 42: worker.v1.WorkerService.SetSessionMode:output_type -> worker.v1.SetSessionModeResponse
+	6,  // 43: worker.v1.WorkerService.PromptSession:output_type -> worker.v1.PromptSessionResponse
+	8,  // 44: worker.v1.WorkerService.CancelSession:output_type -> worker.v1.CancelSessionResponse
+	34, // 45: worker.v1.WorkerService.CheckSessionResumable:output_type -> worker.v1.CheckSessionResumableResponse
+	39, // [39:46] is the sub-list for method output_type
+	32, // [32:39] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_worker_v1_worker_service_proto_init() }
@@ -624,13 +2520,32 @@ func file_worker_v1_worker_service_proto_init() {
 		return
 	}
 	file_worker_v1_agent_proto_init()
+	file_worker_v1_worker_service_proto_msgTypes[13].OneofWrappers = []any{
+		(*StateSyncResponse_Snapshot)(nil),
+		(*StateSyncResponse_SessionUpdate)(nil),
+		(*StateSyncResponse_SessionRemoved)(nil),
+		(*StateSyncResponse_SessionEvent)(nil),
+	}
+	file_worker_v1_worker_service_proto_msgTypes[14].OneofWrappers = []any{
+		(*SessionEvent_AgentMessageChunk)(nil),
+		(*SessionEvent_AgentThoughtChunk)(nil),
+		(*SessionEvent_ToolCallStart)(nil),
+		(*SessionEvent_ToolCallUpdate)(nil),
+		(*SessionEvent_StatusChange)(nil),
+		(*SessionEvent_ModeChange)(nil),
+		(*SessionEvent_UserMessage)(nil),
+	}
+	file_worker_v1_worker_service_proto_msgTypes[20].OneofWrappers = []any{
+		(*ToolCallContentBlock_Diff)(nil),
+		(*ToolCallContentBlock_Text)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worker_v1_worker_service_proto_rawDesc), len(file_worker_v1_worker_service_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   5,
+			NumEnums:      4,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

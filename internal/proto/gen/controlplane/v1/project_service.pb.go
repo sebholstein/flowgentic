@@ -9,7 +9,6 @@ package controlplanev1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -24,18 +23,19 @@ const (
 
 // ProjectConfig describes a project.
 type ProjectConfig struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	DefaultPlannerAgent string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
-	DefaultPlannerModel string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
-	EmbeddedWorkerPath  string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
-	WorkerPaths         map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	CreatedAt           *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	SortIndex           int32                  `protobuf:"varint,9,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"open.v1"`
+	Id                           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	DefaultPlannerAgent          string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
+	DefaultPlannerModel          string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
+	EmbeddedWorkerPath           string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
+	WorkerPaths                  map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	CreatedAt                    string                 `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt                    string                 `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	SortIndex                    int32                  `protobuf:"varint,9,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
+	AgentPlanningTaskPreferences string                 `protobuf:"bytes,10,opt,name=agent_planning_task_preferences,json=agentPlanningTaskPreferences,proto3" json:"agent_planning_task_preferences,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *ProjectConfig) Reset() {
@@ -110,18 +110,18 @@ func (x *ProjectConfig) GetWorkerPaths() map[string]string {
 	return nil
 }
 
-func (x *ProjectConfig) GetCreatedAt() *timestamppb.Timestamp {
+func (x *ProjectConfig) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return nil
+	return ""
 }
 
-func (x *ProjectConfig) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *ProjectConfig) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return nil
+	return ""
 }
 
 func (x *ProjectConfig) GetSortIndex() int32 {
@@ -129,6 +129,13 @@ func (x *ProjectConfig) GetSortIndex() int32 {
 		return x.SortIndex
 	}
 	return 0
+}
+
+func (x *ProjectConfig) GetAgentPlanningTaskPreferences() string {
+	if x != nil {
+		return x.AgentPlanningTaskPreferences
+	}
+	return ""
 }
 
 type ListProjectsRequest struct {
@@ -300,16 +307,17 @@ func (x *GetProjectResponse) GetProject() *ProjectConfig {
 }
 
 type CreateProjectRequest struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	DefaultPlannerAgent string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
-	DefaultPlannerModel string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
-	EmbeddedWorkerPath  string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
-	WorkerPaths         map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	SortIndex           int32                  `protobuf:"varint,7,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"open.v1"`
+	Id                           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	DefaultPlannerAgent          string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
+	DefaultPlannerModel          string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
+	EmbeddedWorkerPath           string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
+	WorkerPaths                  map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SortIndex                    int32                  `protobuf:"varint,7,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
+	AgentPlanningTaskPreferences string                 `protobuf:"bytes,8,opt,name=agent_planning_task_preferences,json=agentPlanningTaskPreferences,proto3" json:"agent_planning_task_preferences,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *CreateProjectRequest) Reset() {
@@ -391,6 +399,13 @@ func (x *CreateProjectRequest) GetSortIndex() int32 {
 	return 0
 }
 
+func (x *CreateProjectRequest) GetAgentPlanningTaskPreferences() string {
+	if x != nil {
+		return x.AgentPlanningTaskPreferences
+	}
+	return ""
+}
+
 type CreateProjectResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Project       *ProjectConfig         `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
@@ -436,16 +451,17 @@ func (x *CreateProjectResponse) GetProject() *ProjectConfig {
 }
 
 type UpdateProjectRequest struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	DefaultPlannerAgent string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
-	DefaultPlannerModel string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
-	EmbeddedWorkerPath  string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
-	WorkerPaths         map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	SortIndex           int32                  `protobuf:"varint,7,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"open.v1"`
+	Id                           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	DefaultPlannerAgent          string                 `protobuf:"bytes,3,opt,name=default_planner_agent,json=defaultPlannerAgent,proto3" json:"default_planner_agent,omitempty"`
+	DefaultPlannerModel          string                 `protobuf:"bytes,4,opt,name=default_planner_model,json=defaultPlannerModel,proto3" json:"default_planner_model,omitempty"`
+	EmbeddedWorkerPath           string                 `protobuf:"bytes,5,opt,name=embedded_worker_path,json=embeddedWorkerPath,proto3" json:"embedded_worker_path,omitempty"`
+	WorkerPaths                  map[string]string      `protobuf:"bytes,6,rep,name=worker_paths,json=workerPaths,proto3" json:"worker_paths,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SortIndex                    int32                  `protobuf:"varint,7,opt,name=sort_index,json=sortIndex,proto3" json:"sort_index,omitempty"`
+	AgentPlanningTaskPreferences string                 `protobuf:"bytes,8,opt,name=agent_planning_task_preferences,json=agentPlanningTaskPreferences,proto3" json:"agent_planning_task_preferences,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *UpdateProjectRequest) Reset() {
@@ -525,6 +541,13 @@ func (x *UpdateProjectRequest) GetSortIndex() int32 {
 		return x.SortIndex
 	}
 	return 0
+}
+
+func (x *UpdateProjectRequest) GetAgentPlanningTaskPreferences() string {
+	if x != nil {
+		return x.AgentPlanningTaskPreferences
+	}
+	return ""
 }
 
 type UpdateProjectResponse struct {
@@ -788,20 +811,22 @@ var File_controlplane_v1_project_service_proto protoreflect.FileDescriptor
 
 const file_controlplane_v1_project_service_proto_rawDesc = "" +
 	"\n" +
-	"%controlplane/v1/project_service.proto\x12\x0fcontrolplane.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\x03\n" +
+	"%controlplane/v1/project_service.proto\x12\x0fcontrolplane.v1\"\x85\x04\n" +
 	"\rProjectConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x122\n" +
 	"\x15default_planner_agent\x18\x03 \x01(\tR\x13defaultPlannerAgent\x122\n" +
 	"\x15default_planner_model\x18\x04 \x01(\tR\x13defaultPlannerModel\x120\n" +
 	"\x14embedded_worker_path\x18\x05 \x01(\tR\x12embeddedWorkerPath\x12R\n" +
-	"\fworker_paths\x18\x06 \x03(\v2/.controlplane.v1.ProjectConfig.WorkerPathsEntryR\vworkerPaths\x129\n" +
+	"\fworker_paths\x18\x06 \x03(\v2/.controlplane.v1.ProjectConfig.WorkerPathsEntryR\vworkerPaths\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\a \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1d\n" +
+	"updated_at\x18\b \x01(\tR\tupdatedAt\x12\x1d\n" +
 	"\n" +
-	"sort_index\x18\t \x01(\x05R\tsortIndex\x1a>\n" +
+	"sort_index\x18\t \x01(\x05R\tsortIndex\x12E\n" +
+	"\x1fagent_planning_task_preferences\x18\n" +
+	" \x01(\tR\x1cagentPlanningTaskPreferences\x1a>\n" +
 	"\x10WorkerPathsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x15\n" +
@@ -811,7 +836,7 @@ const file_controlplane_v1_project_service_proto_rawDesc = "" +
 	"\x11GetProjectRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"N\n" +
 	"\x12GetProjectResponse\x128\n" +
-	"\aproject\x18\x01 \x01(\v2\x1e.controlplane.v1.ProjectConfigR\aproject\"\x8e\x03\n" +
+	"\aproject\x18\x01 \x01(\v2\x1e.controlplane.v1.ProjectConfigR\aproject\"\xd5\x03\n" +
 	"\x14CreateProjectRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x122\n" +
@@ -820,12 +845,13 @@ const file_controlplane_v1_project_service_proto_rawDesc = "" +
 	"\x14embedded_worker_path\x18\x05 \x01(\tR\x12embeddedWorkerPath\x12Y\n" +
 	"\fworker_paths\x18\x06 \x03(\v26.controlplane.v1.CreateProjectRequest.WorkerPathsEntryR\vworkerPaths\x12\x1d\n" +
 	"\n" +
-	"sort_index\x18\a \x01(\x05R\tsortIndex\x1a>\n" +
+	"sort_index\x18\a \x01(\x05R\tsortIndex\x12E\n" +
+	"\x1fagent_planning_task_preferences\x18\b \x01(\tR\x1cagentPlanningTaskPreferences\x1a>\n" +
 	"\x10WorkerPathsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
 	"\x15CreateProjectResponse\x128\n" +
-	"\aproject\x18\x01 \x01(\v2\x1e.controlplane.v1.ProjectConfigR\aproject\"\x8e\x03\n" +
+	"\aproject\x18\x01 \x01(\v2\x1e.controlplane.v1.ProjectConfigR\aproject\"\xd5\x03\n" +
 	"\x14UpdateProjectRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x122\n" +
@@ -834,7 +860,8 @@ const file_controlplane_v1_project_service_proto_rawDesc = "" +
 	"\x14embedded_worker_path\x18\x05 \x01(\tR\x12embeddedWorkerPath\x12Y\n" +
 	"\fworker_paths\x18\x06 \x03(\v26.controlplane.v1.UpdateProjectRequest.WorkerPathsEntryR\vworkerPaths\x12\x1d\n" +
 	"\n" +
-	"sort_index\x18\a \x01(\x05R\tsortIndex\x1a>\n" +
+	"sort_index\x18\a \x01(\x05R\tsortIndex\x12E\n" +
+	"\x1fagent_planning_task_preferences\x18\b \x01(\tR\x1cagentPlanningTaskPreferences\x1a>\n" +
 	"\x10WorkerPathsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
@@ -891,36 +918,33 @@ var file_controlplane_v1_project_service_proto_goTypes = []any{
 	nil,                             // 14: controlplane.v1.ProjectConfig.WorkerPathsEntry
 	nil,                             // 15: controlplane.v1.CreateProjectRequest.WorkerPathsEntry
 	nil,                             // 16: controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
-	(*timestamppb.Timestamp)(nil),   // 17: google.protobuf.Timestamp
 }
 var file_controlplane_v1_project_service_proto_depIdxs = []int32{
 	14, // 0: controlplane.v1.ProjectConfig.worker_paths:type_name -> controlplane.v1.ProjectConfig.WorkerPathsEntry
-	17, // 1: controlplane.v1.ProjectConfig.created_at:type_name -> google.protobuf.Timestamp
-	17, // 2: controlplane.v1.ProjectConfig.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 3: controlplane.v1.ListProjectsResponse.projects:type_name -> controlplane.v1.ProjectConfig
-	0,  // 4: controlplane.v1.GetProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	15, // 5: controlplane.v1.CreateProjectRequest.worker_paths:type_name -> controlplane.v1.CreateProjectRequest.WorkerPathsEntry
-	0,  // 6: controlplane.v1.CreateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	16, // 7: controlplane.v1.UpdateProjectRequest.worker_paths:type_name -> controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
-	0,  // 8: controlplane.v1.UpdateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
-	12, // 9: controlplane.v1.ReorderProjectsRequest.entries:type_name -> controlplane.v1.ProjectSortEntry
-	1,  // 10: controlplane.v1.ProjectService.ListProjects:input_type -> controlplane.v1.ListProjectsRequest
-	3,  // 11: controlplane.v1.ProjectService.GetProject:input_type -> controlplane.v1.GetProjectRequest
-	5,  // 12: controlplane.v1.ProjectService.CreateProject:input_type -> controlplane.v1.CreateProjectRequest
-	7,  // 13: controlplane.v1.ProjectService.UpdateProject:input_type -> controlplane.v1.UpdateProjectRequest
-	9,  // 14: controlplane.v1.ProjectService.DeleteProject:input_type -> controlplane.v1.DeleteProjectRequest
-	11, // 15: controlplane.v1.ProjectService.ReorderProjects:input_type -> controlplane.v1.ReorderProjectsRequest
-	2,  // 16: controlplane.v1.ProjectService.ListProjects:output_type -> controlplane.v1.ListProjectsResponse
-	4,  // 17: controlplane.v1.ProjectService.GetProject:output_type -> controlplane.v1.GetProjectResponse
-	6,  // 18: controlplane.v1.ProjectService.CreateProject:output_type -> controlplane.v1.CreateProjectResponse
-	8,  // 19: controlplane.v1.ProjectService.UpdateProject:output_type -> controlplane.v1.UpdateProjectResponse
-	10, // 20: controlplane.v1.ProjectService.DeleteProject:output_type -> controlplane.v1.DeleteProjectResponse
-	13, // 21: controlplane.v1.ProjectService.ReorderProjects:output_type -> controlplane.v1.ReorderProjectsResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	0,  // 1: controlplane.v1.ListProjectsResponse.projects:type_name -> controlplane.v1.ProjectConfig
+	0,  // 2: controlplane.v1.GetProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	15, // 3: controlplane.v1.CreateProjectRequest.worker_paths:type_name -> controlplane.v1.CreateProjectRequest.WorkerPathsEntry
+	0,  // 4: controlplane.v1.CreateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	16, // 5: controlplane.v1.UpdateProjectRequest.worker_paths:type_name -> controlplane.v1.UpdateProjectRequest.WorkerPathsEntry
+	0,  // 6: controlplane.v1.UpdateProjectResponse.project:type_name -> controlplane.v1.ProjectConfig
+	12, // 7: controlplane.v1.ReorderProjectsRequest.entries:type_name -> controlplane.v1.ProjectSortEntry
+	1,  // 8: controlplane.v1.ProjectService.ListProjects:input_type -> controlplane.v1.ListProjectsRequest
+	3,  // 9: controlplane.v1.ProjectService.GetProject:input_type -> controlplane.v1.GetProjectRequest
+	5,  // 10: controlplane.v1.ProjectService.CreateProject:input_type -> controlplane.v1.CreateProjectRequest
+	7,  // 11: controlplane.v1.ProjectService.UpdateProject:input_type -> controlplane.v1.UpdateProjectRequest
+	9,  // 12: controlplane.v1.ProjectService.DeleteProject:input_type -> controlplane.v1.DeleteProjectRequest
+	11, // 13: controlplane.v1.ProjectService.ReorderProjects:input_type -> controlplane.v1.ReorderProjectsRequest
+	2,  // 14: controlplane.v1.ProjectService.ListProjects:output_type -> controlplane.v1.ListProjectsResponse
+	4,  // 15: controlplane.v1.ProjectService.GetProject:output_type -> controlplane.v1.GetProjectResponse
+	6,  // 16: controlplane.v1.ProjectService.CreateProject:output_type -> controlplane.v1.CreateProjectResponse
+	8,  // 17: controlplane.v1.ProjectService.UpdateProject:output_type -> controlplane.v1.UpdateProjectResponse
+	10, // 18: controlplane.v1.ProjectService.DeleteProject:output_type -> controlplane.v1.DeleteProjectResponse
+	13, // 19: controlplane.v1.ProjectService.ReorderProjects:output_type -> controlplane.v1.ReorderProjectsResponse
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_controlplane_v1_project_service_proto_init() }

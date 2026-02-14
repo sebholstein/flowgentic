@@ -11,20 +11,21 @@ import (
 )
 
 const createProject = `-- name: CreateProject :exec
-INSERT INTO projects (id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO projects (id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index, agent_planning_task_preferences)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateProjectParams struct {
-	ID                  string
-	Name                string
-	DefaultPlannerAgent string
-	DefaultPlannerModel string
-	EmbeddedWorkerPath  string
-	WorkerPaths         string
-	CreatedAt           string
-	UpdatedAt           string
-	SortIndex           int64
+	ID                           string
+	Name                         string
+	DefaultPlannerAgent          string
+	DefaultPlannerModel          string
+	EmbeddedWorkerPath           string
+	WorkerPaths                  string
+	CreatedAt                    string
+	UpdatedAt                    string
+	SortIndex                    int64
+	AgentPlanningTaskPreferences string
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) error {
@@ -38,6 +39,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) er
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.SortIndex,
+		arg.AgentPlanningTaskPreferences,
 	)
 	return err
 }
@@ -50,8 +52,17 @@ func (q *Queries) DeleteProject(ctx context.Context, id string) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteProject, id)
 }
 
+const deleteWorkerProjectPaths = `-- name: DeleteWorkerProjectPaths :exec
+DELETE FROM worker_project_paths WHERE project_id = ?
+`
+
+func (q *Queries) DeleteWorkerProjectPaths(ctx context.Context, projectID string) error {
+	_, err := q.db.ExecContext(ctx, deleteWorkerProjectPaths, projectID)
+	return err
+}
+
 const getProject = `-- name: GetProject :one
-SELECT id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index FROM projects
+SELECT id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index, agent_planning_task_preferences FROM projects
 WHERE id = ?
 `
 
@@ -68,12 +79,29 @@ func (q *Queries) GetProject(ctx context.Context, id string) (Project, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SortIndex,
+		&i.AgentPlanningTaskPreferences,
 	)
 	return i, err
 }
 
+const insertWorkerProjectPath = `-- name: InsertWorkerProjectPath :exec
+INSERT INTO worker_project_paths (project_id, worker_id, path)
+VALUES (?, ?, ?)
+`
+
+type InsertWorkerProjectPathParams struct {
+	ProjectID string
+	WorkerID  string
+	Path      string
+}
+
+func (q *Queries) InsertWorkerProjectPath(ctx context.Context, arg InsertWorkerProjectPathParams) error {
+	_, err := q.db.ExecContext(ctx, insertWorkerProjectPath, arg.ProjectID, arg.WorkerID, arg.Path)
+	return err
+}
+
 const listProjects = `-- name: ListProjects :many
-SELECT id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index FROM projects
+SELECT id, name, default_planner_agent, default_planner_model, embedded_worker_path, worker_paths, created_at, updated_at, sort_index, agent_planning_task_preferences FROM projects
 ORDER BY sort_index, created_at
 `
 
@@ -96,7 +124,41 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SortIndex,
+			&i.AgentPlanningTaskPreferences,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWorkerProjectPaths = `-- name: ListWorkerProjectPaths :many
+SELECT worker_id, path FROM worker_project_paths
+WHERE project_id = ?
+`
+
+type ListWorkerProjectPathsRow struct {
+	WorkerID string
+	Path     string
+}
+
+func (q *Queries) ListWorkerProjectPaths(ctx context.Context, projectID string) ([]ListWorkerProjectPathsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listWorkerProjectPaths, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListWorkerProjectPathsRow
+	for rows.Next() {
+		var i ListWorkerProjectPathsRow
+		if err := rows.Scan(&i.WorkerID, &i.Path); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -112,19 +174,20 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 
 const updateProject = `-- name: UpdateProject :execresult
 UPDATE projects
-SET name = ?, default_planner_agent = ?, default_planner_model = ?, embedded_worker_path = ?, worker_paths = ?, updated_at = ?, sort_index = ?
+SET name = ?, default_planner_agent = ?, default_planner_model = ?, embedded_worker_path = ?, worker_paths = ?, updated_at = ?, sort_index = ?, agent_planning_task_preferences = ?
 WHERE id = ?
 `
 
 type UpdateProjectParams struct {
-	Name                string
-	DefaultPlannerAgent string
-	DefaultPlannerModel string
-	EmbeddedWorkerPath  string
-	WorkerPaths         string
-	UpdatedAt           string
-	SortIndex           int64
-	ID                  string
+	Name                         string
+	DefaultPlannerAgent          string
+	DefaultPlannerModel          string
+	EmbeddedWorkerPath           string
+	WorkerPaths                  string
+	UpdatedAt                    string
+	SortIndex                    int64
+	AgentPlanningTaskPreferences string
+	ID                           string
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (sql.Result, error) {
@@ -136,6 +199,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (s
 		arg.WorkerPaths,
 		arg.UpdatedAt,
 		arg.SortIndex,
+		arg.AgentPlanningTaskPreferences,
 		arg.ID,
 	)
 }

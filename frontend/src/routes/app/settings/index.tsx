@@ -11,7 +11,7 @@ import {
   EmbeddedWorkerStatus,
 } from "@/proto/gen/controlplane/v1/embedded_worker_service_pb";
 import type { WatchEmbeddedWorkerStatusResponse } from "@/proto/gen/controlplane/v1/embedded_worker_service_pb";
-import { getHarnessIcon } from "@/components/icons/harness-icons";
+import { getHarnessIcon } from "@/components/icons/agent-icons";
 
 import { Badge } from "@/components/ui/badge";
 import { SettingsSection } from "@/components/settings/SettingsSection";

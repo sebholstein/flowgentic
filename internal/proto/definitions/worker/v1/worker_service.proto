@@ -7,33 +7,74 @@ import "worker/v1/agent.proto";
 
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
 
-enum AgentRunStatus {
-  AGENT_RUN_STATUS_UNSPECIFIED = 0;
-  AGENT_RUN_STATUS_STARTING = 1;
-  AGENT_RUN_STATUS_RUNNING = 2;
-  AGENT_RUN_STATUS_IDLE = 3;
-  AGENT_RUN_STATUS_STOPPING = 4;
-  AGENT_RUN_STATUS_STOPPED = 5;
-  AGENT_RUN_STATUS_ERRORED = 6;
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_STARTING = 1;
+  SESSION_STATUS_RUNNING = 2;
+  SESSION_STATUS_IDLE = 3;
+  SESSION_STATUS_STOPPING = 4;
+  SESSION_STATUS_STOPPED = 5;
+  SESSION_STATUS_ERRORED = 6;
 }
 
-enum AgentRunMode {
-  AGENT_RUN_MODE_UNSPECIFIED = 0;
-  AGENT_RUN_MODE_HEADLESS = 1;
+enum SessionMode {
+  SESSION_MODE_UNSPECIFIED = 0;
+  SESSION_MODE_HEADLESS = 1;
 }
 
 // WorkerService is the API exposed by each worker node.
-// The control plane calls these RPCs to dispatch agent runs to workers.
+// The control plane calls these RPCs to dispatch sessions to workers.
 service WorkerService {
-  // NewAgentRun asks the worker to run an agent workload.
-  rpc NewAgentRun(NewAgentRunRequest) returns (NewAgentRunResponse) {}
-  // ListAgentRuns returns all currently active agent runs on this worker.
-  rpc ListAgentRuns(ListAgentRunsRequest) returns (ListAgentRunsResponse) {}
+  // NewSession asks the worker to run an agent workload.
+  rpc NewSession(NewSessionRequest) returns (NewSessionResponse) {}
+  // ListSessions returns all currently active sessions on this worker.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+  // StateSync is a persistent bidi stream. The CP connects and receives
+  // the full current state of all sessions, then delta updates as state changes.
+  rpc StateSync(stream StateSyncRequest) returns (stream StateSyncResponse) {}
+  // SetSessionMode changes the permission mode of a running agent session.
+  rpc SetSessionMode(SetSessionModeRequest) returns (SetSessionModeResponse) {}
+  // PromptSession sends a follow-up prompt to a running session.
+  rpc PromptSession(PromptSessionRequest) returns (PromptSessionResponse) {}
+  // CancelSession cancels the active prompt on a running session.
+  rpc CancelSession(CancelSessionRequest) returns (CancelSessionResponse) {}
+  // CheckSessionResumable checks if an ACP session can be resumed from disk.
+  rpc CheckSessionResumable(CheckSessionResumableRequest) returns (CheckSessionResumableResponse) {}
 }
 
-message NewAgentRunRequest {
-  // Unique identifier for this agent run, assigned by the control plane.
-  string agent_run_id = 1 [(buf.validate.field).string.min_len = 1];
+message PromptSessionRequest {
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
+  // The prompt content blocks to send.
+  repeated ContentBlock content_blocks = 2;
+}
+
+message ContentBlock {
+  string type = 1;  // "text"
+  string text = 2;
+}
+
+message PromptSessionResponse {
+  string stop_reason = 1;
+}
+
+message CancelSessionRequest {
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message CancelSessionResponse {}
+
+message SetSessionModeRequest {
+  // The session whose session mode should change.
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
+  // The new mode ID (e.g. "ask", "architect", "code").
+  string mode_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message SetSessionModeResponse {}
+
+message NewSessionRequest {
+  // Unique identifier for this session, assigned by the control plane.
+  string session_id = 1 [(buf.validate.field).string.min_len = 1];
   // Agent driver to use.
   Agent agent = 2;
   // Session mode: "headless" or "interactive".
@@ -46,20 +87,20 @@ message NewAgentRunRequest {
   string model = 6;
   // Working directory for the agent session.
   string cwd = 7;
-  // Optional: resume an existing session by ID.
-  string session_id = 8;
-  // Whether to run in yolo/auto-approve mode.
-  bool yolo = 9;
+  // Optional: resume an existing session by agent session ID.
+  string agent_session_id = 8;
+  // Session mode (e.g. "ask", "architect", "code").
+  string session_mode = 9;
   // Optional list of allowed tools.
   repeated string allowed_tools = 10;
 }
 
-message NewAgentRunResponse {
-  // Whether the worker accepted the agent run.
+message NewSessionResponse {
+  // Whether the worker accepted the session.
   bool accepted = 1;
   // Human-readable message (e.g. reason for rejection).
   string message = 2;
-  // The session ID for the launched agent run.
+  // The session ID for the launched session.
   string session_id = 3;
   // The agent driver used.
   Agent agent = 4;
@@ -71,17 +112,135 @@ message NewAgentRunResponse {
   string agent_session_id = 11;
 }
 
-message AgentRunInfo {
-  string agent_run_id = 1;
+message SessionInfo {
+  string session_id = 1;
   Agent agent = 2;
-  AgentRunStatus status = 3;
-  AgentRunMode mode = 4;
-  string session_id = 5;
-  string agent_session_id = 6;
+  SessionStatus status = 3;
+  SessionMode mode = 4;
+  string agent_session_id = 5;
+  string model = 6;
 }
 
-message ListAgentRunsRequest {}
+message ListSessionsRequest {}
 
-message ListAgentRunsResponse {
-  repeated AgentRunInfo agent_runs = 1;
+message ListSessionsResponse {
+  repeated SessionInfo sessions = 1;
+}
+
+// CP → Worker (bidi stream).
+message StateSyncRequest {
+  // ACK: CP has processed all events up to and including this sequence for this session.
+  // Worker can drop ACKed events from its queue.
+  string ack_session_id = 1;
+  int64 ack_sequence = 2;
+}
+
+// Worker → CP
+message StateSyncResponse {
+  oneof update {
+    SessionStateSnapshot snapshot = 1;
+    SessionState session_update = 2;
+    SessionRemoved session_removed = 3;
+    SessionEvent session_event = 4;
+  }
+}
+
+// A single ACP event from a running session.
+message SessionEvent {
+  string session_id = 1;
+  int64 sequence = 2;           // Monotonic per session, assigned by worker
+  string timestamp = 3;         // RFC 3339
+
+  oneof payload {
+    AgentMessageChunk agent_message_chunk = 10;
+    AgentThoughtChunk agent_thought_chunk = 11;
+    ToolCallStart tool_call_start = 12;
+    ToolCallUpdate tool_call_update = 13;
+    StatusChange status_change = 14;
+    ModeChange mode_change = 15;
+    UserMessage user_message = 16;
+  }
+}
+
+message AgentMessageChunk { string text = 1; }
+message AgentThoughtChunk { string text = 1; }
+message UserMessage { string text = 1; }
+
+enum ToolCallStatus {
+  TOOL_CALL_STATUS_UNSPECIFIED = 0;
+  TOOL_CALL_STATUS_RUNNING = 1;
+  TOOL_CALL_STATUS_COMPLETED = 2;
+  TOOL_CALL_STATUS_ERRORED = 3;
+}
+
+enum ToolCallKind {
+  TOOL_CALL_KIND_UNSPECIFIED = 0;
+  TOOL_CALL_KIND_FILE = 1;
+  TOOL_CALL_KIND_SHELL = 2;
+  TOOL_CALL_KIND_SEARCH = 3;
+  TOOL_CALL_KIND_OTHER = 4;
+}
+
+message ToolCallStart {
+  string tool_call_id = 1;
+  string title = 2;
+  ToolCallKind kind = 3;
+  string raw_input = 4;
+  repeated ToolCallLocation locations = 5;
+  ToolCallStatus status = 6;
+  repeated ToolCallContentBlock content = 7;
+}
+
+message ToolCallUpdate {
+  string tool_call_id = 1;
+  string title = 2;
+  ToolCallStatus status = 3;
+  string raw_output = 4;
+  repeated ToolCallLocation locations = 5;
+  repeated ToolCallContentBlock content = 6;
+}
+
+message ToolCallContentBlock {
+  oneof block {
+    ToolCallDiff diff = 1;
+    ToolCallText text = 2;
+  }
+}
+message ToolCallDiff { string path = 1; string new_text = 2; string old_text = 3; }
+message ToolCallText { string text = 1; }
+
+message ToolCallLocation { string path = 1; int64 line = 2; }
+message StatusChange { SessionStatus status = 1; }
+message ModeChange { string mode_id = 1; }
+
+// Full snapshot of all sessions on this worker.
+message SessionStateSnapshot {
+  repeated SessionState sessions = 1;
+}
+
+// Current state of a single session.
+message SessionState {
+  string session_id = 1;
+  Agent agent = 2;
+  SessionStatus status = 3;
+  SessionMode mode = 4;
+  string agent_session_id = 5;
+  string topic = 6;
+}
+
+// Notification that a session has been removed.
+message SessionRemoved {
+  string session_id = 1;
+  string final_status = 2;
+}
+
+message CheckSessionResumableRequest {
+  string agent = 1;             // which agent driver
+  string agent_session_id = 2;  // the ACP session ID
+  string cwd = 3;               // working directory
+}
+
+message CheckSessionResumableResponse {
+  bool resumable = 1;
+  string reason = 2;  // if not resumable, why
 }

@@ -10,7 +10,7 @@ export interface ThreadOverseer {
 
 export interface Thread {
   id: string;
-  title: string;
+  topic: string;
   description: string;
   status: ThreadStatus;
   taskCount: number;
@@ -26,4 +26,6 @@ export interface Thread {
   model?: string;
   harness?: string;
   controlPlaneId?: string;
+  archived?: boolean;
+  plan?: string;
 }

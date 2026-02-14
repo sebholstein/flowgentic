@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // projectServiceHandler implements controlplanev1connect.ProjectServiceHandler.
@@ -64,6 +63,7 @@ func (h *projectServiceHandler) CreateProject(
 		EmbeddedWorkerPath:  req.Msg.EmbeddedWorkerPath,
 		WorkerPaths:         req.Msg.WorkerPaths,
 		SortIndex:           req.Msg.SortIndex,
+		AgentPlanningTaskPreferences:    req.Msg.AgentPlanningTaskPreferences,
 	}
 
 	created, err := h.svc.CreateProject(ctx, p)
@@ -92,6 +92,7 @@ func (h *projectServiceHandler) UpdateProject(
 		EmbeddedWorkerPath:  req.Msg.EmbeddedWorkerPath,
 		WorkerPaths:         req.Msg.WorkerPaths,
 		SortIndex:           req.Msg.SortIndex,
+		AgentPlanningTaskPreferences:    req.Msg.AgentPlanningTaskPreferences,
 	}
 
 	updated, err := h.svc.UpdateProject(ctx, p)
@@ -143,8 +144,9 @@ func projectToProto(p Project) *controlplanev1.ProjectConfig {
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
 		WorkerPaths:         p.WorkerPaths,
-		CreatedAt:           timestamppb.New(p.CreatedAt),
-		UpdatedAt:           timestamppb.New(p.UpdatedAt),
+		CreatedAt:           p.CreatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
+		UpdatedAt:           p.UpdatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
 		SortIndex:           p.SortIndex,
+		AgentPlanningTaskPreferences:    p.AgentPlanningTaskPreferences,
 	}
 }

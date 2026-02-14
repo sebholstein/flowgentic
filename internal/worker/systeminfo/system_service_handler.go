@@ -2,10 +2,12 @@ package systeminfo
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"connectrpc.com/connect"
 	workerv1 "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1"
+	"github.com/sebastianm/flowgentic/internal/worker/driver"
 )
 
 // systemServiceHandler implements workerv1connect.SystemServiceHandler.
@@ -27,7 +29,6 @@ func (h *systemServiceHandler) ListAgents(
 	req *connect.Request[workerv1.ListAgentsRequest],
 ) (*connect.Response[workerv1.ListAgentsResponse], error) {
 
-
 	agents, err := h.svc.ListAgents(ctx, req.Msg.DisableCache)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -44,4 +45,32 @@ func (h *systemServiceHandler) ListAgents(
 	}
 
 	return connect.NewResponse(&workerv1.ListAgentsResponse{Agents: out}), nil
+}
+
+func (h *systemServiceHandler) GetAgentModels(
+	ctx context.Context,
+	req *connect.Request[workerv1.GetAgentModelsRequest],
+) (*connect.Response[workerv1.GetAgentModelsResponse], error) {
+	agent, err := driver.AgentTypeFromProto(req.Msg.Agent)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	models, err := h.svc.GetAgentModels(ctx, agent, req.Msg.DisableCache)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrUnsupportedAgent):
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		case errors.Is(err, ErrModelDiscovery):
+			return nil, connect.NewError(connect.CodeUnavailable, err)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+	}
+
+	return connect.NewResponse(&workerv1.GetAgentModelsResponse{
+		Agent:        req.Msg.Agent,
+		Models:       models.Models,
+		DefaultModel: models.DefaultModel,
+	}), nil
 }

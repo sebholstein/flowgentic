@@ -10,7 +10,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <ThemeProvider defaultTheme="system">
+    <ThemeProvider defaultTheme="dark">
       <ConnectProvider>
         <Outlet />
       </ConnectProvider>

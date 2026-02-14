@@ -7,5 +7,6 @@ export interface Project {
   defaultPlannerModel?: string;
   embeddedWorkerPath?: string;
   workerPaths?: Record<string, string>;
+  agentPlanningTaskPreferences?: string;
   sortIndex?: number;
 }

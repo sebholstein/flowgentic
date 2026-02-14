@@ -23,8 +23,22 @@ sql:
         out: "internal/controlplane/thread/store"
   - engine: "sqlite"
     schema: "internal/database/migrations/"
-    queries: "internal/controlplane/agentrun/store/query.sql"
+    queries: "internal/controlplane/session/store/query.sql"
     gen:
       go:
         package: "store"
-        out: "internal/controlplane/agentrun/store"
+        out: "internal/controlplane/session/store"
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/task/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/task/store"
+  - engine: "sqlite"
+    schema: "internal/database/migrations/"
+    queries: "internal/controlplane/embeddedworker/store/query.sql"
+    gen:
+      go:
+        package: "store"
+        out: "internal/controlplane/embeddedworker/store"

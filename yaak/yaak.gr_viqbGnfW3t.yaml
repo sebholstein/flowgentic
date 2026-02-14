@@ -2,7 +2,7 @@ type: grpc_request
 model: grpc_request
 id: gr_viqbGnfW3t
 createdAt: 2026-02-10T14:43:16.659516
-updatedAt: 2026-02-10T21:02:00.958599
+updatedAt: 2026-02-12T15:43:46.583138
 workspaceId: wk_q4YmHWWz2K
 folderId: fl_pQ4pznSF9y
 authenticationType: bearer
@@ -12,15 +12,15 @@ description: ''
 message: |-
   {
     "cwd": "/Users/sebastian/projects/flowgentic",
-    "agent": "AGENT_CODEX",
+    "agent": "AGENT_CLAUDE_CODE",
     "yolo": true,
     "agent_run_id": "${[ uuid.v4() ]}",
     "prompt": "how many packages does the frontend use?",
     "system_prompt": "# Flowgentic Agent\n\nYou are a coding agent managed by Flowgentic. You work inside a managed session called thread — your lifecycle, context, and coordination are handled by the Flowgentic control plane.\n\n## agentctl\n\nYou have a CLI tool called `agentctl` available on your PATH. Use it to communicate status back - its important to use it so the control plane can work correctly and knows when you need attention.\n\n### Commands\n\n#### `agentctl set-topic \"short description\"`\nSet a human-readable topic summarizing what this thread is about as a title. Max 100 characters.\n\n- You MUST call this after processing the first user message.\n- Update the topic later if the focus of the work changes substantially.\n- Keep it concise and descriptive — it is shown in a list of threads which should describe it as short as possible.\n- Examples: `\"Fix auth middleware token validation\"`, `\"Add dark mode to settings page\"`, `\"Investigate flaky CI in payment tests\"`\n\n\n## Guidelines\n\n- Focus on the task given to you. Do not deviate or work on unrelated things.\n- Prefer small, incremental changes over large rewrites.\n- If you are unsure about something, say so rather than guessing.\n- When you finish a task, report your status as idle.\n"
   }
 metadata: []
-method: NewAgentRun
+method: NewSession
 name: WorkerService/ListAgentRuns Copy
 service: worker.v1.WorkerService
 sortPriority: -1770734092111.999
-url: localhost:8081
+url: ${[ WORKER_ENDPOINT ]}

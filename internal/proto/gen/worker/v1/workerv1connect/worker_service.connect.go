@@ -33,20 +33,45 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// WorkerServiceNewAgentRunProcedure is the fully-qualified name of the WorkerService's NewAgentRun
+	// WorkerServiceNewSessionProcedure is the fully-qualified name of the WorkerService's NewSession
 	// RPC.
-	WorkerServiceNewAgentRunProcedure = "/worker.v1.WorkerService/NewAgentRun"
-	// WorkerServiceListAgentRunsProcedure is the fully-qualified name of the WorkerService's
-	// ListAgentRuns RPC.
-	WorkerServiceListAgentRunsProcedure = "/worker.v1.WorkerService/ListAgentRuns"
+	WorkerServiceNewSessionProcedure = "/worker.v1.WorkerService/NewSession"
+	// WorkerServiceListSessionsProcedure is the fully-qualified name of the WorkerService's
+	// ListSessions RPC.
+	WorkerServiceListSessionsProcedure = "/worker.v1.WorkerService/ListSessions"
+	// WorkerServiceStateSyncProcedure is the fully-qualified name of the WorkerService's StateSync RPC.
+	WorkerServiceStateSyncProcedure = "/worker.v1.WorkerService/StateSync"
+	// WorkerServiceSetSessionModeProcedure is the fully-qualified name of the WorkerService's
+	// SetSessionMode RPC.
+	WorkerServiceSetSessionModeProcedure = "/worker.v1.WorkerService/SetSessionMode"
+	// WorkerServicePromptSessionProcedure is the fully-qualified name of the WorkerService's
+	// PromptSession RPC.
+	WorkerServicePromptSessionProcedure = "/worker.v1.WorkerService/PromptSession"
+	// WorkerServiceCancelSessionProcedure is the fully-qualified name of the WorkerService's
+	// CancelSession RPC.
+	WorkerServiceCancelSessionProcedure = "/worker.v1.WorkerService/CancelSession"
+	// WorkerServiceCheckSessionResumableProcedure is the fully-qualified name of the WorkerService's
+	// CheckSessionResumable RPC.
+	WorkerServiceCheckSessionResumableProcedure = "/worker.v1.WorkerService/CheckSessionResumable"
 )
 
 // WorkerServiceClient is a client for the worker.v1.WorkerService service.
 type WorkerServiceClient interface {
-	// NewAgentRun asks the worker to run an agent workload.
-	NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error)
-	// ListAgentRuns returns all currently active agent runs on this worker.
-	ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error)
+	// NewSession asks the worker to run an agent workload.
+	NewSession(context.Context, *connect.Request[v1.NewSessionRequest]) (*connect.Response[v1.NewSessionResponse], error)
+	// ListSessions returns all currently active sessions on this worker.
+	ListSessions(context.Context, *connect.Request[v1.ListSessionsRequest]) (*connect.Response[v1.ListSessionsResponse], error)
+	// StateSync is a persistent bidi stream. The CP connects and receives
+	// the full current state of all sessions, then delta updates as state changes.
+	StateSync(context.Context) *connect.BidiStreamForClient[v1.StateSyncRequest, v1.StateSyncResponse]
+	// SetSessionMode changes the permission mode of a running agent session.
+	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
+	// PromptSession sends a follow-up prompt to a running session.
+	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// CancelSession cancels the active prompt on a running session.
+	CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error)
+	// CheckSessionResumable checks if an ACP session can be resumed from disk.
+	CheckSessionResumable(context.Context, *connect.Request[v1.CheckSessionResumableRequest]) (*connect.Response[v1.CheckSessionResumableResponse], error)
 }
 
 // NewWorkerServiceClient constructs a client for the worker.v1.WorkerService service. By default,
@@ -60,16 +85,46 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	workerServiceMethods := v1.File_worker_v1_worker_service_proto.Services().ByName("WorkerService").Methods()
 	return &workerServiceClient{
-		newAgentRun: connect.NewClient[v1.NewAgentRunRequest, v1.NewAgentRunResponse](
+		newSession: connect.NewClient[v1.NewSessionRequest, v1.NewSessionResponse](
 			httpClient,
-			baseURL+WorkerServiceNewAgentRunProcedure,
-			connect.WithSchema(workerServiceMethods.ByName("NewAgentRun")),
+			baseURL+WorkerServiceNewSessionProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("NewSession")),
 			connect.WithClientOptions(opts...),
 		),
-		listAgentRuns: connect.NewClient[v1.ListAgentRunsRequest, v1.ListAgentRunsResponse](
+		listSessions: connect.NewClient[v1.ListSessionsRequest, v1.ListSessionsResponse](
 			httpClient,
-			baseURL+WorkerServiceListAgentRunsProcedure,
-			connect.WithSchema(workerServiceMethods.ByName("ListAgentRuns")),
+			baseURL+WorkerServiceListSessionsProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("ListSessions")),
+			connect.WithClientOptions(opts...),
+		),
+		stateSync: connect.NewClient[v1.StateSyncRequest, v1.StateSyncResponse](
+			httpClient,
+			baseURL+WorkerServiceStateSyncProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("StateSync")),
+			connect.WithClientOptions(opts...),
+		),
+		setSessionMode: connect.NewClient[v1.SetSessionModeRequest, v1.SetSessionModeResponse](
+			httpClient,
+			baseURL+WorkerServiceSetSessionModeProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("SetSessionMode")),
+			connect.WithClientOptions(opts...),
+		),
+		promptSession: connect.NewClient[v1.PromptSessionRequest, v1.PromptSessionResponse](
+			httpClient,
+			baseURL+WorkerServicePromptSessionProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("PromptSession")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelSession: connect.NewClient[v1.CancelSessionRequest, v1.CancelSessionResponse](
+			httpClient,
+			baseURL+WorkerServiceCancelSessionProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("CancelSession")),
+			connect.WithClientOptions(opts...),
+		),
+		checkSessionResumable: connect.NewClient[v1.CheckSessionResumableRequest, v1.CheckSessionResumableResponse](
+			httpClient,
+			baseURL+WorkerServiceCheckSessionResumableProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("CheckSessionResumable")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -77,26 +132,67 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // workerServiceClient implements WorkerServiceClient.
 type workerServiceClient struct {
-	newAgentRun   *connect.Client[v1.NewAgentRunRequest, v1.NewAgentRunResponse]
-	listAgentRuns *connect.Client[v1.ListAgentRunsRequest, v1.ListAgentRunsResponse]
+	newSession            *connect.Client[v1.NewSessionRequest, v1.NewSessionResponse]
+	listSessions          *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
+	stateSync             *connect.Client[v1.StateSyncRequest, v1.StateSyncResponse]
+	setSessionMode        *connect.Client[v1.SetSessionModeRequest, v1.SetSessionModeResponse]
+	promptSession         *connect.Client[v1.PromptSessionRequest, v1.PromptSessionResponse]
+	cancelSession         *connect.Client[v1.CancelSessionRequest, v1.CancelSessionResponse]
+	checkSessionResumable *connect.Client[v1.CheckSessionResumableRequest, v1.CheckSessionResumableResponse]
 }
 
-// NewAgentRun calls worker.v1.WorkerService.NewAgentRun.
-func (c *workerServiceClient) NewAgentRun(ctx context.Context, req *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error) {
-	return c.newAgentRun.CallUnary(ctx, req)
+// NewSession calls worker.v1.WorkerService.NewSession.
+func (c *workerServiceClient) NewSession(ctx context.Context, req *connect.Request[v1.NewSessionRequest]) (*connect.Response[v1.NewSessionResponse], error) {
+	return c.newSession.CallUnary(ctx, req)
 }
 
-// ListAgentRuns calls worker.v1.WorkerService.ListAgentRuns.
-func (c *workerServiceClient) ListAgentRuns(ctx context.Context, req *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error) {
-	return c.listAgentRuns.CallUnary(ctx, req)
+// ListSessions calls worker.v1.WorkerService.ListSessions.
+func (c *workerServiceClient) ListSessions(ctx context.Context, req *connect.Request[v1.ListSessionsRequest]) (*connect.Response[v1.ListSessionsResponse], error) {
+	return c.listSessions.CallUnary(ctx, req)
+}
+
+// StateSync calls worker.v1.WorkerService.StateSync.
+func (c *workerServiceClient) StateSync(ctx context.Context) *connect.BidiStreamForClient[v1.StateSyncRequest, v1.StateSyncResponse] {
+	return c.stateSync.CallBidiStream(ctx)
+}
+
+// SetSessionMode calls worker.v1.WorkerService.SetSessionMode.
+func (c *workerServiceClient) SetSessionMode(ctx context.Context, req *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error) {
+	return c.setSessionMode.CallUnary(ctx, req)
+}
+
+// PromptSession calls worker.v1.WorkerService.PromptSession.
+func (c *workerServiceClient) PromptSession(ctx context.Context, req *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
+	return c.promptSession.CallUnary(ctx, req)
+}
+
+// CancelSession calls worker.v1.WorkerService.CancelSession.
+func (c *workerServiceClient) CancelSession(ctx context.Context, req *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error) {
+	return c.cancelSession.CallUnary(ctx, req)
+}
+
+// CheckSessionResumable calls worker.v1.WorkerService.CheckSessionResumable.
+func (c *workerServiceClient) CheckSessionResumable(ctx context.Context, req *connect.Request[v1.CheckSessionResumableRequest]) (*connect.Response[v1.CheckSessionResumableResponse], error) {
+	return c.checkSessionResumable.CallUnary(ctx, req)
 }
 
 // WorkerServiceHandler is an implementation of the worker.v1.WorkerService service.
 type WorkerServiceHandler interface {
-	// NewAgentRun asks the worker to run an agent workload.
-	NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error)
-	// ListAgentRuns returns all currently active agent runs on this worker.
-	ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error)
+	// NewSession asks the worker to run an agent workload.
+	NewSession(context.Context, *connect.Request[v1.NewSessionRequest]) (*connect.Response[v1.NewSessionResponse], error)
+	// ListSessions returns all currently active sessions on this worker.
+	ListSessions(context.Context, *connect.Request[v1.ListSessionsRequest]) (*connect.Response[v1.ListSessionsResponse], error)
+	// StateSync is a persistent bidi stream. The CP connects and receives
+	// the full current state of all sessions, then delta updates as state changes.
+	StateSync(context.Context, *connect.BidiStream[v1.StateSyncRequest, v1.StateSyncResponse]) error
+	// SetSessionMode changes the permission mode of a running agent session.
+	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
+	// PromptSession sends a follow-up prompt to a running session.
+	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// CancelSession cancels the active prompt on a running session.
+	CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error)
+	// CheckSessionResumable checks if an ACP session can be resumed from disk.
+	CheckSessionResumable(context.Context, *connect.Request[v1.CheckSessionResumableRequest]) (*connect.Response[v1.CheckSessionResumableResponse], error)
 }
 
 // NewWorkerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -106,24 +202,64 @@ type WorkerServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	workerServiceMethods := v1.File_worker_v1_worker_service_proto.Services().ByName("WorkerService").Methods()
-	workerServiceNewAgentRunHandler := connect.NewUnaryHandler(
-		WorkerServiceNewAgentRunProcedure,
-		svc.NewAgentRun,
-		connect.WithSchema(workerServiceMethods.ByName("NewAgentRun")),
+	workerServiceNewSessionHandler := connect.NewUnaryHandler(
+		WorkerServiceNewSessionProcedure,
+		svc.NewSession,
+		connect.WithSchema(workerServiceMethods.ByName("NewSession")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workerServiceListAgentRunsHandler := connect.NewUnaryHandler(
-		WorkerServiceListAgentRunsProcedure,
-		svc.ListAgentRuns,
-		connect.WithSchema(workerServiceMethods.ByName("ListAgentRuns")),
+	workerServiceListSessionsHandler := connect.NewUnaryHandler(
+		WorkerServiceListSessionsProcedure,
+		svc.ListSessions,
+		connect.WithSchema(workerServiceMethods.ByName("ListSessions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceStateSyncHandler := connect.NewBidiStreamHandler(
+		WorkerServiceStateSyncProcedure,
+		svc.StateSync,
+		connect.WithSchema(workerServiceMethods.ByName("StateSync")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceSetSessionModeHandler := connect.NewUnaryHandler(
+		WorkerServiceSetSessionModeProcedure,
+		svc.SetSessionMode,
+		connect.WithSchema(workerServiceMethods.ByName("SetSessionMode")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServicePromptSessionHandler := connect.NewUnaryHandler(
+		WorkerServicePromptSessionProcedure,
+		svc.PromptSession,
+		connect.WithSchema(workerServiceMethods.ByName("PromptSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceCancelSessionHandler := connect.NewUnaryHandler(
+		WorkerServiceCancelSessionProcedure,
+		svc.CancelSession,
+		connect.WithSchema(workerServiceMethods.ByName("CancelSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workerServiceCheckSessionResumableHandler := connect.NewUnaryHandler(
+		WorkerServiceCheckSessionResumableProcedure,
+		svc.CheckSessionResumable,
+		connect.WithSchema(workerServiceMethods.ByName("CheckSessionResumable")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/worker.v1.WorkerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case WorkerServiceNewAgentRunProcedure:
-			workerServiceNewAgentRunHandler.ServeHTTP(w, r)
-		case WorkerServiceListAgentRunsProcedure:
-			workerServiceListAgentRunsHandler.ServeHTTP(w, r)
+		case WorkerServiceNewSessionProcedure:
+			workerServiceNewSessionHandler.ServeHTTP(w, r)
+		case WorkerServiceListSessionsProcedure:
+			workerServiceListSessionsHandler.ServeHTTP(w, r)
+		case WorkerServiceStateSyncProcedure:
+			workerServiceStateSyncHandler.ServeHTTP(w, r)
+		case WorkerServiceSetSessionModeProcedure:
+			workerServiceSetSessionModeHandler.ServeHTTP(w, r)
+		case WorkerServicePromptSessionProcedure:
+			workerServicePromptSessionHandler.ServeHTTP(w, r)
+		case WorkerServiceCancelSessionProcedure:
+			workerServiceCancelSessionHandler.ServeHTTP(w, r)
+		case WorkerServiceCheckSessionResumableProcedure:
+			workerServiceCheckSessionResumableHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -133,10 +269,30 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 // UnimplementedWorkerServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWorkerServiceHandler struct{}
 
-func (UnimplementedWorkerServiceHandler) NewAgentRun(context.Context, *connect.Request[v1.NewAgentRunRequest]) (*connect.Response[v1.NewAgentRunResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.NewAgentRun is not implemented"))
+func (UnimplementedWorkerServiceHandler) NewSession(context.Context, *connect.Request[v1.NewSessionRequest]) (*connect.Response[v1.NewSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.NewSession is not implemented"))
 }
 
-func (UnimplementedWorkerServiceHandler) ListAgentRuns(context.Context, *connect.Request[v1.ListAgentRunsRequest]) (*connect.Response[v1.ListAgentRunsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.ListAgentRuns is not implemented"))
+func (UnimplementedWorkerServiceHandler) ListSessions(context.Context, *connect.Request[v1.ListSessionsRequest]) (*connect.Response[v1.ListSessionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.ListSessions is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) StateSync(context.Context, *connect.BidiStream[v1.StateSyncRequest, v1.StateSyncResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.StateSync is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.SetSessionMode is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.PromptSession is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.CancelSession is not implemented"))
+}
+
+func (UnimplementedWorkerServiceHandler) CheckSessionResumable(context.Context, *connect.Request[v1.CheckSessionResumableRequest]) (*connect.Response[v1.CheckSessionResumableResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.CheckSessionResumable is not implemented"))
 }

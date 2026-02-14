@@ -4,31 +4,64 @@
 
 package store
 
-type AgentRun struct {
-	ID        string
-	ThreadID  string
-	WorkerID  string
-	Prompt    string
-	Status    string
-	Agent     string
-	Model     string
-	Mode      string
-	Yolo      int64
-	SessionID string
-	CreatedAt string
-	UpdatedAt string
+import (
+	"database/sql"
+)
+
+type EmbeddedWorkerConfig struct {
+	ID     int64
+	Secret string
 }
 
 type Project struct {
-	ID                  string
-	Name                string
-	DefaultPlannerAgent string
-	DefaultPlannerModel string
-	EmbeddedWorkerPath  string
-	WorkerPaths         string
-	CreatedAt           string
-	UpdatedAt           string
-	SortIndex           int64
+	ID                           string
+	Name                         string
+	DefaultPlannerAgent          string
+	DefaultPlannerModel          string
+	EmbeddedWorkerPath           string
+	WorkerPaths                  string
+	CreatedAt                    string
+	UpdatedAt                    string
+	SortIndex                    int64
+	AgentPlanningTaskPreferences string
+}
+
+type Session struct {
+	ID          string
+	ThreadID    string
+	WorkerID    string
+	Prompt      string
+	Status      string
+	Agent       string
+	Model       string
+	Mode        string
+	Yolo        int64
+	SessionID   string
+	CreatedAt   string
+	UpdatedAt   string
+	SessionMode string
+	TaskID      sql.NullString
+}
+
+type SessionEvent struct {
+	ID        int64
+	SessionID string
+	Sequence  int64
+	EventType string
+	Payload   []byte
+	CreatedAt string
+}
+
+type Task struct {
+	ID          string
+	ThreadID    string
+	Description string
+	Subtasks    string
+	Memory      string
+	Status      string
+	SortIndex   int64
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 type Thread struct {
@@ -39,6 +72,9 @@ type Thread struct {
 	CreatedAt string
 	UpdatedAt string
 	Mode      string
+	Topic     string
+	Archived  int64
+	Plan      string
 }
 
 type Worker struct {
@@ -48,4 +84,10 @@ type Worker struct {
 	Secret    string
 	CreatedAt string
 	UpdatedAt string
+}
+
+type WorkerProjectPath struct {
+	ProjectID string
+	WorkerID  string
+	Path      string
 }

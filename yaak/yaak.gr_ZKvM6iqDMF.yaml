@@ -2,7 +2,7 @@ type: grpc_request
 model: grpc_request
 id: gr_ZKvM6iqDMF
 createdAt: 2026-02-10T14:34:52.113713
-updatedAt: 2026-02-10T14:35:27.296202
+updatedAt: 2026-02-12T15:44:12.313425
 workspaceId: wk_q4YmHWWz2K
 folderId: fl_pQ4pznSF9y
 authenticationType: bearer
@@ -11,8 +11,8 @@ authentication:
 description: ''
 message: ''
 metadata: []
-method: ListAgentRuns
+method: StateSync
 name: ''
 service: worker.v1.WorkerService
 sortPriority: -1770734092112.0
-url: localhost:8081
+url: ${[ WORKER_ENDPOINT ]}

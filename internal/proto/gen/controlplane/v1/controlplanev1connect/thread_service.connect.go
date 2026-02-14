@@ -47,6 +47,12 @@ const (
 	// ThreadServiceDeleteThreadProcedure is the fully-qualified name of the ThreadService's
 	// DeleteThread RPC.
 	ThreadServiceDeleteThreadProcedure = "/controlplane.v1.ThreadService/DeleteThread"
+	// ThreadServiceWatchThreadUpdatesProcedure is the fully-qualified name of the ThreadService's
+	// WatchThreadUpdates RPC.
+	ThreadServiceWatchThreadUpdatesProcedure = "/controlplane.v1.ThreadService/WatchThreadUpdates"
+	// ThreadServiceArchiveThreadProcedure is the fully-qualified name of the ThreadService's
+	// ArchiveThread RPC.
+	ThreadServiceArchiveThreadProcedure = "/controlplane.v1.ThreadService/ArchiveThread"
 )
 
 // ThreadServiceClient is a client for the controlplane.v1.ThreadService service.
@@ -61,6 +67,10 @@ type ThreadServiceClient interface {
 	UpdateThread(context.Context, *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error)
 	// DeleteThread removes a thread by ID.
 	DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error)
+	// WatchThreadUpdates streams real-time thread updates (e.g. topic changes).
+	WatchThreadUpdates(context.Context, *connect.Request[v1.WatchThreadUpdatesRequest]) (*connect.ServerStreamForClient[v1.WatchThreadUpdatesResponse], error)
+	// ArchiveThread sets or clears the archived flag on a thread.
+	ArchiveThread(context.Context, *connect.Request[v1.ArchiveThreadRequest]) (*connect.Response[v1.ArchiveThreadResponse], error)
 }
 
 // NewThreadServiceClient constructs a client for the controlplane.v1.ThreadService service. By
@@ -104,16 +114,30 @@ func NewThreadServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(threadServiceMethods.ByName("DeleteThread")),
 			connect.WithClientOptions(opts...),
 		),
+		watchThreadUpdates: connect.NewClient[v1.WatchThreadUpdatesRequest, v1.WatchThreadUpdatesResponse](
+			httpClient,
+			baseURL+ThreadServiceWatchThreadUpdatesProcedure,
+			connect.WithSchema(threadServiceMethods.ByName("WatchThreadUpdates")),
+			connect.WithClientOptions(opts...),
+		),
+		archiveThread: connect.NewClient[v1.ArchiveThreadRequest, v1.ArchiveThreadResponse](
+			httpClient,
+			baseURL+ThreadServiceArchiveThreadProcedure,
+			connect.WithSchema(threadServiceMethods.ByName("ArchiveThread")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // threadServiceClient implements ThreadServiceClient.
 type threadServiceClient struct {
-	listThreads  *connect.Client[v1.ListThreadsRequest, v1.ListThreadsResponse]
-	getThread    *connect.Client[v1.GetThreadRequest, v1.GetThreadResponse]
-	createThread *connect.Client[v1.CreateThreadRequest, v1.CreateThreadResponse]
-	updateThread *connect.Client[v1.UpdateThreadRequest, v1.UpdateThreadResponse]
-	deleteThread *connect.Client[v1.DeleteThreadRequest, v1.DeleteThreadResponse]
+	listThreads        *connect.Client[v1.ListThreadsRequest, v1.ListThreadsResponse]
+	getThread          *connect.Client[v1.GetThreadRequest, v1.GetThreadResponse]
+	createThread       *connect.Client[v1.CreateThreadRequest, v1.CreateThreadResponse]
+	updateThread       *connect.Client[v1.UpdateThreadRequest, v1.UpdateThreadResponse]
+	deleteThread       *connect.Client[v1.DeleteThreadRequest, v1.DeleteThreadResponse]
+	watchThreadUpdates *connect.Client[v1.WatchThreadUpdatesRequest, v1.WatchThreadUpdatesResponse]
+	archiveThread      *connect.Client[v1.ArchiveThreadRequest, v1.ArchiveThreadResponse]
 }
 
 // ListThreads calls controlplane.v1.ThreadService.ListThreads.
@@ -141,6 +165,16 @@ func (c *threadServiceClient) DeleteThread(ctx context.Context, req *connect.Req
 	return c.deleteThread.CallUnary(ctx, req)
 }
 
+// WatchThreadUpdates calls controlplane.v1.ThreadService.WatchThreadUpdates.
+func (c *threadServiceClient) WatchThreadUpdates(ctx context.Context, req *connect.Request[v1.WatchThreadUpdatesRequest]) (*connect.ServerStreamForClient[v1.WatchThreadUpdatesResponse], error) {
+	return c.watchThreadUpdates.CallServerStream(ctx, req)
+}
+
+// ArchiveThread calls controlplane.v1.ThreadService.ArchiveThread.
+func (c *threadServiceClient) ArchiveThread(ctx context.Context, req *connect.Request[v1.ArchiveThreadRequest]) (*connect.Response[v1.ArchiveThreadResponse], error) {
+	return c.archiveThread.CallUnary(ctx, req)
+}
+
 // ThreadServiceHandler is an implementation of the controlplane.v1.ThreadService service.
 type ThreadServiceHandler interface {
 	// ListThreads returns all threads for a given project.
@@ -153,6 +187,10 @@ type ThreadServiceHandler interface {
 	UpdateThread(context.Context, *connect.Request[v1.UpdateThreadRequest]) (*connect.Response[v1.UpdateThreadResponse], error)
 	// DeleteThread removes a thread by ID.
 	DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error)
+	// WatchThreadUpdates streams real-time thread updates (e.g. topic changes).
+	WatchThreadUpdates(context.Context, *connect.Request[v1.WatchThreadUpdatesRequest], *connect.ServerStream[v1.WatchThreadUpdatesResponse]) error
+	// ArchiveThread sets or clears the archived flag on a thread.
+	ArchiveThread(context.Context, *connect.Request[v1.ArchiveThreadRequest]) (*connect.Response[v1.ArchiveThreadResponse], error)
 }
 
 // NewThreadServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -192,6 +230,18 @@ func NewThreadServiceHandler(svc ThreadServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(threadServiceMethods.ByName("DeleteThread")),
 		connect.WithHandlerOptions(opts...),
 	)
+	threadServiceWatchThreadUpdatesHandler := connect.NewServerStreamHandler(
+		ThreadServiceWatchThreadUpdatesProcedure,
+		svc.WatchThreadUpdates,
+		connect.WithSchema(threadServiceMethods.ByName("WatchThreadUpdates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	threadServiceArchiveThreadHandler := connect.NewUnaryHandler(
+		ThreadServiceArchiveThreadProcedure,
+		svc.ArchiveThread,
+		connect.WithSchema(threadServiceMethods.ByName("ArchiveThread")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/controlplane.v1.ThreadService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ThreadServiceListThreadsProcedure:
@@ -204,6 +254,10 @@ func NewThreadServiceHandler(svc ThreadServiceHandler, opts ...connect.HandlerOp
 			threadServiceUpdateThreadHandler.ServeHTTP(w, r)
 		case ThreadServiceDeleteThreadProcedure:
 			threadServiceDeleteThreadHandler.ServeHTTP(w, r)
+		case ThreadServiceWatchThreadUpdatesProcedure:
+			threadServiceWatchThreadUpdatesHandler.ServeHTTP(w, r)
+		case ThreadServiceArchiveThreadProcedure:
+			threadServiceArchiveThreadHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -231,4 +285,12 @@ func (UnimplementedThreadServiceHandler) UpdateThread(context.Context, *connect.
 
 func (UnimplementedThreadServiceHandler) DeleteThread(context.Context, *connect.Request[v1.DeleteThreadRequest]) (*connect.Response[v1.DeleteThreadResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.ThreadService.DeleteThread is not implemented"))
+}
+
+func (UnimplementedThreadServiceHandler) WatchThreadUpdates(context.Context, *connect.Request[v1.WatchThreadUpdatesRequest], *connect.ServerStream[v1.WatchThreadUpdatesResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.ThreadService.WatchThreadUpdates is not implemented"))
+}
+
+func (UnimplementedThreadServiceHandler) ArchiveThread(context.Context, *connect.Request[v1.ArchiveThreadRequest]) (*connect.Response[v1.ArchiveThreadResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.ThreadService.ArchiveThread is not implemented"))
 }

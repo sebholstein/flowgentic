@@ -11,13 +11,14 @@ import (
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
 )
 
-// EventHandler defines the interface that the AgentRunManager satisfies,
+// EventHandler defines the interface that the SessionManager satisfies,
 // allowing agentctl RPC handlers to dispatch events without knowing the
 // concrete manager type.
 type EventHandler interface {
 	HandleHookEvent(ctx context.Context, event driver.HookEvent) error
 	HandleStatusReport(ctx context.Context, sessionID, agent, status string) error
 	HandlePlanSubmission(ctx context.Context, sessionID, agent string, plan []byte) error
+	HandleSetTopic(ctx context.Context, agentRunID, topic string) error
 }
 
 // StartDeps are the dependencies for starting the agentctl feature.

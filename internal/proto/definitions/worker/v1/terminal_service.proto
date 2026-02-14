@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package worker.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
+
+// TerminalService manages interactive PTY sessions on a worker node.
+service TerminalService {
+  // CreateSession starts a new PTY session in the given directory.
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {}
+  // DestroySession terminates an active PTY session.
+  rpc DestroySession(DestroySessionRequest) returns (DestroySessionResponse) {}
+  // Resize changes the terminal dimensions for an active session.
+  rpc Resize(ResizeRequest) returns (ResizeResponse) {}
+  // Stream opens a bidirectional byte stream to an active PTY session.
+  rpc Stream(stream StreamRequest) returns (stream StreamResponse) {}
+}
+
+message CreateSessionRequest {
+  // Working directory for the shell.
+  string cwd = 1 [(buf.validate.field).string.min_len = 1];
+  // Terminal width in columns (0 = default 80).
+  uint32 cols = 2;
+  // Terminal height in rows (0 = default 24).
+  uint32 rows = 3;
+  // Shell to launch (empty = $SHELL or /bin/sh).
+  string shell = 4;
+  // Additional environment variables (KEY=VALUE format).
+  repeated string env = 5;
+}
+
+message CreateSessionResponse {
+  string terminal_id = 1;
+}
+
+message DestroySessionRequest {
+  string terminal_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DestroySessionResponse {}
+
+message ResizeRequest {
+  string terminal_id = 1 [(buf.validate.field).string.min_len = 1];
+  uint32 cols = 2;
+  uint32 rows = 3;
+}
+
+message ResizeResponse {}
+
+message StreamRequest {
+  string terminal_id = 1 [(buf.validate.field).string.min_len = 1];
+  // Raw bytes to write to the PTY stdin.
+  bytes data = 2;
+}
+
+message StreamResponse {
+  oneof event {
+    // Raw bytes read from PTY stdout.
+    bytes data = 1;
+    // Final exit code — sent once before server closes the stream.
+    int32 exit_code = 2;
+  }
+}

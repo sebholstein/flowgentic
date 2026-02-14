@@ -47,7 +47,7 @@ func (q *Queries) DeleteThread(ctx context.Context, id string) (sql.Result, erro
 }
 
 const getThread = `-- name: GetThread :one
-SELECT id, project_id, agent, model, created_at, updated_at, mode FROM threads
+SELECT id, project_id, agent, model, created_at, updated_at, mode, topic, archived, "plan" FROM threads
 WHERE id = ?
 `
 
@@ -62,14 +62,17 @@ func (q *Queries) GetThread(ctx context.Context, id string) (Thread, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Mode,
+		&i.Topic,
+		&i.Archived,
+		&i.Plan,
 	)
 	return i, err
 }
 
 const listThreads = `-- name: ListThreads :many
-SELECT id, project_id, agent, model, created_at, updated_at, mode FROM threads
+SELECT id, project_id, agent, model, created_at, updated_at, mode, topic, archived, "plan" FROM threads
 WHERE project_id = ?
-ORDER BY created_at
+ORDER BY created_at DESC
 `
 
 func (q *Queries) ListThreads(ctx context.Context, projectID string) ([]Thread, error) {
@@ -89,6 +92,9 @@ func (q *Queries) ListThreads(ctx context.Context, projectID string) ([]Thread, 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Mode,
+			&i.Topic,
+			&i.Archived,
+			&i.Plan,
 		); err != nil {
 			return nil, err
 		}
@@ -123,4 +129,52 @@ func (q *Queries) UpdateThread(ctx context.Context, arg UpdateThreadParams) (sql
 		arg.UpdatedAt,
 		arg.ID,
 	)
+}
+
+const updateThreadArchived = `-- name: UpdateThreadArchived :execresult
+UPDATE threads
+SET archived = ?, updated_at = ?
+WHERE id = ?
+`
+
+type UpdateThreadArchivedParams struct {
+	Archived  int64
+	UpdatedAt string
+	ID        string
+}
+
+func (q *Queries) UpdateThreadArchived(ctx context.Context, arg UpdateThreadArchivedParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateThreadArchived, arg.Archived, arg.UpdatedAt, arg.ID)
+}
+
+const updateThreadPlan = `-- name: UpdateThreadPlan :execresult
+UPDATE threads
+SET plan = ?, updated_at = ?
+WHERE id = ?
+`
+
+type UpdateThreadPlanParams struct {
+	Plan      string
+	UpdatedAt string
+	ID        string
+}
+
+func (q *Queries) UpdateThreadPlan(ctx context.Context, arg UpdateThreadPlanParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateThreadPlan, arg.Plan, arg.UpdatedAt, arg.ID)
+}
+
+const updateThreadTopic = `-- name: UpdateThreadTopic :execresult
+UPDATE threads
+SET topic = ?, updated_at = ?
+WHERE id = ?
+`
+
+type UpdateThreadTopicParams struct {
+	Topic     string
+	UpdatedAt string
+	ID        string
+}
+
+func (q *Queries) UpdateThreadTopic(ctx context.Context, arg UpdateThreadTopicParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateThreadTopic, arg.Topic, arg.UpdatedAt, arg.ID)
 }

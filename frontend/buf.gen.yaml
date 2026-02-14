@@ -6,3 +6,4 @@ plugins:
     out: src/proto/gen
     opt:
       - target=ts
+    include_imports: true

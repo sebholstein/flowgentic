@@ -59,6 +59,36 @@ func (m *memStore) UpdateThread(_ context.Context, t Thread) (Thread, error) {
 	return existing, nil
 }
 
+func (m *memStore) UpdateThreadTopic(_ context.Context, id, topic string) error {
+	t, ok := m.threads[id]
+	if !ok {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	t.Topic = topic
+	m.threads[id] = t
+	return nil
+}
+
+func (m *memStore) UpdateThreadPlan(_ context.Context, id, plan string) error {
+	t, ok := m.threads[id]
+	if !ok {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	t.Plan = plan
+	m.threads[id] = t
+	return nil
+}
+
+func (m *memStore) UpdateThreadArchived(_ context.Context, id string, archived bool) error {
+	t, ok := m.threads[id]
+	if !ok {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	t.Archived = archived
+	m.threads[id] = t
+	return nil
+}
+
 func (m *memStore) DeleteThread(_ context.Context, id string) error {
 	if _, exists := m.threads[id]; !exists {
 		return fmt.Errorf("thread %q not found", id)
@@ -185,6 +215,37 @@ func TestThreadService(t *testing.T) {
 		threads, err := svc.ListThreads(ctx, "my-project")
 		require.NoError(t, err)
 		assert.Empty(t, threads)
+	})
+
+	t.Run("archive and unarchive", func(t *testing.T) {
+		store := newMemStore()
+		svc := NewThreadService(store)
+		ctx := context.Background()
+
+		created, err := svc.CreateThread(ctx, Thread{
+			ProjectID: "my-project",
+			Agent:     "claude-code",
+		})
+		require.NoError(t, err)
+		assert.False(t, created.Archived)
+
+		archived, err := svc.ArchiveThread(ctx, created.ID, true)
+		require.NoError(t, err)
+		assert.True(t, archived.Archived)
+
+		unarchived, err := svc.ArchiveThread(ctx, created.ID, false)
+		require.NoError(t, err)
+		assert.False(t, unarchived.Archived)
+	})
+
+	t.Run("archive rejects empty id", func(t *testing.T) {
+		store := newMemStore()
+		svc := NewThreadService(store)
+		ctx := context.Background()
+
+		_, err := svc.ArchiveThread(ctx, "", true)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "thread id is required")
 	})
 
 	t.Run("get", func(t *testing.T) {

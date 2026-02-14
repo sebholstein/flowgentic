@@ -9,7 +9,9 @@ const (
 	CapCostTracking   Capability = "cost_tracking"
 	CapCustomModel    Capability = "custom_model"
 	CapSystemPrompt   Capability = "system_prompt"
-	CapYolo           Capability = "yolo"
+	CapPermissionRequest Capability = "permission_request"
+	CapFileSystem        Capability = "file_system"
+	CapTerminal          Capability = "terminal"
 )
 
 // Capabilities describes what a driver supports.

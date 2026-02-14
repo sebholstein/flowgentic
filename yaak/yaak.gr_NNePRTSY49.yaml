@@ -1,0 +1,18 @@
+type: grpc_request
+model: grpc_request
+id: gr_NNePRTSY49
+createdAt: 2026-02-12T15:45:15.373481
+updatedAt: 2026-02-12T15:52:36.781124
+workspaceId: wk_q4YmHWWz2K
+folderId: fl_pQ4pznSF9y
+authenticationType: bearer
+authentication:
+  token: ${[ WORKER_SECRET ]}
+description: ''
+message: ''
+metadata: []
+method: ListSessions
+name: WorkerService/StateSync Copy 2
+service: worker.v1.WorkerService
+sortPriority: -1770734092111.999
+url: ${[ WORKER_ENDPOINT ]}

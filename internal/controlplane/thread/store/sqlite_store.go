@@ -88,6 +88,70 @@ func (s *SQLiteStore) UpdateThread(ctx context.Context, t thread.Thread) (thread
 	return s.GetThread(ctx, t.ID)
 }
 
+func (s *SQLiteStore) UpdateThreadTopic(ctx context.Context, id, topic string) error {
+	res, err := s.q.UpdateThreadTopic(ctx, UpdateThreadTopicParams{
+		Topic:     topic,
+		UpdatedAt: time.Now().UTC().Format(timeFormat),
+		ID:        id,
+	})
+	if err != nil {
+		return fmt.Errorf("updating thread topic: %w", err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("checking rows affected: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	return nil
+}
+
+func (s *SQLiteStore) UpdateThreadArchived(ctx context.Context, id string, archived bool) error {
+	var v int64
+	if archived {
+		v = 1
+	}
+	res, err := s.q.UpdateThreadArchived(ctx, UpdateThreadArchivedParams{
+		Archived:  v,
+		UpdatedAt: time.Now().UTC().Format(timeFormat),
+		ID:        id,
+	})
+	if err != nil {
+		return fmt.Errorf("updating thread archived: %w", err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("checking rows affected: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	return nil
+}
+
+func (s *SQLiteStore) UpdateThreadPlan(ctx context.Context, id, plan string) error {
+	res, err := s.q.UpdateThreadPlan(ctx, UpdateThreadPlanParams{
+		Plan:      plan,
+		UpdatedAt: time.Now().UTC().Format(timeFormat),
+		ID:        id,
+	})
+	if err != nil {
+		return fmt.Errorf("updating thread plan: %w", err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("checking rows affected: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("thread %q not found", id)
+	}
+	return nil
+}
+
 func (s *SQLiteStore) DeleteThread(ctx context.Context, id string) error {
 	res, err := s.q.DeleteThread(ctx, id)
 	if err != nil {
@@ -113,6 +177,9 @@ func threadFromRow(r Thread) thread.Thread {
 		Agent:     r.Agent,
 		Model:     r.Model,
 		Mode:      r.Mode,
+		Topic:     r.Topic,
+		Plan:      r.Plan,
+		Archived:  r.Archived != 0,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}

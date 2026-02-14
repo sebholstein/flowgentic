@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -31,10 +30,12 @@ func (s *SQLiteStore) ListProjects(ctx context.Context) ([]project.Project, erro
 
 	projects := make([]project.Project, 0, len(rows))
 	for _, r := range rows {
-		p, err := projectFromRow(r)
+		p := projectFromRow(r)
+		wp, err := s.loadWorkerPaths(ctx, p.ID)
 		if err != nil {
 			return nil, err
 		}
+		p.WorkerPaths = wp
 		projects = append(projects, p)
 	}
 	return projects, nil
@@ -45,7 +46,13 @@ func (s *SQLiteStore) GetProject(ctx context.Context, id string) (project.Projec
 	if err != nil {
 		return project.Project{}, fmt.Errorf("getting project %q: %w", id, err)
 	}
-	return projectFromRow(row)
+	p := projectFromRow(row)
+	wp, err := s.loadWorkerPaths(ctx, p.ID)
+	if err != nil {
+		return project.Project{}, err
+	}
+	p.WorkerPaths = wp
+	return p, nil
 }
 
 func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (project.Project, error) {
@@ -53,25 +60,25 @@ func (s *SQLiteStore) CreateProject(ctx context.Context, p project.Project) (pro
 	p.CreatedAt = now
 	p.UpdatedAt = now
 
-	wpJSON, err := marshalWorkerPaths(p.WorkerPaths)
-	if err != nil {
-		return project.Project{}, err
-	}
-
 	nowStr := now.Format(timeFormat)
-	err = s.q.CreateProject(ctx, CreateProjectParams{
+	err := s.q.CreateProject(ctx, CreateProjectParams{
 		ID:                  p.ID,
 		Name:                p.Name,
 		DefaultPlannerAgent: p.DefaultPlannerAgent,
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
-		WorkerPaths:         wpJSON,
+		WorkerPaths:         "{}",
 		CreatedAt:           nowStr,
 		UpdatedAt:           nowStr,
 		SortIndex:           int64(p.SortIndex),
+		AgentPlanningTaskPreferences:    p.AgentPlanningTaskPreferences,
 	})
 	if err != nil {
 		return project.Project{}, fmt.Errorf("inserting project: %w", err)
+	}
+
+	if err := s.syncWorkerPaths(ctx, p.ID, p.WorkerPaths); err != nil {
+		return project.Project{}, err
 	}
 	return p, nil
 }
@@ -80,20 +87,16 @@ func (s *SQLiteStore) UpdateProject(ctx context.Context, p project.Project) (pro
 	now := time.Now().UTC()
 	p.UpdatedAt = now
 
-	wpJSON, err := marshalWorkerPaths(p.WorkerPaths)
-	if err != nil {
-		return project.Project{}, err
-	}
-
 	res, err := s.q.UpdateProject(ctx, UpdateProjectParams{
 		Name:                p.Name,
 		DefaultPlannerAgent: p.DefaultPlannerAgent,
 		DefaultPlannerModel: p.DefaultPlannerModel,
 		EmbeddedWorkerPath:  p.EmbeddedWorkerPath,
-		WorkerPaths:         wpJSON,
+		WorkerPaths:         "{}",
 		UpdatedAt:           now.Format(timeFormat),
 		SortIndex:           int64(p.SortIndex),
 		ID:                  p.ID,
+		AgentPlanningTaskPreferences:    p.AgentPlanningTaskPreferences,
 	})
 	if err != nil {
 		return project.Project{}, fmt.Errorf("updating project: %w", err)
@@ -105,6 +108,10 @@ func (s *SQLiteStore) UpdateProject(ctx context.Context, p project.Project) (pro
 	}
 	if n == 0 {
 		return project.Project{}, fmt.Errorf("project %q not found", p.ID)
+	}
+
+	if err := s.syncWorkerPaths(ctx, p.ID, p.WorkerPaths); err != nil {
+		return project.Project{}, err
 	}
 
 	return s.GetProject(ctx, p.ID)
@@ -151,11 +158,7 @@ func (s *SQLiteStore) ReorderProjects(ctx context.Context, entries []project.Sor
 	return nil
 }
 
-func projectFromRow(r Project) (project.Project, error) {
-	wp, err := unmarshalWorkerPaths(r.WorkerPaths)
-	if err != nil {
-		return project.Project{}, err
-	}
+func projectFromRow(r Project) project.Project {
 	createdAt, _ := time.Parse(timeFormat, r.CreatedAt)
 	updatedAt, _ := time.Parse(timeFormat, r.UpdatedAt)
 	return project.Project{
@@ -164,31 +167,40 @@ func projectFromRow(r Project) (project.Project, error) {
 		DefaultPlannerAgent: r.DefaultPlannerAgent,
 		DefaultPlannerModel: r.DefaultPlannerModel,
 		EmbeddedWorkerPath:  r.EmbeddedWorkerPath,
-		WorkerPaths:         wp,
+		AgentPlanningTaskPreferences:    r.AgentPlanningTaskPreferences,
 		CreatedAt:           createdAt,
 		UpdatedAt:           updatedAt,
 		SortIndex:           int32(r.SortIndex),
-	}, nil
+	}
 }
 
-func marshalWorkerPaths(wp map[string]string) (string, error) {
-	if wp == nil {
-		return "{}", nil
-	}
-	b, err := json.Marshal(wp)
+func (s *SQLiteStore) loadWorkerPaths(ctx context.Context, projectID string) (map[string]string, error) {
+	rows, err := s.q.ListWorkerProjectPaths(ctx, projectID)
 	if err != nil {
-		return "", fmt.Errorf("marshalling worker_paths: %w", err)
+		return nil, fmt.Errorf("loading worker paths for project %q: %w", projectID, err)
 	}
-	return string(b), nil
-}
-
-func unmarshalWorkerPaths(s string) (map[string]string, error) {
-	if s == "" || s == "{}" {
+	if len(rows) == 0 {
 		return nil, nil
 	}
-	var wp map[string]string
-	if err := json.Unmarshal([]byte(s), &wp); err != nil {
-		return nil, fmt.Errorf("unmarshalling worker_paths: %w", err)
+	wp := make(map[string]string, len(rows))
+	for _, r := range rows {
+		wp[r.WorkerID] = r.Path
 	}
 	return wp, nil
+}
+
+func (s *SQLiteStore) syncWorkerPaths(ctx context.Context, projectID string, paths map[string]string) error {
+	if err := s.q.DeleteWorkerProjectPaths(ctx, projectID); err != nil {
+		return fmt.Errorf("deleting worker paths for project %q: %w", projectID, err)
+	}
+	for workerID, path := range paths {
+		if err := s.q.InsertWorkerProjectPath(ctx, InsertWorkerProjectPathParams{
+			ProjectID: projectID,
+			WorkerID:  workerID,
+			Path:      path,
+		}); err != nil {
+			return fmt.Errorf("inserting worker path for project %q worker %q: %w", projectID, workerID, err)
+		}
+	}
+	return nil
 }

@@ -1,14 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MessageSquarePlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { dragStyle } from "@/components/layout/WindowDragRegion";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
+import { ThreadSetupForm } from "@/components/ui/ThreadSetupForm";
 import { useClient } from "@/lib/connect";
 import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
 import { WorkerService } from "@/proto/gen/controlplane/v1/worker_service_pb";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
+import { SystemService } from "@/proto/gen/worker/v1/system_service_pb";
 import { Agent, AgentSchema } from "@/proto/gen/worker/v1/agent_pb";
 import { projectsQueryOptions } from "@/lib/queries/projects";
 import { workersQueryOptions } from "@/lib/queries/workers";
@@ -17,25 +19,29 @@ import type { Worker } from "@/types/server";
 
 type SearchParams = {
   projectId?: string;
-  threadId?: string;
+};
+
+type ThreadBootstrapState = {
+  initialPrompt: string;
+  createdAt: number;
 };
 
 export const Route = createFileRoute("/app/threads/new")({
   component: NewThreadPage,
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
     projectId: typeof search.projectId === "string" ? search.projectId : undefined,
-    threadId: typeof search.threadId === "string" ? search.threadId : undefined,
   }),
 });
 
 function NewThreadPage() {
-  const { projectId, threadId } = Route.useSearch();
+  const { projectId } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const projectClient = useClient(ProjectService);
   const workerClient = useClient(WorkerService);
   const threadClient = useClient(ThreadService);
+  const systemClient = useClient(SystemService);
   const { data: projectsData } = useQuery(projectsQueryOptions(projectClient));
   const { data: workersData } = useQuery(workersQueryOptions(workerClient));
 
@@ -68,9 +74,47 @@ function NewThreadPage() {
 
   const currentProject = projects.find((p) => p.id === projectId) ?? projects[0];
   const [threadMode, setThreadMode] = useState<"plan" | "build">("plan");
-  const [threadModel, setThreadModel] = useState("default");
+  const [threadModel, setThreadModel] = useState("");
+
   const [agent, setAgent] = useState<Agent>(Agent.CLAUDE_CODE);
   const [workerId, setWorkerId] = useState("");
+  const [sessionMode, setSessionMode] = useState("code");
+
+  const {
+    data: modelsData,
+    isLoading: modelsLoading,
+    isError: modelsIsError,
+  } = useQuery({
+    queryKey: ["agent-models", workerId, agent],
+    queryFn: () =>
+      systemClient.getAgentModels(
+        {
+          agent,
+          disableCache: false,
+        },
+        {
+          headers: {
+            "X-Worker-Id": workerId,
+          },
+        },
+      ),
+    enabled: !!workerId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!modelsData) {
+      return;
+    }
+    const models = modelsData.models;
+    const fallbackModel = modelsData.defaultModel || models[0] || "";
+    if (!fallbackModel) {
+      return;
+    }
+    if (!threadModel || !models.includes(threadModel)) {
+      setThreadModel(fallbackModel);
+    }
+  }, [modelsData, threadModel]);
 
   // Set initial worker when data loads
   const initialWorkerSet = useRef(false);
@@ -80,7 +124,7 @@ function NewThreadPage() {
   }
 
   const createThreadMutation = useMutation({
-    mutationFn: (prompt: string) =>
+    mutationFn: ({ prompt }: { prompt: string }) =>
       threadClient.createThread({
         projectId: currentProject?.id ?? "",
         agent: AgentSchema.value[agent].name,
@@ -88,14 +132,21 @@ function NewThreadPage() {
         prompt,
         mode: threadMode,
         workerId,
-        yolo: false,
+        sessionMode,
       }),
-    onSuccess: (resp) => {
+    onSuccess: (resp, variables) => {
       const id = resp.thread?.id ?? "";
+      if (id) {
+        const bootstrapState: ThreadBootstrapState = {
+          initialPrompt: variables.prompt,
+          createdAt: Date.now(),
+        };
+        queryClient.setQueryData(["thread-bootstrap", id], bootstrapState);
+      }
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       navigate({
-        to: "/app/threads/new",
-        search: { projectId: currentProject?.id, threadId: id },
+        to: "/app/threads/$threadId",
+        params: { threadId: id },
         replace: true,
       });
     },
@@ -103,10 +154,9 @@ function NewThreadPage() {
 
   const handleSendMessage = useCallback(
     (message: string) => {
-      if (threadId) return;
-      createThreadMutation.mutate(message);
+      createThreadMutation.mutate({ prompt: message });
     },
-    [threadId, createThreadMutation],
+    [createThreadMutation],
   );
 
   const handleProjectChange = (newProjectId: string) => {
@@ -177,26 +227,33 @@ function NewThreadPage() {
               type: "thread_overseer",
               entityId: "new",
               agentName: "Overseer",
-              title: threadId ? `Thread ${threadId.slice(0, 8)}` : "New Thread",
+              title: "New Thread",
               agentColor: "bg-violet-500",
             }}
             hideHeader
-            enableSimulation={!threadId}
             onSend={handleSendMessage}
-            {...(!threadId && {
-              threadMode,
-              onModeChange: setThreadMode,
-              threadModel,
-              onModelChange: setThreadModel,
-              project: currentProject,
-              projects,
-              onProjectChange: handleProjectChange,
-              workerId,
-              workers,
-              onWorkerChange: setWorkerId,
-              agent,
-              onAgentChange: setAgent,
-            })}
+            emptyStateContent={
+              <ThreadSetupForm
+                threadMode={threadMode}
+                onModeChange={setThreadMode}
+                threadModel={threadModel}
+                onModelChange={setThreadModel}
+                project={currentProject}
+                projects={projects}
+                onProjectChange={handleProjectChange}
+                workerId={workerId}
+                workers={workers}
+                onWorkerChange={setWorkerId}
+                agent={agent}
+                onAgentChange={setAgent}
+                sessionMode={sessionMode}
+                onSessionModeChange={setSessionMode}
+                availableModels={modelsData?.models ?? []}
+                defaultModel={modelsData?.defaultModel ?? ""}
+                modelsLoading={modelsLoading}
+                modelsError={modelsIsError ? "Could not load models for this agent" : null}
+              />
+            }
           />
         </div>
         {/* Resize handle */}

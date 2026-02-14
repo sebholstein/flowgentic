@@ -20,6 +20,7 @@ type Project struct {
 	DefaultPlannerModel string
 	EmbeddedWorkerPath  string
 	WorkerPaths         map[string]string
+	AgentPlanningTaskPreferences string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	SortIndex           int32

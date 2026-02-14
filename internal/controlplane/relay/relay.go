@@ -15,6 +15,7 @@ import (
 var allowedPrefixes = []string{
 	"/worker.v1.SystemService/",
 	"/worker.v1.WorkerService/",
+	"/worker.v1.TerminalService/",
 }
 
 // StartDeps are the dependencies required to start the relay.

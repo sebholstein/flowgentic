@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 	controlplanev1 "github.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // workerServiceHandler implements controlplanev1connect.WorkerServiceHandler.
@@ -103,7 +102,7 @@ func workerToProto(w Worker) *controlplanev1.WorkerConfig {
 		Name:      w.Name,
 		Url:       w.URL,
 		Secret:    w.Secret,
-		CreatedAt: timestamppb.New(w.CreatedAt),
-		UpdatedAt: timestamppb.New(w.UpdatedAt),
+		CreatedAt: w.CreatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
+		UpdatedAt: w.UpdatedAt.UTC().Format("2006-01-02T15:04:05.000Z"),
 	}
 }

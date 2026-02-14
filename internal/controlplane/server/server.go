@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/sebastianm/flowgentic/internal/config"
+	"github.com/sebastianm/flowgentic/internal/connectutil"
 	"github.com/sebastianm/flowgentic/internal/database"
 	"github.com/sebastianm/flowgentic/internal/tsnetutil"
 )
@@ -129,11 +130,7 @@ func (s *Server) Start() error {
 		s.ln.Close()
 	}()
 
-	protocols := new(http.Protocols)
-	protocols.SetHTTP1(true)
-	protocols.SetUnencryptedHTTP2(true)
-
-	srv := &http.Server{Handler: handler, Protocols: protocols}
+	srv := &http.Server{Handler: handler, Protocols: connectutil.H2CServerProtocols()}
 	if err := srv.Serve(s.ln); err != nil {
 		s.log.Error("serve error", "error", err)
 		return fmt.Errorf("serve: %w", err)

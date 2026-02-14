@@ -3,6 +3,7 @@ import { useForm, useFormContext, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Form } from "@/components/ui/form";
 import {
   Select,
@@ -45,7 +46,7 @@ function validateResourceName(value: string) {
 
 type ProjectFormValues = Pick<
   CreateProjectRequest,
-  "id" | "name" | "defaultPlannerAgent" | "defaultPlannerModel" | "embeddedWorkerPath" | "workerPaths"
+  "id" | "name" | "defaultPlannerAgent" | "defaultPlannerModel" | "embeddedWorkerPath" | "workerPaths" | "agentPlanningTaskPreferences"
 > & {
   defaultWorkerId: string;
 };
@@ -168,6 +169,7 @@ export function NewProjectDialog({
       defaultPlannerModel: "",
       embeddedWorkerPath: "",
       workerPaths: {},
+      agentPlanningTaskPreferences: "",
       defaultWorkerId: "",
     },
   });
@@ -195,6 +197,7 @@ export function NewProjectDialog({
       defaultPlannerAgent: data.defaultPlannerAgent.trim(),
       defaultPlannerModel: data.defaultPlannerModel.trim(),
       embeddedWorkerPath: data.embeddedWorkerPath.trim(),
+      agentPlanningTaskPreferences: data.agentPlanningTaskPreferences.trim(),
       workerPaths,
     });
   };
@@ -230,6 +233,16 @@ export function NewProjectDialog({
               id="project-embedded-worker-path"
               {...form.register("embeddedWorkerPath")}
               placeholder="Optional — absolute file path"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="project-agent-preferences">Agent Planning Task Preferences</Label>
+            <Textarea
+              id="project-agent-preferences"
+              {...form.register("agentPlanningTaskPreferences")}
+              placeholder="Describe preferences for assigning agents and models when planning tasks..."
+              rows={3}
             />
           </div>
 

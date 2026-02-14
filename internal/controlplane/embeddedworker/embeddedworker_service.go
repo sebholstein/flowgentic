@@ -38,12 +38,13 @@ type Store interface {
 // EmbeddedWorkerService manages the lifecycle of an embedded worker child
 // process.
 type EmbeddedWorkerService struct {
-	log        *slog.Logger
-	binaryPath string
-	secret     string
-	configPath string
-	registry   RegistryUpdater
-	store      Store
+	log           *slog.Logger
+	binaryPath    string
+	secret        string
+	preferredPort int
+	configPath    string
+	registry      RegistryUpdater
+	store         Store
 
 	mu          sync.Mutex
 	status      controlplanev1.EmbeddedWorkerStatus
@@ -63,19 +64,21 @@ func NewEmbeddedWorkerService(
 	log *slog.Logger,
 	binaryPath string,
 	secret string,
+	preferredPort int,
 	configPath string,
 	registry RegistryUpdater,
 	store Store,
 ) *EmbeddedWorkerService {
 	return &EmbeddedWorkerService{
-		log:         log,
-		binaryPath:  binaryPath,
-		secret:      secret,
-		configPath:  configPath,
-		registry:    registry,
-		store:       store,
-		status:      controlplanev1.EmbeddedWorkerStatus_EMBEDDED_WORKER_STATUS_STOPPED,
-		subscribers: make(map[chan struct{}]struct{}),
+		log:           log,
+		binaryPath:    binaryPath,
+		secret:        secret,
+		preferredPort: preferredPort,
+		configPath:    configPath,
+		registry:      registry,
+		store:         store,
+		status:        controlplanev1.EmbeddedWorkerStatus_EMBEDDED_WORKER_STATUS_STOPPED,
+		subscribers:   make(map[chan struct{}]struct{}),
 	}
 }
 
@@ -91,7 +94,7 @@ func (s *EmbeddedWorkerService) Start(ctx context.Context) error {
 	s.setStatusLocked(controlplanev1.EmbeddedWorkerStatus_EMBEDDED_WORKER_STATUS_STARTING, "")
 	s.mu.Unlock()
 
-	port, err := portutil.FindFreePort()
+	port, err := portutil.FindFreePortFrom(s.preferredPort, 10)
 	if err != nil {
 		s.mu.Lock()
 		s.setStatusLocked(controlplanev1.EmbeddedWorkerStatus_EMBEDDED_WORKER_STATUS_ERRORED, err.Error())
@@ -130,7 +133,7 @@ func (s *EmbeddedWorkerService) Start(ctx context.Context) error {
 	s.pid = cmd.Process.Pid
 	s.mu.Unlock()
 
-	s.log.Info("embedded worker process started", "pid", cmd.Process.Pid, "addr", listenAddr)
+	s.log.Info("embedded worker process started", "pid", cmd.Process.Pid, "addr", listenAddr, "secret", s.secret)
 
 	go s.watchForCrash(cmd)
 
@@ -201,6 +204,11 @@ func (s *EmbeddedWorkerService) Restart(ctx context.Context) error {
 		}
 	}
 	return s.Start(ctx)
+}
+
+// Secret returns the worker authentication secret.
+func (s *EmbeddedWorkerService) Secret() string {
+	return s.secret
 }
 
 // GetStatus returns the current state.

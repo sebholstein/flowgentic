@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package worker.v1;
 
+import "worker/v1/agent.proto";
+
 option go_package = "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1";
 
 // SystemService exposes system-level information about the worker node.
@@ -9,6 +11,8 @@ service SystemService {
   // ListAgents returns the coding agents installed on this worker
   // along with their version and whether they are enabled by config.
   rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse) {}
+  // GetAgentModels returns available models and default model for one agent.
+  rpc GetAgentModels(GetAgentModelsRequest) returns (GetAgentModelsResponse) {}
   // Ping is a lightweight health-check that confirms the worker is reachable.
   rpc Ping(PingRequest) returns (PingResponse) {}
 }
@@ -36,4 +40,17 @@ message AgentInfo {
   string version = 3;
   // Whether this agent is enabled in the worker's configuration.
   bool enabled = 4;
+}
+
+message GetAgentModelsRequest {
+  Agent agent = 1;
+  // When true, bypass the cache and re-discover models.
+  // The fresh result is still stored in the cache.
+  bool disable_cache = 2;
+}
+
+message GetAgentModelsResponse {
+  Agent agent = 1;
+  repeated string models = 2;
+  string default_model = 3;
 }

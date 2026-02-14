@@ -2,15 +2,18 @@ import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from "re
 import { init, Terminal as GhosttyTerminal, FitAddon } from "ghostty-web";
 
 export interface TerminalHandle {
-  write: (data: string) => void;
+  write: (data: string | Uint8Array) => void;
   writeln: (data: string) => void;
   clear: () => void;
   focus: () => void;
+  cols: number;
+  rows: number;
 }
 
 interface TerminalProps {
   className?: string;
   onData?: (data: string) => void;
+  onResize?: (cols: number, rows: number) => void;
   initialContent?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -82,6 +85,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   {
     className,
     onData,
+    onResize,
     initialContent,
     fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
     fontSize = 13,
@@ -94,10 +98,16 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const [_isReady, setIsReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    write: (data: string) => terminalRef.current?.write(data),
+    write: (data: string | Uint8Array) => terminalRef.current?.write(data),
     writeln: (data: string) => terminalRef.current?.write(data + "\r\n"),
     clear: () => terminalRef.current?.clear(),
     focus: () => terminalRef.current?.focus(),
+    get cols() {
+      return terminalRef.current?.cols ?? 80;
+    },
+    get rows() {
+      return terminalRef.current?.rows ?? 24;
+    },
   }));
 
   useEffect(() => {
@@ -134,6 +144,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       fitAddon.fit();
       fitAddon.observeResize();
 
+      // Forward resize events to parent
+      if (onResize) {
+        terminal.onResize(({ cols, rows }) => onResize(cols, rows));
+      }
+
       // Handle user input
       if (onData) {
         terminal.onData(onData);
@@ -155,7 +170,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       terminal?.dispose();
       terminalRef.current = null;
     };
-  }, [fontFamily, fontSize, theme, onData, initialContent]);
+  }, [fontFamily, fontSize, theme, onData, onResize, initialContent]);
 
   return (
     <div

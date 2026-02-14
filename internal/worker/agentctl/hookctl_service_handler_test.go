@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	workerv1 "github.com/sebastianm/flowgentic/internal/proto/gen/worker/v1"
-	"github.com/sebastianm/flowgentic/internal/worker/driver"
+	v2 "github.com/sebastianm/flowgentic/internal/worker/driver/v2"
 	"github.com/sebastianm/flowgentic/internal/worker/workload"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,12 +14,10 @@ import (
 
 func TestHookCtlServiceHandler_ReportHook(t *testing.T) {
 	d := newFakeDriver("claude-code")
-	m := workload.NewAgentRunManager(testLogger(), "", "", d)
+	m := workload.NewSessionManager(testLogger(), "", "", d)
 
 	agentRunID := "ar-hook"
-	_, err := m.Launch(context.Background(), agentRunID, "claude-code", driver.LaunchOpts{
-		Mode: driver.SessionModeHeadless,
-	}, nil)
+	_, err := m.Launch(context.Background(), agentRunID, "claude-code", v2.LaunchOpts{}, nil)
 	require.NoError(t, err)
 
 	h := &hookCtlServiceHandler{log: testLogger(), handler: m}
@@ -34,20 +32,16 @@ func TestHookCtlServiceHandler_ReportHook(t *testing.T) {
 		resp, err := h.ReportHook(context.Background(), req)
 		require.NoError(t, err)
 		assert.NotNil(t, resp)
-
-		d.mu.Lock()
-		defer d.mu.Unlock()
-		require.Len(t, d.hookEvents, 1)
-		assert.Equal(t, "Stop", d.hookEvents[0].HookName)
 	})
 
-	t.Run("unknown session returns error", func(t *testing.T) {
+	t.Run("unknown session succeeds (hooks are no-ops in V2)", func(t *testing.T) {
 		req := connect.NewRequest(&workerv1.ReportHookRequest{
 			SessionId: "nonexistent",
 			Agent:     workerv1.Agent_AGENT_CLAUDE_CODE,
 			HookName:  "Stop",
 		})
-		_, err := h.ReportHook(context.Background(), req)
-		assert.Error(t, err)
+		resp, err := h.ReportHook(context.Background(), req)
+		require.NoError(t, err)
+		assert.NotNil(t, resp)
 	})
 }
