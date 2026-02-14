@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNormalizeNotification_McpToolCallLifecycle(t *testing.T) {
+func TestNotificationHandlers_McpToolCallLifecycle(t *testing.T) {
 	a := &Adapter{}
 
-	started := a.normalizeNotification("item/started", rawJSON(t, map[string]any{
+	started := notificationHandlers[methodItemStarted](a, rawJSON(t, map[string]any{
 		"item": map[string]any{
 			"id":        "mcp-1",
 			"type":      "mcpToolCall",
@@ -27,7 +27,7 @@ func TestNormalizeNotification_McpToolCallLifecycle(t *testing.T) {
 	assert.Equal(t, "flowgentic.plan_commit", started[0].ToolCall.Title)
 	assert.Equal(t, acpsdk.ToolCallStatusInProgress, started[0].ToolCall.Status)
 
-	progress := a.normalizeNotification("item/mcpToolCall/progress", rawJSON(t, map[string]any{
+	progress := notificationHandlers[methodMCPToolCallProgress](a, rawJSON(t, map[string]any{
 		"itemId":   "mcp-1",
 		"progress": "running",
 	}))
@@ -37,7 +37,7 @@ func TestNormalizeNotification_McpToolCallLifecycle(t *testing.T) {
 	require.NotNil(t, progress[0].ToolCallUpdate.Status)
 	assert.Equal(t, acpsdk.ToolCallStatusInProgress, *progress[0].ToolCallUpdate.Status)
 
-	completed := a.normalizeNotification("item/completed", rawJSON(t, map[string]any{
+	completed := notificationHandlers[methodItemCompleted](a, rawJSON(t, map[string]any{
 		"item": map[string]any{
 			"id":     "mcp-1",
 			"type":   "mcpToolCall",
@@ -51,10 +51,10 @@ func TestNormalizeNotification_McpToolCallLifecycle(t *testing.T) {
 	assert.Equal(t, acpsdk.ToolCallStatusCompleted, *completed[0].ToolCallUpdate.Status)
 }
 
-func TestNormalizeNotification_McpStartupUpdate(t *testing.T) {
+func TestNotificationHandlers_McpStartupUpdate(t *testing.T) {
 	a := &Adapter{}
 
-	updates := a.normalizeNotification("codex/event/mcp_startup_update", rawJSON(t, map[string]any{
+	updates := notificationHandlers[methodMCPStartupUpdate](a, rawJSON(t, map[string]any{
 		"server":  "flowgentic",
 		"message": "connected",
 	}))
