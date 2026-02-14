@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  Link,
-  useParams,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useParams, useRouterState } from "@tanstack/react-router";
 import { dragStyle, noDragStyle } from "@/components/layout/WindowDragRegion";
 import { useState, useCallback, useMemo, createContext, use, useRef, useEffect } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
@@ -120,7 +114,7 @@ function ThreadLayout() {
       updatedAt: t.updatedAt ?? "",
       overseer: { id: "overseer", name: "Overseer" },
       projectId: t.projectId,
-      mode: (t.mode === "plan" || t.mode === "build") ? t.mode : "build",
+      mode: t.mode === "plan" || t.mode === "build" ? t.mode : "build",
       model: t.model,
       harness: t.agent,
       plan: t.plan || undefined,
@@ -151,7 +145,6 @@ function ThreadLayout() {
     pendingThoughtText,
     isResponding: isSessionResponding,
     hasReceivedUpdate: hasReceivedSessionUpdate,
-    addOptimisticUserMessage,
   } = useSessionEvents({ threadId });
 
   const bootstrapState = queryClient.getQueryData<ThreadBootstrapState>([
@@ -207,16 +200,14 @@ function ThreadLayout() {
 
   // Follow-up message mutation
   const promptMutation = useMutation({
-    mutationFn: (text: string) =>
-      sessionClient.promptSession({ threadId, text }),
+    mutationFn: (text: string) => sessionClient.promptSession({ threadId, text }),
   });
 
   const handleSendFollowUp = useCallback(
     (text: string) => {
-      addOptimisticUserMessage(text);
       promptMutation.mutate(text);
     },
-    [addOptimisticUserMessage, promptMutation],
+    [promptMutation],
   );
 
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) : undefined;
@@ -228,7 +219,6 @@ function ThreadLayout() {
   const handleCloseTaskDetail = useCallback(() => {
     setSelectedTaskId(undefined);
   }, []);
-
 
   // Resize handle for left panel (chat)
   const handleMouseDown = useCallback(

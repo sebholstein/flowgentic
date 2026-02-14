@@ -2,14 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Bot,
-  Loader2,
-  X,
-  ImagePlus,
-  Bell,
-  ArrowUp,
-} from "lucide-react";
+import { Bot, Loader2, X, ImagePlus, Bell, ArrowUp } from "lucide-react";
 import { ToolCallBlock } from "./ToolCallBlock";
 import { McpToolCallBlock } from "./McpToolCallBlock";
 import { ThinkingBlock } from "./ThinkingBlock";
@@ -157,7 +150,7 @@ export function AgentChatPanel({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSend();
     }
@@ -222,10 +215,7 @@ export function AgentChatPanel({
 
       {/* Messages */}
       <div
-        className={cn(
-          "flex-1 min-h-0 overflow-y-auto",
-          showSetupForm && "flex flex-col",
-        )}
+        className={cn("flex-1 min-h-0 overflow-y-auto", showSetupForm && "flex flex-col")}
         ref={scrollRef}
       >
         <div
