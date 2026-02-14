@@ -64,3 +64,8 @@ flowgentic.local.json
 
 
 audio_000.wav
+# Binaries built in root
+acpchat
+agentctl
+hookctl
+flowgentic-*
