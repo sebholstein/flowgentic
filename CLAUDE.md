@@ -2,6 +2,7 @@
 
 # General
 - This project is not released yet. No backward compatibility is needed — freely remove or change old code, APIs, and formats instead of keeping legacy fallbacks.
+- Use Conventional Commits for all git commit messages (e.g. `feat: ...`, `fix(scope): ...`).
 
 ## Technologies
 
@@ -64,4 +65,3 @@ Use the `/speak` skill to notify the user audibly when something important happe
 - When you need user input on a decision
 
 Keep messages short and conversational.
-
