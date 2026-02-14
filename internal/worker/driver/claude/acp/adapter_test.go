@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	acpsdk "github.com/coder/acp-go-sdk"
-	claudecode "github.com/severity1/claude-agent-sdk-go"
+	claudecode "github.com/sebastianm/flowgentic/internal/claude-agent-sdk-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,6 +50,29 @@ func TestNewSession_ReturnsModelStateWhenProviderAvailable(t *testing.T) {
 	assert.Equal(t, "claude-sonnet", string(resp.Models.CurrentModelId))
 	require.Len(t, resp.Models.AvailableModels, 2)
 	assert.Equal(t, "claude-sonnet", string(resp.Models.AvailableModels[0].ModelId))
+}
+
+func TestNewSession_DoesNotEmitAvailableCommandsOnStartup(t *testing.T) {
+	a, fake := newTestAdapter()
+	resp, err := a.NewSession(context.Background(), acpsdk.NewSessionRequest{Cwd: t.TempDir()})
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.SessionId)
+
+	updates := fake.allUpdates()
+	require.Empty(t, updates)
+}
+
+func TestBuildSDKOptions_SetsAllSettingSources(t *testing.T) {
+	a, _ := newTestAdapter()
+	a.cwd = t.TempDir()
+
+	opts := claudecode.NewOptions(a.buildSDKOptions()...)
+
+	require.Equal(t, []claudecode.SettingSource{
+		claudecode.SettingSourceUser,
+		claudecode.SettingSourceProject,
+		claudecode.SettingSourceLocal,
+	}, opts.SettingSources)
 }
 
 func TestNormalizeAndSend_AssistantMessage_SkipsTextAndThinking(t *testing.T) {
@@ -365,7 +388,7 @@ func TestConvertMCPServers(t *testing.T) {
 			Stdio: &acpsdk.McpServerStdio{
 				Name:    "flowgentic",
 				Command: "agentctl",
-				Args:    []string{"mcp", "serve"},
+				Args:    nil,
 				Env: []acpsdk.EnvVariable{
 					{Name: "AGENTCTL_AGENT_RUN_ID", Value: "sess-1"},
 				},
@@ -393,7 +416,7 @@ func TestConvertMCPServers(t *testing.T) {
 	stdio, ok := converted["flowgentic"].(*claudecode.McpStdioServerConfig)
 	require.True(t, ok)
 	assert.Equal(t, "agentctl", stdio.Command)
-	assert.Equal(t, []string{"mcp", "serve"}, stdio.Args)
+	assert.Nil(t, stdio.Args)
 	assert.Equal(t, map[string]string{"AGENTCTL_AGENT_RUN_ID": "sess-1"}, stdio.Env)
 
 	httpCfg, ok := converted["remote-http"].(*claudecode.McpHTTPServerConfig)
@@ -412,7 +435,7 @@ func TestBuildSDKOptions_IncludesMCPServers(t *testing.T) {
 		"flowgentic": &claudecode.McpStdioServerConfig{
 			Type:    claudecode.McpServerTypeStdio,
 			Command: "agentctl",
-			Args:    []string{"mcp", "serve"},
+			Args:    nil,
 		},
 	}
 
@@ -645,6 +668,102 @@ func TestSystemMessage_ExtractsText(t *testing.T) {
 	updates := fake.allUpdates()
 	require.Len(t, updates, 1)
 	require.NotNil(t, updates[0].Update.AgentMessageChunk, "should send AgentMessageChunk for system message text")
+}
+
+func TestSystemMessage_AvailableCommandsRootLevel(t *testing.T) {
+	a, fake := newTestAdapter()
+	ctx := context.Background()
+
+	a.normalizeAndSend(ctx, testSessionID, &claudecode.SystemMessage{
+		MessageType: "system",
+		Subtype:     "init",
+		Data: map[string]any{
+			"availableCommands": []any{
+				map[string]any{"name": "init", "description": "create/update AGENTS.md"},
+				map[string]any{"name": "review", "description": "review changes"},
+			},
+		},
+	})
+
+	updates := fake.allUpdates()
+	require.Len(t, updates, 1)
+	require.NotNil(t, updates[0].Update.AvailableCommandsUpdate)
+	require.Len(t, updates[0].Update.AvailableCommandsUpdate.AvailableCommands, 2)
+	assert.Equal(t, "init", updates[0].Update.AvailableCommandsUpdate.AvailableCommands[0].Name)
+	assert.Equal(t, "review changes", updates[0].Update.AvailableCommandsUpdate.AvailableCommands[1].Description)
+}
+
+func TestSystemMessage_AvailableCommandsNestedUnderMessage(t *testing.T) {
+	a, fake := newTestAdapter()
+	ctx := context.Background()
+
+	a.normalizeAndSend(ctx, testSessionID, &claudecode.SystemMessage{
+		MessageType: "system",
+		Subtype:     "init",
+		Data: map[string]any{
+			"message": map[string]any{
+				"availableCommands": []any{
+					map[string]any{"name": "compact", "description": "compact the session"},
+				},
+			},
+		},
+	})
+
+	updates := fake.allUpdates()
+	require.Len(t, updates, 1)
+	require.NotNil(t, updates[0].Update.AvailableCommandsUpdate)
+	require.Len(t, updates[0].Update.AvailableCommandsUpdate.AvailableCommands, 1)
+	assert.Equal(t, "compact", updates[0].Update.AvailableCommandsUpdate.AvailableCommands[0].Name)
+}
+
+func TestSystemMessage_AvailableCommandsNestedUnderData(t *testing.T) {
+	a, fake := newTestAdapter()
+	ctx := context.Background()
+
+	a.normalizeAndSend(ctx, testSessionID, &claudecode.SystemMessage{
+		MessageType: "system",
+		Subtype:     "init",
+		Data: map[string]any{
+			"type":    "system",
+			"subtype": "init",
+			"data": map[string]any{
+				"availableCommands": []any{
+					map[string]any{"name": "review", "description": "review changes"},
+				},
+			},
+		},
+	})
+
+	updates := fake.allUpdates()
+	require.Len(t, updates, 1)
+	require.NotNil(t, updates[0].Update.AvailableCommandsUpdate)
+	require.Len(t, updates[0].Update.AvailableCommandsUpdate.AvailableCommands, 1)
+	assert.Equal(t, "review", updates[0].Update.AvailableCommandsUpdate.AvailableCommands[0].Name)
+}
+
+func TestSystemMessage_AvailableCommandsSnakeCaseUnderData(t *testing.T) {
+	a, fake := newTestAdapter()
+	ctx := context.Background()
+
+	a.normalizeAndSend(ctx, testSessionID, &claudecode.SystemMessage{
+		MessageType: "system",
+		Subtype:     "init",
+		Data: map[string]any{
+			"type":    "system",
+			"subtype": "init",
+			"data": map[string]any{
+				"available_commands": []any{
+					map[string]any{"name": "compact", "description": "compact the session"},
+				},
+			},
+		},
+	})
+
+	updates := fake.allUpdates()
+	require.Len(t, updates, 1)
+	require.NotNil(t, updates[0].Update.AvailableCommandsUpdate)
+	require.Len(t, updates[0].Update.AvailableCommandsUpdate.AvailableCommands, 1)
+	assert.Equal(t, "compact", updates[0].Update.AvailableCommandsUpdate.AvailableCommands[0].Name)
 }
 
 func TestNilConn_NoOp(t *testing.T) {

@@ -318,28 +318,30 @@ func (d *acpDriver) runSession(ctx context.Context, sess *acpSession, conn *acp.
 	sess.mu.Unlock()
 	sess.setStatus(SessionStatusRunning)
 
-	// Step 3: Initial prompt
-	// For subprocess agents, _meta.systemPrompt is non-standard and may be
-	// ignored (e.g. OpenCode). Prepend it to the prompt text so the agent
-	// always sees it. In-process adapters (Claude Code) handle systemPrompt
-	// via their own NewSession/Prompt logic and skip this path.
-	var blocks []acp.ContentBlock
-	if cmd != nil && opts.SystemPrompt != "" {
-		blocks = append(blocks, acp.TextBlock(opts.SystemPrompt+"\n\n---\n\n"))
-	}
-	blocks = append(blocks, acp.TextBlock(opts.Prompt))
+	// Step 3: Initial prompt (optional).
+	if strings.TrimSpace(opts.Prompt) != "" {
+		// For subprocess agents, _meta.systemPrompt is non-standard and may be
+		// ignored (e.g. OpenCode). Prepend it to the prompt text so the agent
+		// always sees it. In-process adapters (Claude Code) handle systemPrompt
+		// via their own NewSession/Prompt logic and skip this path.
+		var blocks []acp.ContentBlock
+		if cmd != nil && opts.SystemPrompt != "" {
+			blocks = append(blocks, acp.TextBlock(opts.SystemPrompt+"\n\n---\n\n"))
+		}
+		blocks = append(blocks, acp.TextBlock(opts.Prompt))
 
-	promptResp, promptErr := d.doPrompt(ctx, conn, sessionID, blocks)
-	if promptErr != nil {
-		if ctx.Err() != nil {
-			d.log.Info("ACP session cancelled")
+		promptResp, promptErr := d.doPrompt(ctx, conn, sessionID, blocks)
+		if promptErr != nil {
+			if ctx.Err() != nil {
+				d.log.Info("ACP session cancelled")
+				return
+			}
+			d.log.Error("ACP prompt failed", "error", promptErr)
+			sess.setStatus(SessionStatusErrored)
 			return
 		}
-		d.log.Error("ACP prompt failed", "error", promptErr)
-		sess.setStatus(SessionStatusErrored)
-		return
+		d.log.Info("ACP prompt completed", "stop_reason", promptResp.StopReason)
 	}
-	d.log.Info("ACP prompt completed", "stop_reason", promptResp.StopReason)
 
 	// Step 4: Enter idle loop — wait for follow-up prompts or cancellation.
 	sess.setStatus(SessionStatusIdle)
@@ -388,7 +390,8 @@ func (d *acpDriver) buildMeta(opts LaunchOpts) map[string]any {
 }
 
 func sessionMCPServers(opts LaunchOpts) []acp.McpServer {
-	servers := append([]acp.McpServer(nil), opts.MCPServers...)
+	servers := make([]acp.McpServer, len(opts.MCPServers))
+	copy(servers, opts.MCPServers)
 	if !shouldInjectDefaultFlowgenticMCP(opts) {
 		return servers
 	}
@@ -424,7 +427,7 @@ func defaultFlowgenticMCPServer(envVars map[string]string) (acp.McpServer, bool)
 		Stdio: &acp.McpServerStdio{
 			Name:    "flowgentic",
 			Command: command,
-			Args:    append(commandArgs, "mcp", "serve"),
+			Args:    commandArgs,
 			Env:     env,
 		},
 	}, true
@@ -463,7 +466,7 @@ func resolveAgentctlInvocation(envVars map[string]string) (string, []string) {
 	if cwd, err := os.Getwd(); err == nil && cwd != "" {
 		sourceCmdDir := filepath.Join(cwd, "cmd", "agentctl")
 		if _, statErr := os.Stat(sourceCmdDir); statErr == nil {
-			slog.Default().Warn("flowgentic MCP using PATH agentctl; build/install `agentctl` with `mcp serve` support for best compatibility")
+			slog.Default().Warn("flowgentic MCP using PATH agentctl; build/install `agentctl` for best compatibility")
 		}
 	}
 
@@ -474,15 +477,11 @@ func commandSupportsMCPServe(command string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, command, "mcp", "serve", "--help").CombinedOutput()
-	if err == nil {
-		return true
-	}
-
-	// Cobra returns status 0 for help on valid commands and 1 for unknown command.
-	// Treat explicit "unknown command" as unsupported.
-	text := strings.ToLower(string(out))
-	return !strings.Contains(text, "unknown command")
+	// agentctl runs as an MCP stdio server directly — verify the binary exists
+	// and is executable by invoking it with --help (which will fail quickly for
+	// non-agentctl binaries).
+	err := exec.CommandContext(ctx, command, "--help").Run()
+	return err == nil
 }
 
 func hasStdioMCPServerNamed(servers []acp.McpServer, name string) bool {

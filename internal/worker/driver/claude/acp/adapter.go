@@ -14,8 +14,8 @@ import (
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
+	claudecode "github.com/sebastianm/flowgentic/internal/claude-agent-sdk-go"
 	"github.com/sebastianm/flowgentic/internal/worker/driver"
-	claudecode "github.com/severity1/claude-agent-sdk-go"
 )
 
 // updateSender abstracts sending session updates, enabling test injection.
@@ -60,11 +60,17 @@ type Adapter struct {
 
 	// promptCancel cancels the in-flight Prompt() context when Cancel() is called.
 	promptCancel context.CancelFunc
+	// promptDone closes when the active prompt turn receives a ResultMessage.
+	promptDone chan struct{}
+	// connectWait is non-nil while a connect attempt is in progress.
+	connectWait chan struct{}
 
 	// activeTools tracks tool calls that have been started but not yet completed.
 	// Maps toolCallId → tool name. Used to deduplicate starts (stream vs batch)
 	// and synthesize completion events when the next assistant turn begins.
 	activeTools map[string]string
+	// availableCommandsSent guards one-time emission of startup commands.
+	availableCommandsSent bool
 
 	modelProvider modelStateProvider
 }
@@ -144,6 +150,7 @@ func (a *Adapter) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (a
 		}
 	}
 	a.planModeMCP = strings.Contains(a.systemPrompt, "## Flowgentic MCP") && len(a.mcpServers) > 0
+	a.availableCommandsSent = false
 
 	resp := acpsdk.NewSessionResponse{
 		SessionId: acpsdk.SessionId(a.sessionID),
@@ -159,6 +166,19 @@ func (a *Adapter) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (a
 			resp.Models = &cloned
 		}
 	}
+	// Eagerly connect in the background for runtime sessions so SDK startup
+	// messages (including available commands) can be forwarded soon after
+	// session creation without blocking NewSession.
+	if a.conn != nil {
+		go func() {
+			if err := a.ensureClientConnected(context.Background()); err != nil {
+				a.log.Debug("background sdk connect failed", "error", err)
+				return
+			}
+			a.emitAvailableCommandsFromSDK(context.Background(), acpsdk.SessionId(a.sessionID))
+		}()
+	}
+
 	return resp, nil
 }
 
@@ -183,54 +203,127 @@ func (a *Adapter) Prompt(ctx context.Context, req acpsdk.PromptRequest) (acpsdk.
 		}
 	}
 
-	// Lazy-init: create and connect client on first Prompt() call.
-	// The client persists across calls so multi-turn conversations
-	// share the same subprocess and conversation history.
-	a.mu.Lock()
-	if a.client == nil {
-		// Use a session-scoped context for Connect/ReceiveMessages so the
-		// subprocess outlives individual Prompt() calls.
-		sessionCtx, sessionCancel := context.WithCancel(context.Background())
-		a.sessionCtx = sessionCtx
-		a.sessionCancel = sessionCancel
-
-		sdkOpts := a.buildSDKOptions()
-		sdkOpts = append(sdkOpts, claudecode.WithCanUseTool(func(toolCtx context.Context, toolName string, input map[string]any, _ claudecode.ToolPermissionContext) (claudecode.PermissionResult, error) {
-			return a.handlePermission(toolCtx, req.SessionId, toolName, input)
-		}))
-
-		client := claudecode.NewClient(sdkOpts...)
-		if err := client.Connect(sessionCtx); err != nil {
-			sessionCancel()
-			a.mu.Unlock()
-			return acpsdk.PromptResponse{}, fmt.Errorf("connect: %w", err)
-		}
-		a.client = client
-		a.msgChan = client.ReceiveMessages(sessionCtx)
+	if err := a.ensureClientConnected(ctx); err != nil {
+		return acpsdk.PromptResponse{}, fmt.Errorf("connect: %w", err)
 	}
+	a.emitAvailableCommandsFromSDK(ctx, acpsdk.SessionId(a.sessionID))
+
+	a.mu.Lock()
+	if a.promptDone != nil {
+		a.mu.Unlock()
+		return acpsdk.PromptResponse{}, fmt.Errorf("prompt already in progress")
+	}
+	done := make(chan struct{})
+	a.promptDone = done
 	a.mu.Unlock()
 
 	// Send prompt on the persistent session.
 	if promptText != "" {
 		if err := a.client.QueryWithSession(ctx, promptText, a.sessionID); err != nil {
+			a.clearPromptDone(done)
 			return acpsdk.PromptResponse{}, fmt.Errorf("query: %w", err)
 		}
 	}
 
-	// Drain messages until ResultMessage signals the turn is complete.
-	var finalStopReason acpsdk.StopReason = acpsdk.StopReasonEndTurn
+	finalStopReason := acpsdk.StopReasonEndTurn
 	for {
 		select {
-		case msg, ok := <-a.msgChan:
-			if !ok || msg == nil {
-				return acpsdk.PromptResponse{StopReason: finalStopReason}, nil
-			}
-			if a.normalizeAndSend(ctx, req.SessionId, msg) {
-				return acpsdk.PromptResponse{StopReason: finalStopReason}, nil
-			}
+		case <-done:
+			return acpsdk.PromptResponse{StopReason: finalStopReason}, nil
 		case <-ctx.Done():
+			a.clearPromptDone(done)
 			finalStopReason = acpsdk.StopReasonCancelled
 			return acpsdk.PromptResponse{StopReason: finalStopReason}, nil
+		}
+	}
+}
+
+func (a *Adapter) clearPromptDone(done chan struct{}) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.promptDone == done {
+		a.promptDone = nil
+	}
+}
+
+func (a *Adapter) completePromptTurn() {
+	a.mu.Lock()
+	done := a.promptDone
+	if done != nil {
+		a.promptDone = nil
+	}
+	a.mu.Unlock()
+	if done != nil {
+		close(done)
+	}
+}
+
+func (a *Adapter) ensureClientConnected(ctx context.Context) error {
+	a.mu.Lock()
+	if a.client != nil {
+		a.mu.Unlock()
+		return nil
+	}
+	if wait := a.connectWait; wait != nil {
+		a.mu.Unlock()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-wait:
+		}
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		if a.client == nil {
+			return errors.New("sdk connect failed")
+		}
+		return nil
+	}
+	wait := make(chan struct{})
+	a.connectWait = wait
+	// Use a session-scoped context for Connect/ReceiveMessages so the
+	// subprocess outlives individual Prompt() calls.
+	sessionCtx, sessionCancel := context.WithCancel(context.Background())
+	a.sessionCtx = sessionCtx
+	a.sessionCancel = sessionCancel
+
+	sdkOpts := a.buildSDKOptions()
+	sdkOpts = append(sdkOpts, claudecode.WithCanUseTool(func(toolCtx context.Context, toolName string, input map[string]any, _ claudecode.ToolPermissionContext) (claudecode.PermissionResult, error) {
+		return a.handlePermission(toolCtx, acpsdk.SessionId(a.sessionID), toolName, input)
+	}))
+
+	client := claudecode.NewClient(sdkOpts...)
+	if err := client.Connect(sessionCtx); err != nil {
+		sessionCancel()
+		a.connectWait = nil
+		close(wait)
+		a.mu.Unlock()
+		return err
+	}
+	a.client = client
+	a.msgChan = client.ReceiveMessages(sessionCtx)
+	msgChan := a.msgChan
+	sessionID := acpsdk.SessionId(a.sessionID)
+	a.connectWait = nil
+	close(wait)
+	a.mu.Unlock()
+
+	go a.pumpMessages(sessionCtx, sessionID, msgChan)
+	return nil
+}
+
+func (a *Adapter) pumpMessages(ctx context.Context, sessionID acpsdk.SessionId, msgChan <-chan claudecode.Message) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-msgChan:
+			if !ok || msg == nil {
+				a.completePromptTurn()
+				return
+			}
+			if a.normalizeAndSend(ctx, sessionID, msg) {
+				a.completePromptTurn()
+			}
 		}
 	}
 }
@@ -629,6 +722,22 @@ func (a *Adapter) normalizeSystemMessage(ctx context.Context, sessionID acpsdk.S
 	if msg.Data == nil {
 		return
 	}
+	a.log.Debug(
+		"claude system message",
+		"subtype", msg.Subtype,
+		"keys", mapKeys(msg.Data),
+		"data_keys", nestedMapKeys(msg.Data["data"]),
+		"message_keys", nestedMapKeys(msg.Data["message"]),
+	)
+
+	if cmds, ok := extractAvailableCommands(msg.Data); ok {
+		a.sendUpdate(ctx, sessionID, acpsdk.SessionUpdate{
+			AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+				AvailableCommands: cmds,
+			},
+		})
+	}
+
 	msgData, ok := msg.Data["message"]
 	if !ok {
 		return
@@ -664,6 +773,76 @@ func (a *Adapter) normalizeSystemMessage(ctx context.Context, sessionID acpsdk.S
 	}
 }
 
+func extractAvailableCommands(data map[string]any) ([]acpsdk.AvailableCommand, bool) {
+	if len(data) == 0 {
+		return nil, false
+	}
+
+	candidates := []map[string]any{data}
+	if nested, ok := data["data"].(map[string]any); ok {
+		candidates = append(candidates, nested)
+	}
+	for _, m := range candidates {
+		if cmds, ok := parseAvailableCommandsList(m["availableCommands"]); ok {
+			return cmds, true
+		}
+		if cmds, ok := parseAvailableCommandsList(m["available_commands"]); ok {
+			return cmds, true
+		}
+		msgRaw, ok := m["message"]
+		if !ok {
+			continue
+		}
+		msgMap, ok := msgRaw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if cmds, ok := parseAvailableCommandsList(msgMap["availableCommands"]); ok {
+			return cmds, true
+		}
+		if cmds, ok := parseAvailableCommandsList(msgMap["available_commands"]); ok {
+			return cmds, true
+		}
+	}
+	return nil, false
+}
+
+func parseAvailableCommandsList(raw any) ([]acpsdk.AvailableCommand, bool) {
+	list, ok := raw.([]any)
+	if !ok || len(list) == 0 {
+		return nil, false
+	}
+
+	out := make([]acpsdk.AvailableCommand, 0, len(list))
+	for _, item := range list {
+		cmdMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := cmdMap["name"].(string)
+		if name == "" {
+			continue
+		}
+		desc, _ := cmdMap["description"].(string)
+		out = append(out, acpsdk.AvailableCommand{
+			Name:        name,
+			Description: desc,
+		})
+	}
+	if len(out) == 0 {
+		return nil, false
+	}
+	return out, true
+}
+
+func nestedMapKeys(v any) []string {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return nil
+	}
+	return mapKeys(m)
+}
+
 func (a *Adapter) sendUpdate(ctx context.Context, sessionID acpsdk.SessionId, update acpsdk.SessionUpdate) {
 	sender := a.sender()
 	if sender == nil {
@@ -675,6 +854,52 @@ func (a *Adapter) sendUpdate(ctx context.Context, sessionID acpsdk.SessionId, up
 	}); err != nil {
 		a.log.Debug("failed to send session update", "error", err)
 	}
+}
+
+func (a *Adapter) emitAvailableCommandsFromSDK(ctx context.Context, sessionID acpsdk.SessionId) {
+	a.mu.Lock()
+	if a.availableCommandsSent {
+		a.mu.Unlock()
+		return
+	}
+	client := a.client
+	a.mu.Unlock()
+	if client == nil {
+		return
+	}
+
+	cmds, err := client.SupportedCommands(ctx)
+	if err != nil || len(cmds) == 0 {
+		return
+	}
+
+	available := make([]acpsdk.AvailableCommand, 0, len(cmds))
+	for _, cmd := range cmds {
+		if cmd.Name == "" {
+			continue
+		}
+		available = append(available, acpsdk.AvailableCommand{
+			Name:        cmd.Name,
+			Description: cmd.Description,
+		})
+	}
+	if len(available) == 0 {
+		return
+	}
+
+	a.mu.Lock()
+	if a.availableCommandsSent {
+		a.mu.Unlock()
+		return
+	}
+	a.availableCommandsSent = true
+	a.mu.Unlock()
+
+	a.sendUpdate(ctx, sessionID, acpsdk.SessionUpdate{
+		AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+			AvailableCommands: available,
+		},
+	})
 }
 
 // sender returns the updateSender to use. It prefers the injected updater
@@ -701,6 +926,14 @@ func (a *Adapter) buildSDKOptions() []claudecode.Option {
 	if a.cwd != "" {
 		sdkOpts = append(sdkOpts, claudecode.WithCwd(a.cwd))
 	}
+	// Ensure Claude loads skills from user + project + local settings sources.
+	// Without this, the SDK may pass empty setting sources, which can omit
+	// project-installed skills from supported commands.
+	sdkOpts = append(sdkOpts, claudecode.WithSettingSources(
+		claudecode.SettingSourceUser,
+		claudecode.SettingSourceProject,
+		claudecode.SettingSourceLocal,
+	))
 	if len(a.allowedTools) > 0 {
 		sdkOpts = append(sdkOpts, claudecode.WithAllowedTools(a.allowedTools...))
 	}

@@ -25,8 +25,7 @@ func TestSessionMCPServers_InjectsFlowgenticServer(t *testing.T) {
 	require.NotNil(t, servers[0].Stdio)
 	assert.Equal(t, "flowgentic", servers[0].Stdio.Name)
 	assert.NotEmpty(t, servers[0].Stdio.Command)
-	require.GreaterOrEqual(t, len(servers[0].Stdio.Args), 2)
-	assert.Equal(t, []string{"mcp", "serve"}, servers[0].Stdio.Args[len(servers[0].Stdio.Args)-2:])
+	assert.Empty(t, servers[0].Stdio.Args)
 	assert.Equal(t, []acp.EnvVariable{
 		{Name: "AGENTCTL_WORKER_URL", Value: "http://127.0.0.1:9999"},
 		{Name: "AGENTCTL_WORKER_SECRET", Value: "secret"},
@@ -38,7 +37,7 @@ func TestSessionMCPServers_InjectsFlowgenticServer(t *testing.T) {
 func TestSessionMCPServers_UsesAgentctlBinOverride(t *testing.T) {
 	tmp := t.TempDir()
 	agentctlPath := filepath.Join(tmp, "agentctl")
-	require.NoError(t, os.WriteFile(agentctlPath, []byte("#!/bin/sh\nif [ \"$1\" = \"mcp\" ] && [ \"$2\" = \"serve\" ] && [ \"$3\" = \"--help\" ]; then exit 0; fi\nexit 0\n"), 0o755))
+	require.NoError(t, os.WriteFile(agentctlPath, []byte("#!/bin/sh\nexit 0\n"), 0o755))
 
 	servers := sessionMCPServers(LaunchOpts{
 		SystemPrompt: "## Flowgentic MCP",
@@ -73,7 +72,7 @@ func TestSessionMCPServers_DoesNotDuplicateFlowgenticServer(t *testing.T) {
 				Stdio: &acp.McpServerStdio{
 					Name:    "flowgentic",
 					Command: "agentctl",
-					Args:    []string{"mcp", "serve"},
+					Args:    nil,
 				},
 			},
 		},
@@ -113,4 +112,13 @@ func TestSessionMCPServers_InjectsWithEnvOverride(t *testing.T) {
 	require.Len(t, servers, 1)
 	require.NotNil(t, servers[0].Stdio)
 	assert.Equal(t, "flowgentic", servers[0].Stdio.Name)
+}
+
+func TestSessionMCPServers_PreservesExplicitEmptySlice(t *testing.T) {
+	servers := sessionMCPServers(LaunchOpts{
+		MCPServers: []acp.McpServer{},
+	})
+
+	require.NotNil(t, servers)
+	assert.Empty(t, servers)
 }

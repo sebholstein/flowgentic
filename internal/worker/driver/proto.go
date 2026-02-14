@@ -49,11 +49,20 @@ func AgentTypeFromProto(a workerv1.Agent) (AgentType, error) {
 	return "", fmt.Errorf("unknown proto agent: %v", a)
 }
 
-// ParseProtoAgent converts a string agent name (e.g. "claude-code") to the proto enum.
+// ParseProtoAgent converts a string agent name to the proto enum.
+// It accepts both driver names (e.g. "claude-code") and proto enum names (e.g. "AGENT_CLAUDE_CODE").
 func ParseProtoAgent(name string) (workerv1.Agent, error) {
+	// Try driver name first (e.g. "claude-code").
 	at := AgentType(name)
 	if v, ok := agentTypeToProto[at]; ok {
 		return v, nil
+	}
+	// Try proto enum name (e.g. "AGENT_CLAUDE_CODE").
+	if v, ok := workerv1.Agent_value[name]; ok {
+		agent := workerv1.Agent(v)
+		if agent != workerv1.Agent_AGENT_UNSPECIFIED {
+			return agent, nil
+		}
 	}
 	return workerv1.Agent_AGENT_UNSPECIFIED, fmt.Errorf("unknown agent: %s", name)
 }
