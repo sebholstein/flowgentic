@@ -1,7 +1,10 @@
 package acp
 
 import (
+	"bytes"
 	"encoding/json"
+	"log/slog"
+	"strings"
 	"testing"
 
 	acpsdk "github.com/coder/acp-go-sdk"
@@ -30,6 +33,73 @@ func TestParseModelState(t *testing.T) {
 	assert.Equal(t, "gpt-5-mini", string(state.AvailableModels[1].ModelId))
 }
 
+func TestParseAvailableCommands_FromInitializeShapes(t *testing.T) {
+	raw := map[string]any{
+		"availableCommands": []any{
+			map[string]any{"name": "init", "description": "create AGENTS.md"},
+		},
+		"capabilities": map[string]any{
+			"commands": []any{
+				map[string]any{"name": "review", "description": "review local changes"},
+			},
+		},
+		"skills": []any{
+			map[string]any{"name": "vercel-react-best-practices", "description": "React guidance"},
+		},
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+
+	cmds := parseAvailableCommands(b)
+	require.Len(t, cmds, 3)
+	assert.Equal(t, "init", cmds[0].Name)
+	assert.Equal(t, "review", cmds[1].Name)
+	assert.Equal(t, "vercel-react-best-practices", cmds[2].Name)
+}
+
+func TestParseAvailableCommands_ReturnsEmptyWhenUnknownShape(t *testing.T) {
+	raw := map[string]any{
+		"foo": map[string]any{
+			"bar": "baz",
+		},
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+
+	assert.Empty(t, parseAvailableCommands(b))
+}
+
+func TestParseAvailableCommands_DeduplicatesByNameDeterministically(t *testing.T) {
+	raw := map[string]any{
+		"availableCommands": []any{
+			map[string]any{"name": "init", "description": "first"},
+			map[string]any{"name": "init", "description": "second"},
+			map[string]any{"name": "review", "description": "third"},
+		},
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+
+	cmds := parseAvailableCommands(b)
+	require.Len(t, cmds, 2)
+	assert.Equal(t, "init", cmds[0].Name)
+	assert.Equal(t, "first", cmds[0].Description)
+	assert.Equal(t, "review", cmds[1].Name)
+}
+
+func TestBridgeReadStderrLoop_LogsDebugLines(t *testing.T) {
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	b := newBridge(logger, nil)
+	b.readStderrLoop(strings.NewReader("first line\n\nsecond line\n"))
+
+	output := logBuf.String()
+	assert.Contains(t, output, "codex stderr")
+	assert.Contains(t, output, "first line")
+	assert.Contains(t, output, "second line")
+}
+
 func TestParseModelState_ReturnsNilWhenIncomplete(t *testing.T) {
 	raw := map[string]any{
 		"models": map[string]any{
@@ -55,7 +125,7 @@ func TestCodexMCPServers(t *testing.T) {
 			Stdio: &acpsdk.McpServerStdio{
 				Name:    "flowgentic",
 				Command: "agentctl",
-				Args:    []string{"mcp", "serve"},
+				Args:    nil,
 				Env: []acpsdk.EnvVariable{
 					{Name: "AGENTCTL_AGENT_RUN_ID", Value: "sess-1"},
 				},
@@ -77,7 +147,7 @@ func TestCodexMCPServers(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "stdio", flow["type"])
 	assert.Equal(t, "agentctl", flow["command"])
-	assert.Equal(t, []string{"mcp", "serve"}, flow["args"])
+	assert.Equal(t, []string{}, flow["args"])
 	assert.Equal(t, map[string]string{"AGENTCTL_AGENT_RUN_ID": "sess-1"}, flow["env"])
 
 	httpSrv, ok := servers["remote-http"].(map[string]any)

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -57,7 +57,8 @@ type bridge struct {
 	stdin   io.WriteCloser
 	stdinMu sync.Mutex
 
-	modelState *acpsdk.SessionModelState
+	modelState        *acpsdk.SessionModelState
+	availableCommands []acpsdk.AvailableCommand
 
 	nextID    atomic.Int64
 	pending   map[int64]chan jsonrpcResponse
@@ -80,7 +81,6 @@ func newBridge(log *slog.Logger, dispatch func(threadID string, method string, p
 func (b *bridge) start(ctx context.Context, envVars map[string]string) error {
 	cmd := exec.CommandContext(ctx, "codex", "app-server")
 	cmd.Env = driver.BuildEnv(envVars)
-	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -89,6 +89,10 @@ func (b *bridge) start(ctx context.Context, envVars map[string]string) error {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("stdout pipe: %w", err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("stderr pipe: %w", err)
 	}
 
 	if err := procutil.StartWithCleanup(cmd); err != nil {
@@ -99,6 +103,7 @@ func (b *bridge) start(ctx context.Context, envVars map[string]string) error {
 	b.stdin = stdin
 
 	go b.readLoop(stdout)
+	go b.readStderrLoop(stderr)
 
 	// Handshake.
 	initResult, err := b.sendRequest("initialize", map[string]any{
@@ -110,6 +115,7 @@ func (b *bridge) start(ctx context.Context, envVars map[string]string) error {
 		return fmt.Errorf("initialize handshake: %w", err)
 	}
 	b.modelState = parseModelState(initResult)
+	b.availableCommands = parseAvailableCommands(initResult)
 
 	b.sendNotification("initialized", nil)
 	return nil
@@ -202,6 +208,18 @@ func (b *bridge) readLoop(r io.Reader) {
 
 		threadID := extractThreadID(msg.Params)
 		b.dispatch(threadID, msg.Method, msg.Params, msg.ID)
+	}
+}
+
+func (b *bridge) readStderrLoop(r io.Reader) {
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		b.log.Debug("codex stderr", "line", line)
 	}
 }
 
@@ -305,6 +323,27 @@ func (b *bridge) close() {
 		_ = b.cmd.Process.Kill()
 		_ = b.cmd.Wait()
 	}
+}
+
+func (b *bridge) doneChan() <-chan struct{} {
+	return b.done
+}
+
+func (b *bridge) modelSnapshot() *acpsdk.SessionModelState {
+	if b.modelState == nil {
+		return nil
+	}
+	cloned := *b.modelState
+	cloned.AvailableModels = append([]acpsdk.ModelInfo(nil), b.modelState.AvailableModels...)
+	return &cloned
+}
+
+func (b *bridge) availableCommandsSnapshot() []acpsdk.AvailableCommand {
+	return append([]acpsdk.AvailableCommand(nil), b.availableCommands...)
+}
+
+func (b *bridge) request(method string, params any) (json.RawMessage, error) {
+	return b.sendRequest(method, params)
 }
 
 func extractThreadID(params json.RawMessage) string {
@@ -427,6 +466,207 @@ func parseModelState(raw json.RawMessage) *acpsdk.SessionModelState {
 	return state
 }
 
+type commandEnvelope struct {
+	Name        string `json:"name"`
+	Command     string `json:"command"`
+	ID          string `json:"id"`
+	Slug        string `json:"slug"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Summary     string `json:"summary"`
+}
+
+type initializeResultEnvelope struct {
+	AvailableCommands json.RawMessage `json:"availableCommands"`
+	AvailableSnake    json.RawMessage `json:"available_commands"`
+	Commands          json.RawMessage `json:"commands"`
+	Skills            json.RawMessage `json:"skills"`
+	Data              json.RawMessage `json:"data"`
+	Message           json.RawMessage `json:"message"`
+	Capabilities      struct {
+		AvailableCommands json.RawMessage `json:"availableCommands"`
+		AvailableSnake    json.RawMessage `json:"available_commands"`
+		Commands          json.RawMessage `json:"commands"`
+		Skills            json.RawMessage `json:"skills"`
+	} `json:"capabilities"`
+}
+
+func parseAvailableCommands(raw json.RawMessage) []acpsdk.AvailableCommand {
+	var env initializeResultEnvelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return nil
+	}
+
+	var out []acpsdk.AvailableCommand
+	addRaw := func(candidate json.RawMessage) {
+		out = appendDedupCommands(out, parseCommandArray(candidate)...)
+	}
+	addRaw(env.AvailableCommands)
+	addRaw(env.AvailableSnake)
+	addRaw(env.Commands)
+	addRaw(env.Capabilities.AvailableCommands)
+	addRaw(env.Capabilities.AvailableSnake)
+	addRaw(env.Capabilities.Commands)
+	addRaw(env.Capabilities.Skills)
+	addRaw(env.Skills)
+	addRaw(env.Data)
+	addRaw(env.Message)
+
+	if len(out) > 0 {
+		return out
+	}
+
+	var root map[string]any
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return nil
+	}
+	return parseAvailableCommandsFallback(root)
+}
+
+func parseAvailableCommandsFallback(root map[string]any) []acpsdk.AvailableCommand {
+	var out []acpsdk.AvailableCommand
+	addAny := func(v any) {
+		out = appendDedupCommands(out, parseCommandAny(v)...)
+	}
+
+	addCandidateMap := func(m map[string]any) {
+		for _, key := range []string{"availableCommands", "available_commands", "commands", "skills"} {
+			addAny(m[key])
+		}
+		if inner, ok := m["capabilities"].(map[string]any); ok {
+			for _, key := range []string{"availableCommands", "available_commands", "commands", "skills"} {
+				addAny(inner[key])
+			}
+		}
+		if initialMessages, ok := m["initialMessages"].([]any); ok {
+			for _, msg := range initialMessages {
+				msgMap, ok := msg.(map[string]any)
+				if !ok {
+					continue
+				}
+				addAny(msgMap["skills"])
+				addAny(msgMap["availableCommands"])
+				addAny(msgMap["available_commands"])
+			}
+		}
+	}
+
+	addCandidateMap(root)
+	for _, key := range []string{"data", "message"} {
+		if nested, ok := root[key].(map[string]any); ok {
+			addCandidateMap(nested)
+		}
+	}
+
+	return out
+}
+
+func parseCommandArray(raw json.RawMessage) []acpsdk.AvailableCommand {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil
+	}
+
+	var entries []commandEnvelope
+	if err := json.Unmarshal(raw, &entries); err == nil {
+		out := make([]acpsdk.AvailableCommand, 0, len(entries))
+		for _, entry := range entries {
+			if cmd, ok := normalizeAvailableCommand(entry.Name, entry.Command, entry.ID, entry.Slug, entry.Title, entry.Description, entry.Summary); ok {
+				out = appendDedupCommands(out, cmd)
+			}
+		}
+		if len(out) > 0 {
+			return out
+		}
+	}
+
+	var asAny any
+	if err := json.Unmarshal(raw, &asAny); err != nil {
+		return nil
+	}
+	return parseCommandAny(asAny)
+}
+
+func parseCommandAny(v any) []acpsdk.AvailableCommand {
+	switch typed := v.(type) {
+	case []any:
+		var out []acpsdk.AvailableCommand
+		for _, item := range typed {
+			out = appendDedupCommands(out, parseCommandAny(item)...)
+		}
+		return out
+	case map[string]any:
+		var out []acpsdk.AvailableCommand
+		if cmd, ok := normalizeAvailableCommand(
+			anyString(typed["name"]),
+			anyString(typed["command"]),
+			anyString(typed["id"]),
+			anyString(typed["slug"]),
+			anyString(typed["title"]),
+			anyString(typed["description"]),
+			anyString(typed["summary"]),
+		); ok {
+			out = append(out, cmd)
+		}
+		for _, key := range []string{"availableCommands", "available_commands", "commands", "skills", "data", "message", "capabilities"} {
+			out = appendDedupCommands(out, parseCommandAny(typed[key])...)
+		}
+		return out
+	case string:
+		if cmd, ok := normalizeAvailableCommand(typed, "", "", "", "", "", ""); ok {
+			return []acpsdk.AvailableCommand{cmd}
+		}
+	}
+	return nil
+}
+
+func normalizeAvailableCommand(name, command, id, slug, title, description, summary string) (acpsdk.AvailableCommand, bool) {
+	for _, candidate := range []string{name, command, id, slug, title} {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			continue
+		}
+		desc := strings.TrimSpace(description)
+		if desc == "" {
+			desc = strings.TrimSpace(summary)
+		}
+		return acpsdk.AvailableCommand{
+			Name:        candidate,
+			Description: desc,
+		}, true
+	}
+	return acpsdk.AvailableCommand{}, false
+}
+
+func appendDedupCommands(dst []acpsdk.AvailableCommand, src ...acpsdk.AvailableCommand) []acpsdk.AvailableCommand {
+	if len(src) == 0 {
+		return dst
+	}
+	seen := make(map[string]struct{}, len(dst))
+	for _, cmd := range dst {
+		seen[cmd.Name] = struct{}{}
+	}
+	for _, cmd := range src {
+		name := strings.TrimSpace(cmd.Name)
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		dst = append(dst, acpsdk.AvailableCommand{
+			Name:        name,
+			Description: strings.TrimSpace(cmd.Description),
+		})
+	}
+	return dst
+}
+
+func anyString(v any) string {
+	s, _ := v.(string)
+	return s
+}
+
 func codexMCPServers(servers []acpsdk.McpServer) map[string]any {
 	out := make(map[string]any, len(servers))
 	nextUnnamed := 1
@@ -448,10 +688,17 @@ func codexMCPServers(servers []acpsdk.McpServer) map[string]any {
 				}
 				env[kv.Name] = kv.Value
 			}
+			args := make([]string, 0, len(server.Stdio.Args))
+			for _, arg := range server.Stdio.Args {
+				if strings.TrimSpace(arg) == "" {
+					continue
+				}
+				args = append(args, arg)
+			}
 			out[serverName(server.Stdio.Name)] = map[string]any{
 				"type":    "stdio",
 				"command": server.Stdio.Command,
-				"args":    append([]string(nil), server.Stdio.Args...),
+				"args":    args,
 				"env":     env,
 			}
 		case server.Sse != nil:

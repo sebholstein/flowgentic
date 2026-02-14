@@ -23,6 +23,10 @@ const (
 	methodMCPToolCallProgress = "item/mcpToolCall/progress"
 	methodMCPStartupUpdate    = "codex/event/mcp_startup_update"
 	methodMCPStartupComplete  = "codex/event/mcp_startup_complete"
+	methodSessionConfigured   = "sessionConfigured"
+	methodSessionConfiguredV2 = "session/configured"
+	methodCommandsUpdated     = "codex/event/available_commands_update"
+	methodSkillsUpdated       = "codex/event/skills_update_available"
 )
 
 type agentMessageDeltaParams struct {
@@ -85,6 +89,23 @@ type pendingPermission struct {
 	ch              chan bool
 }
 
+type updateSender interface {
+	SessionUpdate(ctx context.Context, n acpsdk.SessionNotification) error
+}
+
+type bridgeClient interface {
+	start(ctx context.Context, envVars map[string]string) error
+	threadStart(model, cwd, systemPrompt, sessionMode string, mcpServers []acpsdk.McpServer) (string, error)
+	turnStart(threadID, prompt, cwd, sessionMode string) (string, error)
+	turnInterrupt(threadID, turnID string) error
+	respondToServerRequest(id int64, result any)
+	request(method string, params any) (json.RawMessage, error)
+	modelSnapshot() *acpsdk.SessionModelState
+	availableCommandsSnapshot() []acpsdk.AvailableCommand
+	doneChan() <-chan struct{}
+	close()
+}
+
 type notificationHandler func(a *Adapter, params json.RawMessage) []acpsdk.SessionUpdate
 
 var notificationHandlers = map[string]notificationHandler{
@@ -95,14 +116,20 @@ var notificationHandlers = map[string]notificationHandler{
 	methodItemCompleted:       (*Adapter).handleItemCompleted,
 	methodMCPStartupUpdate:    (*Adapter).handleMCPStartupUpdate,
 	methodMCPStartupComplete:  (*Adapter).handleMCPStartupUpdate,
+	methodSessionConfigured:   (*Adapter).handleAvailableCommandsUpdate,
+	methodSessionConfiguredV2: (*Adapter).handleAvailableCommandsUpdate,
+	methodCommandsUpdated:     (*Adapter).handleAvailableCommandsUpdate,
+	methodSkillsUpdated:       (*Adapter).handleAvailableCommandsUpdate,
 }
 
 type Adapter struct {
 	log  *slog.Logger
 	conn atomic.Pointer[acpsdk.AgentSideConnection]
 
+	updater updateSender
+
 	mu     sync.Mutex
-	server *bridge
+	server bridgeClient
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -110,16 +137,22 @@ type Adapter struct {
 	turnID   string
 	cwd      string
 
-	turnDoneCh chan struct{}
+	latestAvailableCommands []acpsdk.AvailableCommand
+	turnDoneCh              chan struct{}
 
 	pendingPermissions   map[string]pendingPermission
 	pendingPermissionsMu sync.Mutex
+
+	bridgeFactory func(log *slog.Logger, dispatch func(threadID string, method string, params json.RawMessage, serverRequestID *int64)) bridgeClient
 }
 
 func NewAdapter(log *slog.Logger) acpsdk.Agent {
 	return &Adapter{
 		log:                log.With("adapter", "codex"),
 		pendingPermissions: make(map[string]pendingPermission),
+		bridgeFactory: func(log *slog.Logger, dispatch func(threadID string, method string, params json.RawMessage, serverRequestID *int64)) bridgeClient {
+			return newBridge(log, dispatch)
+		},
 	}
 }
 
@@ -177,7 +210,7 @@ func (a *Adapter) NewSession(ctx context.Context, req acpsdk.NewSessionRequest) 
 	a.ctx, a.cancel = context.WithCancel(ctx)
 	a.mu.Unlock()
 
-	b := newBridge(a.log, a.dispatchNotification)
+	b := a.bridgeFactory(a.log, a.dispatchNotification)
 	if err := b.start(ctx, envVars); err != nil {
 		return acpsdk.NewSessionResponse{}, fmt.Errorf("start app-server: %w", err)
 	}
@@ -199,10 +232,16 @@ func (a *Adapter) NewSession(ctx context.Context, req acpsdk.NewSessionRequest) 
 	resp := acpsdk.NewSessionResponse{
 		SessionId: acpsdk.SessionId(threadID),
 	}
-	if b.modelState != nil {
-		cloned := *b.modelState
-		cloned.AvailableModels = append([]acpsdk.ModelInfo(nil), b.modelState.AvailableModels...)
-		resp.Models = &cloned
+	if modelState := b.modelSnapshot(); modelState != nil {
+		resp.Models = modelState
+	}
+	if cmds := b.availableCommandsSnapshot(); len(cmds) > 0 {
+		a.setLatestAvailableCommands(cmds)
+		a.sendUpdate(ctx, resp.SessionId, acpsdk.SessionUpdate{
+			AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+				AvailableCommands: cmds,
+			},
+		})
 	}
 	return resp, nil
 }
@@ -251,7 +290,7 @@ func (a *Adapter) Prompt(ctx context.Context, req acpsdk.PromptRequest) (acpsdk.
 		return acpsdk.PromptResponse{StopReason: acpsdk.StopReasonCancelled}, nil
 	case <-adapterCtx.Done():
 		return acpsdk.PromptResponse{StopReason: acpsdk.StopReasonEndTurn}, nil
-	case <-srv.done:
+	case <-srv.doneChan():
 		return acpsdk.PromptResponse{StopReason: acpsdk.StopReasonEndTurn}, nil
 	}
 }
@@ -298,11 +337,16 @@ func (a *Adapter) dispatchNotification(threadID string, method string, params js
 		return
 	}
 
+	var updates []acpsdk.SessionUpdate
 	if handler, ok := notificationHandlers[method]; ok {
-		updates := handler(a, params)
+		updates = handler(a, params)
 		for _, update := range updates {
 			a.sendUpdate(context.Background(), sessionID, update)
 		}
+	}
+
+	if method == methodSkillsUpdated && len(updates) == 0 {
+		a.refreshSkillsSnapshot(context.Background(), sessionID)
 	}
 
 	if method == methodTurnCompleted {
@@ -551,17 +595,77 @@ func (a *Adapter) handleMCPStartupUpdate(params json.RawMessage) []acpsdk.Sessio
 	return []acpsdk.SessionUpdate{acpsdk.UpdateAgentThoughtText(text)}
 }
 
+func (a *Adapter) handleAvailableCommandsUpdate(params json.RawMessage) []acpsdk.SessionUpdate {
+	cmds := parseAvailableCommands(params)
+	if len(cmds) == 0 {
+		return nil
+	}
+	a.setLatestAvailableCommands(cmds)
+	return []acpsdk.SessionUpdate{
+		{
+			AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+				AvailableCommands: cmds,
+			},
+		},
+	}
+}
+
 func (a *Adapter) sendUpdate(ctx context.Context, sessionID acpsdk.SessionId, update acpsdk.SessionUpdate) {
-	conn := a.conn.Load()
-	if conn == nil {
+	sender := a.sender()
+	if sender == nil {
 		return
 	}
-	if err := conn.SessionUpdate(ctx, acpsdk.SessionNotification{
+	if err := sender.SessionUpdate(ctx, acpsdk.SessionNotification{
 		SessionId: sessionID,
 		Update:    update,
 	}); err != nil {
 		a.log.Debug("failed to send session update", "error", err)
 	}
+}
+
+func (a *Adapter) sender() updateSender {
+	if a.updater != nil {
+		return a.updater
+	}
+	conn := a.conn.Load()
+	if conn == nil {
+		return nil
+	}
+	return conn
+}
+
+func (a *Adapter) setLatestAvailableCommands(cmds []acpsdk.AvailableCommand) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.latestAvailableCommands = append([]acpsdk.AvailableCommand(nil), cmds...)
+}
+
+func (a *Adapter) refreshSkillsSnapshot(ctx context.Context, sessionID acpsdk.SessionId) {
+	a.mu.Lock()
+	srv := a.server
+	a.mu.Unlock()
+	if srv == nil {
+		return
+	}
+
+	// Ask Codex for a fresh skills list when it signals that the set changed.
+	raw, err := srv.request("skills/list", map[string]any{
+		"forceReload": true,
+	})
+	if err != nil {
+		a.log.Debug("failed to refresh skills list", "error", err)
+		return
+	}
+	cmds := parseAvailableCommands(raw)
+	if len(cmds) == 0 {
+		return
+	}
+	a.setLatestAvailableCommands(cmds)
+	a.sendUpdate(ctx, sessionID, acpsdk.SessionUpdate{
+		AvailableCommandsUpdate: &acpsdk.SessionAvailableCommandsUpdate{
+			AvailableCommands: cmds,
+		},
+	})
 }
 
 func formatMCPStartupUpdate(method string, params map[string]any) string {
