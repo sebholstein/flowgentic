@@ -1,5 +1,6 @@
 {
   "name": "flowgentic",
+  "productName": "Flowgentic",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +13,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "oxfmt": "oxfmt",
-    "dev": "electron-forge start",
+    "dev": "node scripts/set-app-name.cjs && electron-forge start",
     "package": "electron-forge package",
     "electron:make": "electron-forge make",
     "proto": "npx buf generate"
@@ -36,6 +37,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@pierre/diffs": "^1.0.11",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/react-tabs": "^1.1.13",
@@ -58,6 +60,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "framer-motion": "^12.29.2",
     "ghostty-web": "^0.4.0",
+    "jotai": "^2.17.1",
     "lucide-react": "^0.561.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
