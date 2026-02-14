@@ -1,21 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-
-	"github.com/spf13/cobra"
+	"os/signal"
 )
 
 func main() {
-	rootCmd := &cobra.Command{
-		Use:   "agentctl",
-		Short: "MCP server for Flowgentic agent communication",
-	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-	rootCmd.AddCommand(mcpCmd())
-
-	if err := rootCmd.Execute(); err != nil {
+	if err := newMCPServer().Run(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

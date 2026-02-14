@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	acp "github.com/coder/acp-go-sdk"
@@ -82,16 +83,15 @@ func main() {
 
 	// Initial prompt from positional args or stdin.
 	prompt := strings.Join(flag.Args(), " ")
-	if prompt == "" {
+	if prompt == "" && stdinHasData() {
 		fmt.Fprintln(os.Stderr, "reading prompt from stdin...")
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
 			prompt = scanner.Text()
 		}
-		if prompt == "" {
-			fmt.Fprintln(os.Stderr, "error: no prompt provided")
-			os.Exit(1)
-		}
+	}
+	if prompt == "" {
+		fmt.Fprintln(os.Stderr, "no initial prompt provided; starting session and waiting for your first message")
 	}
 
 	// Resolve cwd to absolute path (required by some agents like Codex).
@@ -131,6 +131,31 @@ func main() {
 
 	// Track whether the last output to stdout ended mid-line (no trailing newline).
 	needsNewline := false
+	var updateCount uint64
+	availableCommands := map[string]struct{}{}
+
+	// Print raw ACP updates for full protocol visibility.
+	printRaw := func(update acp.SessionUpdate) {
+		if needsNewline {
+			fmt.Println()
+			needsNewline = false
+		}
+		if b, ok := tryMarshalChunkRaw(update); ok {
+			fmt.Fprintf(os.Stderr, "\033[35m[acp raw] %s\033[0m\n", string(b))
+			return
+		}
+		b, err := json.Marshal(update)
+		if err != nil {
+			fallback, ferr := json.Marshal(rawFallback(update, err))
+			if ferr != nil {
+				fmt.Fprintf(os.Stderr, "\033[35m[acp raw marshal error: %v]\033[0m\n", err)
+				return
+			}
+			fmt.Fprintf(os.Stderr, "\033[35m[acp raw fallback] %s\033[0m\n", string(fallback))
+			return
+		}
+		fmt.Fprintf(os.Stderr, "\033[35m[acp raw] %s\033[0m\n", string(b))
+	}
 
 	// ensureNewline prints a newline to stdout if the last agent text didn't end
 	// with one, so subsequent stderr output (tool headers, status) starts clean.
@@ -142,9 +167,21 @@ func main() {
 	}
 
 	onEvent := func(n acp.SessionNotification) {
+		atomic.AddUint64(&updateCount, 1)
 		u := n.Update
+		printRaw(u)
 
 		switch {
+		case u.AvailableCommandsUpdate != nil:
+			next := make(map[string]struct{}, len(u.AvailableCommandsUpdate.AvailableCommands))
+			for _, cmd := range u.AvailableCommandsUpdate.AvailableCommands {
+				if cmd.Name == "" {
+					continue
+				}
+				next[cmd.Name] = struct{}{}
+			}
+			availableCommands = next
+
 		case u.AgentMessageChunk != nil:
 			if u.AgentMessageChunk.Content.Text != nil {
 				spin.stop()
@@ -246,6 +283,7 @@ func main() {
 		Model:        *model,
 		Cwd:          absCwd,
 		SessionMode:  *mode,
+		MCPServers:   []acp.McpServer{},
 		StatusCh:     statusCh,
 	}, onEvent)
 	if err != nil {
@@ -294,11 +332,22 @@ func main() {
 		}
 
 		spin.start()
-		_, err := sess.Prompt(ctx, []acp.ContentBlock{acp.TextBlock(input)})
+		if cmdName, _, ok := parseSlashCommand(input); ok {
+			fmt.Fprintf(os.Stderr, "\033[2m[slash command sent via session/prompt: /%s]\033[0m\n", cmdName)
+			if _, known := availableCommands[cmdName]; !known {
+				fmt.Fprintf(os.Stderr, "\033[2m[slash command not in latest availableCommands: /%s]\033[0m\n", cmdName)
+			}
+		}
+		before := atomic.LoadUint64(&updateCount)
+		resp, err := sess.Prompt(ctx, []acp.ContentBlock{acp.TextBlock(input)})
+		after := atomic.LoadUint64(&updateCount)
 		spin.stop()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: prompt failed: %v\n", err)
 			break
+		}
+		if after == before {
+			fmt.Fprintf(os.Stderr, "\033[2m[prompt done: stopReason=%s, no session updates emitted]\033[0m\n", resp.StopReason)
 		}
 		fmt.Println()
 	}
@@ -450,5 +499,125 @@ func agentConfig(name string) (v2.AgentConfig, error) {
 		return v2.GeminiConfig, nil
 	default:
 		return v2.AgentConfig{}, fmt.Errorf("unknown agent: %s (use claude-code, codex, opencode, gemini)", name)
+	}
+}
+
+func stdinHasData() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) == 0
+}
+
+func parseSlashCommand(input string) (name, arg string, ok bool) {
+	if !strings.HasPrefix(input, "/") {
+		return "", "", false
+	}
+	trimmed := strings.TrimSpace(strings.TrimPrefix(input, "/"))
+	if trimmed == "" {
+		return "", "", false
+	}
+	parts := strings.SplitN(trimmed, " ", 2)
+	name = strings.TrimSpace(parts[0])
+	if name == "" {
+		return "", "", false
+	}
+	if len(parts) == 2 {
+		arg = strings.TrimSpace(parts[1])
+	}
+	return name, arg, true
+}
+
+func rawFallback(update acp.SessionUpdate, marshalErr error) map[string]any {
+	out := map[string]any{
+		"marshalError": marshalErr.Error(),
+	}
+	switch {
+	case update.UserMessageChunk != nil:
+		out["sessionUpdate"] = "user_message_chunk"
+	case update.AgentMessageChunk != nil:
+		out["sessionUpdate"] = "agent_message_chunk"
+		if update.AgentMessageChunk.Content.Text != nil {
+			out["text"] = update.AgentMessageChunk.Content.Text.Text
+		}
+	case update.AgentThoughtChunk != nil:
+		out["sessionUpdate"] = "agent_thought_chunk"
+		if update.AgentThoughtChunk.Content.Text != nil {
+			out["text"] = update.AgentThoughtChunk.Content.Text.Text
+		}
+	case update.ToolCall != nil:
+		out["sessionUpdate"] = "tool_call"
+		out["toolCallId"] = update.ToolCall.ToolCallId
+		out["title"] = update.ToolCall.Title
+		out["status"] = update.ToolCall.Status
+		out["kind"] = update.ToolCall.Kind
+	case update.ToolCallUpdate != nil:
+		out["sessionUpdate"] = "tool_call_update"
+		out["toolCallId"] = update.ToolCallUpdate.ToolCallId
+		if update.ToolCallUpdate.Title != nil {
+			out["title"] = *update.ToolCallUpdate.Title
+		}
+		if update.ToolCallUpdate.Status != nil {
+			out["status"] = *update.ToolCallUpdate.Status
+		}
+		if update.ToolCallUpdate.Kind != nil {
+			out["kind"] = *update.ToolCallUpdate.Kind
+		}
+	case update.Plan != nil:
+		out["sessionUpdate"] = "plan"
+		out["entries"] = len(update.Plan.Entries)
+	case update.CurrentModeUpdate != nil:
+		out["sessionUpdate"] = "current_mode_update"
+		out["currentModeId"] = update.CurrentModeUpdate.CurrentModeId
+	case update.AvailableCommandsUpdate != nil:
+		out["sessionUpdate"] = "available_commands_update"
+		out["availableCommands"] = update.AvailableCommandsUpdate.AvailableCommands
+	default:
+		out["sessionUpdate"] = "unknown"
+	}
+	return out
+}
+
+func tryMarshalChunkRaw(update acp.SessionUpdate) ([]byte, bool) {
+	switch {
+	case update.UserMessageChunk != nil:
+		out := map[string]any{
+			"sessionUpdate": "user_message_chunk",
+		}
+		if update.UserMessageChunk.Content.Text != nil {
+			out["content"] = map[string]any{
+				"type": "text",
+				"text": update.UserMessageChunk.Content.Text.Text,
+			}
+		}
+		b, err := json.Marshal(out)
+		return b, err == nil
+	case update.AgentMessageChunk != nil:
+		out := map[string]any{
+			"sessionUpdate": "agent_message_chunk",
+		}
+		if update.AgentMessageChunk.Content.Text != nil {
+			out["content"] = map[string]any{
+				"type": "text",
+				"text": update.AgentMessageChunk.Content.Text.Text,
+			}
+		}
+		b, err := json.Marshal(out)
+		return b, err == nil
+	case update.AgentThoughtChunk != nil:
+		out := map[string]any{
+			"sessionUpdate": "agent_thought_chunk",
+		}
+		if update.AgentThoughtChunk.Content.Text != nil {
+			out["content"] = map[string]any{
+				"type": "text",
+				"text": update.AgentThoughtChunk.Content.Text.Text,
+			}
+		}
+		b, err := json.Marshal(out)
+		return b, err == nil
+	default:
+		return nil, false
 	}
 }
