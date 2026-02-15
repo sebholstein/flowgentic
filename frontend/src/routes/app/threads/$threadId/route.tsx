@@ -99,6 +99,16 @@ function ThreadLayout() {
     queryFn: () => threadClient.getThread({ id: threadId }),
   });
 
+  const [showLoading, setShowLoading] = useState(false);
+  useEffect(() => {
+    if (!isLoading) {
+      setShowLoading(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowLoading(true), 200);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const thread = threadData?.thread;
 
   // Task and session queries
@@ -172,6 +182,10 @@ function ThreadLayout() {
     hasAnySession && !hasReceivedSessionUpdate && !hasPrimingWindowExpired;
   const isPanelStreaming =
     isSessionResponding || isAwaitingBootstrapResponse || isPrimingExistingSession;
+
+  // Hide chat panel while priming an existing session with no content yet to avoid flicker
+  const isChatReady =
+    !isPrimingExistingSession || sessionMessages.length > 0 || !!pendingAgentText || !!pendingThoughtText;
 
   // --- Session setup state (shown when no sessions exist) ---
   const projectClient = useClient(ProjectService);
@@ -321,12 +335,16 @@ function ThreadLayout() {
 
   const pendingCheckInsCount = 0;
 
-  if (isLoading) {
+  if (isLoading && showLoading) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
       </div>
     );
+  }
+
+  if (isLoading) {
+    return null;
   }
 
   if (!thread) {
@@ -453,45 +471,47 @@ function ThreadLayout() {
           {/* Build mode - full-width chat */}
           {isBuildMode && !isTaskDetailPage ? (
             <div className="flex-1 h-full overflow-hidden">
-              <AgentChatPanel
-                target={{
-                  type: "thread_overseer",
-                  entityId: thread.id,
-                  agentName: "Agent",
-                  title: thread.topic || "Untitled",
-                  agentColor: "bg-violet-500",
-                }}
-                hideHeader
-                emptyStateContent={
-                  !hasAnySession ? (
-                    <ThreadSetupForm
-                      threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
-                      onModeChange={() => {}}
-                      threadModel={threadModel}
-                      onModelChange={setThreadModel}
-                      project={projects.find((p) => p.id === thread.projectId)}
-                      projects={projects}
-                      onProjectChange={() => {}}
-                      workerId={workerId}
-                      workers={workers}
-                      onWorkerChange={setWorkerId}
-                      agent={agent}
-                      onAgentChange={setAgent}
-                      sessionMode={sessionMode}
-                      onSessionModeChange={setSessionMode}
-                      availableModels={modelsData?.models ?? []}
-                      defaultModel={modelsData?.defaultModel ?? ""}
-                      modelsLoading={modelsLoading}
-                      modelsError={modelsIsError ? "Could not load models for this agent" : null}
-                    />
-                  ) : undefined
-                }
-                externalMessages={displayMessages}
-                pendingAgentText={pendingAgentText}
-                pendingThoughtText={pendingThoughtText}
-                isStreaming={isPanelStreaming}
-                onSend={handleSendMessage}
-              />
+              {isChatReady && (
+                <AgentChatPanel
+                  target={{
+                    type: "thread_overseer",
+                    entityId: thread.id,
+                    agentName: "Agent",
+                    title: thread.topic || "Untitled",
+                    agentColor: "bg-violet-500",
+                  }}
+                  hideHeader
+                  emptyStateContent={
+                    !hasAnySession ? (
+                      <ThreadSetupForm
+                        threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
+                        onModeChange={() => {}}
+                        threadModel={threadModel}
+                        onModelChange={setThreadModel}
+                        project={projects.find((p) => p.id === thread.projectId)}
+                        projects={projects}
+                        onProjectChange={() => {}}
+                        workerId={workerId}
+                        workers={workers}
+                        onWorkerChange={setWorkerId}
+                        agent={agent}
+                        onAgentChange={setAgent}
+                        sessionMode={sessionMode}
+                        onSessionModeChange={setSessionMode}
+                        availableModels={modelsData?.models ?? []}
+                        defaultModel={modelsData?.defaultModel ?? ""}
+                        modelsLoading={modelsLoading}
+                        modelsError={modelsIsError ? "Could not load models for this agent" : null}
+                      />
+                    ) : undefined
+                  }
+                  externalMessages={displayMessages}
+                  pendingAgentText={pendingAgentText}
+                  pendingThoughtText={pendingThoughtText}
+                  isStreaming={isPanelStreaming}
+                  onSend={handleSendMessage}
+                />
+              )}
             </div>
           ) : (
             <>
@@ -502,44 +522,46 @@ function ThreadLayout() {
                     className="flex-shrink-0 h-full overflow-hidden"
                     style={{ width: `${leftPanelPercent}%` }}
                   >
-                    <AgentChatPanel
-                      target={{
-                        type: "thread_overseer",
-                        entityId: thread.id,
-                        agentName: "Overseer",
-                        title: thread.topic || "Untitled",
-                        agentColor: "bg-violet-500",
-                      }}
-                      emptyStateContent={
-                        !hasAnySession ? (
-                          <ThreadSetupForm
-                            threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
-                            onModeChange={() => {}}
-                            threadModel={threadModel}
-                            onModelChange={setThreadModel}
-                            project={projects.find((p) => p.id === thread.projectId)}
-                            projects={projects}
-                            onProjectChange={() => {}}
-                            workerId={workerId}
-                            workers={workers}
-                            onWorkerChange={setWorkerId}
-                            agent={agent}
-                            onAgentChange={setAgent}
-                            sessionMode={sessionMode}
-                            onSessionModeChange={setSessionMode}
-                            availableModels={modelsData?.models ?? []}
-                            defaultModel={modelsData?.defaultModel ?? ""}
-                            modelsLoading={modelsLoading}
-                            modelsError={modelsIsError ? "Could not load models for this agent" : null}
-                          />
-                        ) : undefined
-                      }
-                      externalMessages={displayMessages}
-                      pendingAgentText={pendingAgentText}
-                      pendingThoughtText={pendingThoughtText}
-                      isStreaming={isPanelStreaming}
-                      onSend={handleSendMessage}
-                    />
+                    {isChatReady && (
+                      <AgentChatPanel
+                        target={{
+                          type: "thread_overseer",
+                          entityId: thread.id,
+                          agentName: "Overseer",
+                          title: thread.topic || "Untitled",
+                          agentColor: "bg-violet-500",
+                        }}
+                        emptyStateContent={
+                          !hasAnySession ? (
+                            <ThreadSetupForm
+                              threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
+                              onModeChange={() => {}}
+                              threadModel={threadModel}
+                              onModelChange={setThreadModel}
+                              project={projects.find((p) => p.id === thread.projectId)}
+                              projects={projects}
+                              onProjectChange={() => {}}
+                              workerId={workerId}
+                              workers={workers}
+                              onWorkerChange={setWorkerId}
+                              agent={agent}
+                              onAgentChange={setAgent}
+                              sessionMode={sessionMode}
+                              onSessionModeChange={setSessionMode}
+                              availableModels={modelsData?.models ?? []}
+                              defaultModel={modelsData?.defaultModel ?? ""}
+                              modelsLoading={modelsLoading}
+                              modelsError={modelsIsError ? "Could not load models for this agent" : null}
+                            />
+                          ) : undefined
+                        }
+                        externalMessages={displayMessages}
+                        pendingAgentText={pendingAgentText}
+                        pendingThoughtText={pendingThoughtText}
+                        isStreaming={isPanelStreaming}
+                        onSend={handleSendMessage}
+                      />
+                    )}
                   </div>
                   {/* Resize handle - wide hit area, thin visual line */}
                   <div

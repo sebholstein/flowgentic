@@ -71,9 +71,20 @@ export function AgentChatPanel({
   const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showStreamingIndicator, setShowStreamingIndicator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Defer streaming indicator by 200ms to avoid flickering on fast loads
+  useEffect(() => {
+    if (!isStreaming) {
+      setShowStreamingIndicator(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowStreamingIndicator(true), 200);
+    return () => clearTimeout(timer);
+  }, [isStreaming]);
 
   // Use external messages when provided, otherwise fall back to internal state
   const messages = externalMessages ?? internalMessages;
@@ -166,13 +177,14 @@ export function AgentChatPanel({
     }
   };
 
-  const showTypingIndicator = isTyping || isStreaming;
+  const showTypingIndicator = isTyping || showStreamingIndicator;
   const showEmptyState =
     messages.length === 0 &&
     !pendingFeedback &&
     !pendingAgentText &&
     !pendingThoughtText &&
-    !showTypingIndicator;
+    !showTypingIndicator &&
+    !isStreaming;
   const showSetupForm = showEmptyState && showSetupOnEmpty;
 
   return (

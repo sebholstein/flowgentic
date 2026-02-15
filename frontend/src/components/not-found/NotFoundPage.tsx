@@ -118,7 +118,7 @@ export function NotFoundPage() {
                 </div>
               </Link>
               <Link
-                to="/app/threads/new"
+                to="/app/threads"
                 className="group rounded-2xl border border-border/70 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:bg-card/90"
               >
                 <div className="flex items-center gap-3">

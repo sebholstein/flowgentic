@@ -19,8 +19,8 @@ import { Route as AppTasksRouteRouteImport } from './routes/app/tasks/route'
 import { Route as AppThreadsIndexRouteImport } from './routes/app/threads/index'
 import { Route as AppSettingsIndexRouteImport } from './routes/app/settings/index'
 import { Route as AppOverseerIndexRouteImport } from './routes/app/overseer/index'
-import { Route as AppThreadsNewRouteImport } from './routes/app/threads/new'
 import { Route as AppThreadsThreadIdRouteRouteImport } from './routes/app/threads/$threadId/route'
+import { Route as AppDemoScenarioIdRouteRouteImport } from './routes/app/demo/$scenarioId/route'
 import { Route as AppThreadsThreadIdIndexRouteImport } from './routes/app/threads/$threadId/index'
 import { Route as AppThreadsThreadIdResourcesRouteImport } from './routes/app/threads/$threadId/resources'
 import { Route as AppThreadsThreadIdMemoryRouteImport } from './routes/app/threads/$threadId/memory'
@@ -83,15 +83,15 @@ const AppOverseerIndexRoute = AppOverseerIndexRouteImport.update({
   path: '/overseer/',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppThreadsNewRoute = AppThreadsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AppThreadsRouteRoute,
-} as any)
 const AppThreadsThreadIdRouteRoute = AppThreadsThreadIdRouteRouteImport.update({
   id: '/$threadId',
   path: '/$threadId',
   getParentRoute: () => AppThreadsRouteRoute,
+} as any)
+const AppDemoScenarioIdRouteRoute = AppDemoScenarioIdRouteRouteImport.update({
+  id: '/demo/$scenarioId',
+  path: '/demo/$scenarioId',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppThreadsThreadIdIndexRoute = AppThreadsThreadIdIndexRouteImport.update({
   id: '/',
@@ -167,8 +167,8 @@ export interface FileRoutesByFullPath {
   '/app/threads': typeof AppThreadsRouteRouteWithChildren
   '/app/test': typeof AppTestRoute
   '/app/': typeof AppIndexRoute
+  '/app/demo/$scenarioId': typeof AppDemoScenarioIdRouteRoute
   '/app/threads/$threadId': typeof AppThreadsThreadIdRouteRouteWithChildren
-  '/app/threads/new': typeof AppThreadsNewRoute
   '/app/overseer/': typeof AppOverseerIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
   '/app/threads/': typeof AppThreadsIndexRoute
@@ -190,7 +190,7 @@ export interface FileRoutesByTo {
   '/app/tasks': typeof AppTasksRouteRouteWithChildren
   '/app/test': typeof AppTestRoute
   '/app': typeof AppIndexRoute
-  '/app/threads/new': typeof AppThreadsNewRoute
+  '/app/demo/$scenarioId': typeof AppDemoScenarioIdRouteRoute
   '/app/overseer': typeof AppOverseerIndexRoute
   '/app/settings': typeof AppSettingsIndexRoute
   '/app/threads': typeof AppThreadsIndexRoute
@@ -213,8 +213,8 @@ export interface FileRoutesById {
   '/app/threads': typeof AppThreadsRouteRouteWithChildren
   '/app/test': typeof AppTestRoute
   '/app/': typeof AppIndexRoute
+  '/app/demo/$scenarioId': typeof AppDemoScenarioIdRouteRoute
   '/app/threads/$threadId': typeof AppThreadsThreadIdRouteRouteWithChildren
-  '/app/threads/new': typeof AppThreadsNewRoute
   '/app/overseer/': typeof AppOverseerIndexRoute
   '/app/settings/': typeof AppSettingsIndexRoute
   '/app/threads/': typeof AppThreadsIndexRoute
@@ -240,8 +240,8 @@ export interface FileRouteTypes {
     | '/app/threads'
     | '/app/test'
     | '/app/'
+    | '/app/demo/$scenarioId'
     | '/app/threads/$threadId'
-    | '/app/threads/new'
     | '/app/overseer/'
     | '/app/settings/'
     | '/app/threads/'
@@ -263,7 +263,7 @@ export interface FileRouteTypes {
     | '/app/tasks'
     | '/app/test'
     | '/app'
-    | '/app/threads/new'
+    | '/app/demo/$scenarioId'
     | '/app/overseer'
     | '/app/settings'
     | '/app/threads'
@@ -285,8 +285,8 @@ export interface FileRouteTypes {
     | '/app/threads'
     | '/app/test'
     | '/app/'
+    | '/app/demo/$scenarioId'
     | '/app/threads/$threadId'
-    | '/app/threads/new'
     | '/app/overseer/'
     | '/app/settings/'
     | '/app/threads/'
@@ -381,19 +381,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOverseerIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/threads/new': {
-      id: '/app/threads/new'
-      path: '/new'
-      fullPath: '/app/threads/new'
-      preLoaderRoute: typeof AppThreadsNewRouteImport
-      parentRoute: typeof AppThreadsRouteRoute
-    }
     '/app/threads/$threadId': {
       id: '/app/threads/$threadId'
       path: '/$threadId'
       fullPath: '/app/threads/$threadId'
       preLoaderRoute: typeof AppThreadsThreadIdRouteRouteImport
       parentRoute: typeof AppThreadsRouteRoute
+    }
+    '/app/demo/$scenarioId': {
+      id: '/app/demo/$scenarioId'
+      path: '/demo/$scenarioId'
+      fullPath: '/app/demo/$scenarioId'
+      preLoaderRoute: typeof AppDemoScenarioIdRouteRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/threads/$threadId/': {
       id: '/app/threads/$threadId/'
@@ -547,13 +547,11 @@ const AppThreadsThreadIdRouteRouteWithChildren =
 
 interface AppThreadsRouteRouteChildren {
   AppThreadsThreadIdRouteRoute: typeof AppThreadsThreadIdRouteRouteWithChildren
-  AppThreadsNewRoute: typeof AppThreadsNewRoute
   AppThreadsIndexRoute: typeof AppThreadsIndexRoute
 }
 
 const AppThreadsRouteRouteChildren: AppThreadsRouteRouteChildren = {
   AppThreadsThreadIdRouteRoute: AppThreadsThreadIdRouteRouteWithChildren,
-  AppThreadsNewRoute: AppThreadsNewRoute,
   AppThreadsIndexRoute: AppThreadsIndexRoute,
 }
 
@@ -566,6 +564,7 @@ interface AppRouteRouteChildren {
   AppThreadsRouteRoute: typeof AppThreadsRouteRouteWithChildren
   AppTestRoute: typeof AppTestRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDemoScenarioIdRouteRoute: typeof AppDemoScenarioIdRouteRoute
   AppOverseerIndexRoute: typeof AppOverseerIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
@@ -575,6 +574,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppThreadsRouteRoute: AppThreadsRouteRouteWithChildren,
   AppTestRoute: AppTestRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDemoScenarioIdRouteRoute: AppDemoScenarioIdRouteRoute,
   AppOverseerIndexRoute: AppOverseerIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
@@ -591,12 +591,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
