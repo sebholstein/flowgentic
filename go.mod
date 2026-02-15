@@ -14,7 +14,6 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.3.0
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
-	github.com/severity1/claude-agent-sdk-go v0.6.12
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.40.0
 	google.golang.org/protobuf v1.36.11
