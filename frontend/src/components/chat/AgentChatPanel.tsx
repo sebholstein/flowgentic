@@ -24,6 +24,7 @@ export function AgentChatPanel({
   isStreaming = false,
   selectedModel,
   availableModels,
+  modelsLoading = false,
   onModelChange,
   sessionMode = "code",
   onSessionModeChange,
@@ -135,6 +136,7 @@ export function AgentChatPanel({
         isTyping={isTyping}
         selectedModel={selectedModel}
         availableModels={availableModels}
+        modelsLoading={modelsLoading}
         onModelChange={onModelChange}
         sessionMode={sessionMode}
         onSessionModeChange={onSessionModeChange}

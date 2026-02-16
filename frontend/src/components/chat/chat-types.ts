@@ -44,6 +44,8 @@ export interface AgentChatPanelProps {
   selectedModel?: string;
   /** Available models for the dropdown */
   availableModels?: ModelInfo[];
+  /** Whether models are still loading */
+  modelsLoading?: boolean;
   /** Callback when model changes */
   onModelChange?: (model: string) => void;
   /** Current session mode */

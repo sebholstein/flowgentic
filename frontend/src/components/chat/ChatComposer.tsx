@@ -2,15 +2,16 @@ import { useState, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Loader2, ImagePlus, ArrowUp, ChevronDown, Map } from "lucide-react";
+import { Loader2, ImagePlus, ArrowUp, ChevronDown, Map, Check } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import type { ModelInfo } from "@/proto/gen/worker/v1/system_service_pb";
 
 export function ChatComposer({
@@ -18,6 +19,7 @@ export function ChatComposer({
   isTyping,
   selectedModel,
   availableModels,
+  modelsLoading = false,
   onModelChange,
   sessionMode = "code",
   onSessionModeChange,
@@ -26,6 +28,7 @@ export function ChatComposer({
   isTyping: boolean;
   selectedModel?: string;
   availableModels?: ModelInfo[];
+  modelsLoading?: boolean;
   onModelChange?: (model: string) => void;
   sessionMode?: string;
   onSessionModeChange?: (mode: string) => void;
@@ -98,36 +101,18 @@ export function ChatComposer({
             </Button>
           </div>
           <div className="flex items-center gap-1">
-            {availableModels && availableModels.length > 0 && onModelChange && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-0.5 rounded-md px-1.5 h-7 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
-                  >
-                    <span className="max-w-[120px] truncate">
-                      {(availableModels.find((m) => m.id === selectedModel)?.displayName || selectedModel || "Model").replace(/\s*\(recommended\)/i, "")}
-                    </span>
-                    <ChevronDown className="size-3 shrink-0 opacity-60" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="end" className="min-w-[180px]">
-                  <DropdownMenuLabel>Model</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup value={selectedModel} onValueChange={onModelChange}>
-                    {availableModels.map((model) => (
-                      <DropdownMenuRadioItem key={model.id} value={model.id}>
-                        <div className="flex flex-col">
-                          <span>{(model.displayName || model.id).replace(/\s*\(recommended\)/i, "")}</span>
-                          {model.description && (
-                            <span className="text-[10px] text-muted-foreground">{model.description}</span>
-                          )}
-                        </div>
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {onModelChange && (modelsLoading ? (
+              <div className="flex items-center gap-1 rounded-md px-1.5 h-7 text-[11px] text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" />
+                <span>Loading models…</span>
+              </div>
+            ) : availableModels && availableModels.length > 0 ? (
+              <ModelSelect
+                models={availableModels}
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            ) : null)}
 
             {onSessionModeChange && (
               <button
@@ -173,5 +158,75 @@ export function ChatComposer({
         </div>
       </div>
     </div>
+  );
+}
+
+function ModelSelect({
+  models,
+  selectedModel,
+  onModelChange,
+}: {
+  models: ModelInfo[];
+  selectedModel?: string;
+  onModelChange: (model: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const displayName = (m: ModelInfo) =>
+    (m.displayName || m.id).replace(/\s*\(recommended\)/i, "");
+  const selected = models.find((m) => m.id === selectedModel);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-0.5 rounded-md px-1.5 h-7 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+        >
+          <span className="max-w-[240px] truncate">
+            {selected ? displayName(selected) : selectedModel || "Model"}
+          </span>
+          <ChevronDown className="size-3 shrink-0 opacity-60" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" align="end" className="w-[400px] p-0">
+        <Command>
+          <CommandInput placeholder="Search models…" className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty className="py-3 text-xs text-center text-muted-foreground">
+              No models found.
+            </CommandEmpty>
+            <CommandGroup>
+              {models.map((model) => (
+                <CommandItem
+                  key={model.id}
+                  value={model.id}
+                  keywords={[model.displayName || "", model.id]}
+                  onSelect={(val) => {
+                    onModelChange(val);
+                    setOpen(false);
+                  }}
+                  className="gap-2"
+                >
+                  <Check
+                    className={cn(
+                      "size-3 shrink-0",
+                      selectedModel === model.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate text-xs">{displayName(model)}</span>
+                    {model.description && (
+                      <span className="text-xs text-muted-foreground truncate">
+                        {model.description}
+                      </span>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

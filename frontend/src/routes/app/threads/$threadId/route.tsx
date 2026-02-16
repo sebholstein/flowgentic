@@ -429,6 +429,7 @@ function ThreadLayout() {
       onSend={handleSendMessage}
       selectedModel={threadModel}
       availableModels={modelsData?.models ?? []}
+      modelsLoading={modelsLoading}
       onModelChange={setThreadModel}
       sessionMode={sessionMode}
       onSessionModeChange={setSessionMode}
