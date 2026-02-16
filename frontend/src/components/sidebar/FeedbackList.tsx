@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,15 +57,16 @@ export function useDemoInboxItems() {
   const [items, setItems] = useState<InboxItem[]>(() =>
     allInboxItems.slice(0, INITIAL_COUNT),
   );
+  const counterRef = useRef(INITIAL_COUNT);
 
   useEffect(() => {
-    if (items.length >= allInboxItems.length) return;
-
     const timer = setTimeout(() => {
       setItems((prev) => {
-        const nextIndex = prev.length;
-        if (nextIndex >= allInboxItems.length) return prev;
-        return [allInboxItems[nextIndex], ...prev];
+        const idx = counterRef.current % allInboxItems.length;
+        counterRef.current += 1;
+        const source = allInboxItems[idx];
+        const newItem: InboxItem = { ...source, id: `demo-${counterRef.current}` };
+        return [newItem, ...prev];
       });
     }, randomInterval());
 
