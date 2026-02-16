@@ -23,8 +23,8 @@ service SessionService {
   // WatchSessionEvents streams history first, then live events via pub-sub.
   rpc WatchSessionEvents(WatchSessionEventsRequest) returns (stream WatchSessionEventsResponse) {}
 
-  // PromptSession sends a follow-up message to the active session for a thread.
-  rpc PromptSession(PromptSessionRequest) returns (PromptSessionResponse) {}
+  // SendUserMessage sends a follow-up message to the active session for a thread.
+  rpc SendUserMessage(SendUserMessageRequest) returns (SendUserMessageResponse) {}
 }
 
 // SessionConfig describes a session record.
@@ -176,9 +176,9 @@ message CreateSessionResponse {
   SessionConfig session = 1;
 }
 
-message PromptSessionRequest {
+message SendUserMessageRequest {
   string thread_id = 1 [(buf.validate.field).string.min_len = 1];
   string text = 2 [(buf.validate.field).string.min_len = 1];
 }
 
-message PromptSessionResponse {}
+message SendUserMessageResponse {}

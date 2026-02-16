@@ -44,9 +44,9 @@ const (
 	// WorkerServiceSetSessionModeProcedure is the fully-qualified name of the WorkerService's
 	// SetSessionMode RPC.
 	WorkerServiceSetSessionModeProcedure = "/worker.v1.WorkerService/SetSessionMode"
-	// WorkerServicePromptSessionProcedure is the fully-qualified name of the WorkerService's
-	// PromptSession RPC.
-	WorkerServicePromptSessionProcedure = "/worker.v1.WorkerService/PromptSession"
+	// WorkerServiceSendUserMessageProcedure is the fully-qualified name of the WorkerService's
+	// SendUserMessage RPC.
+	WorkerServiceSendUserMessageProcedure = "/worker.v1.WorkerService/SendUserMessage"
 	// WorkerServiceCancelSessionProcedure is the fully-qualified name of the WorkerService's
 	// CancelSession RPC.
 	WorkerServiceCancelSessionProcedure = "/worker.v1.WorkerService/CancelSession"
@@ -66,8 +66,8 @@ type WorkerServiceClient interface {
 	StateSync(context.Context) *connect.BidiStreamForClient[v1.StateSyncRequest, v1.StateSyncResponse]
 	// SetSessionMode changes the permission mode of a running agent session.
 	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
-	// PromptSession sends a follow-up prompt to a running session.
-	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// SendUserMessage sends a follow-up prompt to a running session.
+	SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error)
 	// CancelSession cancels the active prompt on a running session.
 	CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error)
 	// CheckSessionResumable checks if an ACP session can be resumed from disk.
@@ -109,10 +109,10 @@ func NewWorkerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(workerServiceMethods.ByName("SetSessionMode")),
 			connect.WithClientOptions(opts...),
 		),
-		promptSession: connect.NewClient[v1.PromptSessionRequest, v1.PromptSessionResponse](
+		sendUserMessage: connect.NewClient[v1.SendUserMessageRequest, v1.SendUserMessageResponse](
 			httpClient,
-			baseURL+WorkerServicePromptSessionProcedure,
-			connect.WithSchema(workerServiceMethods.ByName("PromptSession")),
+			baseURL+WorkerServiceSendUserMessageProcedure,
+			connect.WithSchema(workerServiceMethods.ByName("SendUserMessage")),
 			connect.WithClientOptions(opts...),
 		),
 		cancelSession: connect.NewClient[v1.CancelSessionRequest, v1.CancelSessionResponse](
@@ -136,7 +136,7 @@ type workerServiceClient struct {
 	listSessions          *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
 	stateSync             *connect.Client[v1.StateSyncRequest, v1.StateSyncResponse]
 	setSessionMode        *connect.Client[v1.SetSessionModeRequest, v1.SetSessionModeResponse]
-	promptSession         *connect.Client[v1.PromptSessionRequest, v1.PromptSessionResponse]
+	sendUserMessage       *connect.Client[v1.SendUserMessageRequest, v1.SendUserMessageResponse]
 	cancelSession         *connect.Client[v1.CancelSessionRequest, v1.CancelSessionResponse]
 	checkSessionResumable *connect.Client[v1.CheckSessionResumableRequest, v1.CheckSessionResumableResponse]
 }
@@ -161,9 +161,9 @@ func (c *workerServiceClient) SetSessionMode(ctx context.Context, req *connect.R
 	return c.setSessionMode.CallUnary(ctx, req)
 }
 
-// PromptSession calls worker.v1.WorkerService.PromptSession.
-func (c *workerServiceClient) PromptSession(ctx context.Context, req *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
-	return c.promptSession.CallUnary(ctx, req)
+// SendUserMessage calls worker.v1.WorkerService.SendUserMessage.
+func (c *workerServiceClient) SendUserMessage(ctx context.Context, req *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error) {
+	return c.sendUserMessage.CallUnary(ctx, req)
 }
 
 // CancelSession calls worker.v1.WorkerService.CancelSession.
@@ -187,8 +187,8 @@ type WorkerServiceHandler interface {
 	StateSync(context.Context, *connect.BidiStream[v1.StateSyncRequest, v1.StateSyncResponse]) error
 	// SetSessionMode changes the permission mode of a running agent session.
 	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
-	// PromptSession sends a follow-up prompt to a running session.
-	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// SendUserMessage sends a follow-up prompt to a running session.
+	SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error)
 	// CancelSession cancels the active prompt on a running session.
 	CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error)
 	// CheckSessionResumable checks if an ACP session can be resumed from disk.
@@ -226,10 +226,10 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(workerServiceMethods.ByName("SetSessionMode")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workerServicePromptSessionHandler := connect.NewUnaryHandler(
-		WorkerServicePromptSessionProcedure,
-		svc.PromptSession,
-		connect.WithSchema(workerServiceMethods.ByName("PromptSession")),
+	workerServiceSendUserMessageHandler := connect.NewUnaryHandler(
+		WorkerServiceSendUserMessageProcedure,
+		svc.SendUserMessage,
+		connect.WithSchema(workerServiceMethods.ByName("SendUserMessage")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workerServiceCancelSessionHandler := connect.NewUnaryHandler(
@@ -254,8 +254,8 @@ func NewWorkerServiceHandler(svc WorkerServiceHandler, opts ...connect.HandlerOp
 			workerServiceStateSyncHandler.ServeHTTP(w, r)
 		case WorkerServiceSetSessionModeProcedure:
 			workerServiceSetSessionModeHandler.ServeHTTP(w, r)
-		case WorkerServicePromptSessionProcedure:
-			workerServicePromptSessionHandler.ServeHTTP(w, r)
+		case WorkerServiceSendUserMessageProcedure:
+			workerServiceSendUserMessageHandler.ServeHTTP(w, r)
 		case WorkerServiceCancelSessionProcedure:
 			workerServiceCancelSessionHandler.ServeHTTP(w, r)
 		case WorkerServiceCheckSessionResumableProcedure:
@@ -285,8 +285,8 @@ func (UnimplementedWorkerServiceHandler) SetSessionMode(context.Context, *connec
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.SetSessionMode is not implemented"))
 }
 
-func (UnimplementedWorkerServiceHandler) PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.PromptSession is not implemented"))
+func (UnimplementedWorkerServiceHandler) SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("worker.v1.WorkerService.SendUserMessage is not implemented"))
 }
 
 func (UnimplementedWorkerServiceHandler) CancelSession(context.Context, *connect.Request[v1.CancelSessionRequest]) (*connect.Response[v1.CancelSessionResponse], error) {

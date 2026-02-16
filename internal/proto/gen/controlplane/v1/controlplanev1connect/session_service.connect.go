@@ -48,9 +48,9 @@ const (
 	// SessionServiceWatchSessionEventsProcedure is the fully-qualified name of the SessionService's
 	// WatchSessionEvents RPC.
 	SessionServiceWatchSessionEventsProcedure = "/controlplane.v1.SessionService/WatchSessionEvents"
-	// SessionServicePromptSessionProcedure is the fully-qualified name of the SessionService's
-	// PromptSession RPC.
-	SessionServicePromptSessionProcedure = "/controlplane.v1.SessionService/PromptSession"
+	// SessionServiceSendUserMessageProcedure is the fully-qualified name of the SessionService's
+	// SendUserMessage RPC.
+	SessionServiceSendUserMessageProcedure = "/controlplane.v1.SessionService/SendUserMessage"
 )
 
 // SessionServiceClient is a client for the controlplane.v1.SessionService service.
@@ -65,8 +65,8 @@ type SessionServiceClient interface {
 	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
 	// WatchSessionEvents streams history first, then live events via pub-sub.
 	WatchSessionEvents(context.Context, *connect.Request[v1.WatchSessionEventsRequest]) (*connect.ServerStreamForClient[v1.WatchSessionEventsResponse], error)
-	// PromptSession sends a follow-up message to the active session for a thread.
-	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// SendUserMessage sends a follow-up message to the active session for a thread.
+	SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error)
 }
 
 // NewSessionServiceClient constructs a client for the controlplane.v1.SessionService service. By
@@ -110,10 +110,10 @@ func NewSessionServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(sessionServiceMethods.ByName("WatchSessionEvents")),
 			connect.WithClientOptions(opts...),
 		),
-		promptSession: connect.NewClient[v1.PromptSessionRequest, v1.PromptSessionResponse](
+		sendUserMessage: connect.NewClient[v1.SendUserMessageRequest, v1.SendUserMessageResponse](
 			httpClient,
-			baseURL+SessionServicePromptSessionProcedure,
-			connect.WithSchema(sessionServiceMethods.ByName("PromptSession")),
+			baseURL+SessionServiceSendUserMessageProcedure,
+			connect.WithSchema(sessionServiceMethods.ByName("SendUserMessage")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -126,7 +126,7 @@ type sessionServiceClient struct {
 	listSessions       *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
 	setSessionMode     *connect.Client[v1.SetSessionModeRequest, v1.SetSessionModeResponse]
 	watchSessionEvents *connect.Client[v1.WatchSessionEventsRequest, v1.WatchSessionEventsResponse]
-	promptSession      *connect.Client[v1.PromptSessionRequest, v1.PromptSessionResponse]
+	sendUserMessage    *connect.Client[v1.SendUserMessageRequest, v1.SendUserMessageResponse]
 }
 
 // CreateSession calls controlplane.v1.SessionService.CreateSession.
@@ -154,9 +154,9 @@ func (c *sessionServiceClient) WatchSessionEvents(ctx context.Context, req *conn
 	return c.watchSessionEvents.CallServerStream(ctx, req)
 }
 
-// PromptSession calls controlplane.v1.SessionService.PromptSession.
-func (c *sessionServiceClient) PromptSession(ctx context.Context, req *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
-	return c.promptSession.CallUnary(ctx, req)
+// SendUserMessage calls controlplane.v1.SessionService.SendUserMessage.
+func (c *sessionServiceClient) SendUserMessage(ctx context.Context, req *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error) {
+	return c.sendUserMessage.CallUnary(ctx, req)
 }
 
 // SessionServiceHandler is an implementation of the controlplane.v1.SessionService service.
@@ -171,8 +171,8 @@ type SessionServiceHandler interface {
 	SetSessionMode(context.Context, *connect.Request[v1.SetSessionModeRequest]) (*connect.Response[v1.SetSessionModeResponse], error)
 	// WatchSessionEvents streams history first, then live events via pub-sub.
 	WatchSessionEvents(context.Context, *connect.Request[v1.WatchSessionEventsRequest], *connect.ServerStream[v1.WatchSessionEventsResponse]) error
-	// PromptSession sends a follow-up message to the active session for a thread.
-	PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error)
+	// SendUserMessage sends a follow-up message to the active session for a thread.
+	SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error)
 }
 
 // NewSessionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -212,10 +212,10 @@ func NewSessionServiceHandler(svc SessionServiceHandler, opts ...connect.Handler
 		connect.WithSchema(sessionServiceMethods.ByName("WatchSessionEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
-	sessionServicePromptSessionHandler := connect.NewUnaryHandler(
-		SessionServicePromptSessionProcedure,
-		svc.PromptSession,
-		connect.WithSchema(sessionServiceMethods.ByName("PromptSession")),
+	sessionServiceSendUserMessageHandler := connect.NewUnaryHandler(
+		SessionServiceSendUserMessageProcedure,
+		svc.SendUserMessage,
+		connect.WithSchema(sessionServiceMethods.ByName("SendUserMessage")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/controlplane.v1.SessionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -230,8 +230,8 @@ func NewSessionServiceHandler(svc SessionServiceHandler, opts ...connect.Handler
 			sessionServiceSetSessionModeHandler.ServeHTTP(w, r)
 		case SessionServiceWatchSessionEventsProcedure:
 			sessionServiceWatchSessionEventsHandler.ServeHTTP(w, r)
-		case SessionServicePromptSessionProcedure:
-			sessionServicePromptSessionHandler.ServeHTTP(w, r)
+		case SessionServiceSendUserMessageProcedure:
+			sessionServiceSendUserMessageHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -261,6 +261,6 @@ func (UnimplementedSessionServiceHandler) WatchSessionEvents(context.Context, *c
 	return connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.SessionService.WatchSessionEvents is not implemented"))
 }
 
-func (UnimplementedSessionServiceHandler) PromptSession(context.Context, *connect.Request[v1.PromptSessionRequest]) (*connect.Response[v1.PromptSessionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.SessionService.PromptSession is not implemented"))
+func (UnimplementedSessionServiceHandler) SendUserMessage(context.Context, *connect.Request[v1.SendUserMessageRequest]) (*connect.Response[v1.SendUserMessageResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("controlplane.v1.SessionService.SendUserMessage is not implemented"))
 }

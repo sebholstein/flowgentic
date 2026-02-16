@@ -172,10 +172,10 @@ func (h *workerServiceHandler) SetSessionMode(
 	return connect.NewResponse(&workerv1.SetSessionModeResponse{}), nil
 }
 
-func (h *workerServiceHandler) PromptSession(
+func (h *workerServiceHandler) SendUserMessage(
 	ctx context.Context,
-	req *connect.Request[workerv1.PromptSessionRequest],
-) (*connect.Response[workerv1.PromptSessionResponse], error) {
+	req *connect.Request[workerv1.SendUserMessageRequest],
+) (*connect.Response[workerv1.SendUserMessageResponse], error) {
 	// Convert proto ContentBlocks to ACP ContentBlocks.
 	var blocks []acp.ContentBlock
 	for _, b := range req.Msg.ContentBlocks {
@@ -187,7 +187,7 @@ func (h *workerServiceHandler) PromptSession(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect.NewResponse(&workerv1.PromptSessionResponse{
+	return connect.NewResponse(&workerv1.SendUserMessageResponse{
 		StopReason: string(resp.StopReason),
 	}), nil
 }

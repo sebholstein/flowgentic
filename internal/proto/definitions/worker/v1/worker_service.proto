@@ -34,15 +34,15 @@ service WorkerService {
   rpc StateSync(stream StateSyncRequest) returns (stream StateSyncResponse) {}
   // SetSessionMode changes the permission mode of a running agent session.
   rpc SetSessionMode(SetSessionModeRequest) returns (SetSessionModeResponse) {}
-  // PromptSession sends a follow-up prompt to a running session.
-  rpc PromptSession(PromptSessionRequest) returns (PromptSessionResponse) {}
+  // SendUserMessage sends a follow-up prompt to a running session.
+  rpc SendUserMessage(SendUserMessageRequest) returns (SendUserMessageResponse) {}
   // CancelSession cancels the active prompt on a running session.
   rpc CancelSession(CancelSessionRequest) returns (CancelSessionResponse) {}
   // CheckSessionResumable checks if an ACP session can be resumed from disk.
   rpc CheckSessionResumable(CheckSessionResumableRequest) returns (CheckSessionResumableResponse) {}
 }
 
-message PromptSessionRequest {
+message SendUserMessageRequest {
   string session_id = 1 [(buf.validate.field).string.min_len = 1];
   // The prompt content blocks to send.
   repeated ContentBlock content_blocks = 2;
@@ -53,7 +53,7 @@ message ContentBlock {
   string text = 2;
 }
 
-message PromptSessionResponse {
+message SendUserMessageResponse {
   string stop_reason = 1;
 }
 

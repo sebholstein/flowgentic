@@ -503,23 +503,10 @@ func hasStdioMCPServerNamed(servers []acp.McpServer, name string) bool {
 // filterMCPServers removes MCP servers whose transport is not supported by the
 // agent based on the capabilities advertised during initialize.
 //
-// Per the ACP spec, stdio is always supported. However, some agents (e.g.
-// OpenCode) don't actually handle stdio MCP servers and reject them during
-// validation. When an agent advertises no MCP capabilities at all (both http
-// and sse are false), we conservatively drop all MCP servers to avoid session
-// creation failures.
+// Per the ACP spec, stdio is always supported so stdio servers are always kept.
+// Non-stdio servers (HTTP, SSE) are only kept when the agent advertises the
+// corresponding capability.
 func filterMCPServers(servers []acp.McpServer, caps acp.McpCapabilities) []acp.McpServer {
-	// If the agent didn't advertise any MCP capability, don't send any servers.
-	// This works around agents that technically should support stdio per spec
-	// but don't (e.g. OpenCode's validator rejects stdio servers).
-	if !caps.Http && !caps.Sse {
-		if len(servers) > 0 {
-			slog.Default().Warn("agent advertises no MCP capabilities; dropping all MCP servers",
-				"count", len(servers))
-		}
-		return nil
-	}
-
 	filtered := make([]acp.McpServer, 0, len(servers))
 	for _, s := range servers {
 		switch {

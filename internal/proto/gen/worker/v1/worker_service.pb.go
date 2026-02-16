@@ -251,7 +251,7 @@ func (ToolCallKind) EnumDescriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{3}
 }
 
-type PromptSessionRequest struct {
+type SendUserMessageRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// The prompt content blocks to send.
@@ -260,20 +260,20 @@ type PromptSessionRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PromptSessionRequest) Reset() {
-	*x = PromptSessionRequest{}
+func (x *SendUserMessageRequest) Reset() {
+	*x = SendUserMessageRequest{}
 	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PromptSessionRequest) String() string {
+func (x *SendUserMessageRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PromptSessionRequest) ProtoMessage() {}
+func (*SendUserMessageRequest) ProtoMessage() {}
 
-func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
+func (x *SendUserMessageRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_v1_worker_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -285,19 +285,19 @@ func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PromptSessionRequest.ProtoReflect.Descriptor instead.
-func (*PromptSessionRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendUserMessageRequest.ProtoReflect.Descriptor instead.
+func (*SendUserMessageRequest) Descriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PromptSessionRequest) GetSessionId() string {
+func (x *SendUserMessageRequest) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *PromptSessionRequest) GetContentBlocks() []*ContentBlock {
+func (x *SendUserMessageRequest) GetContentBlocks() []*ContentBlock {
 	if x != nil {
 		return x.ContentBlocks
 	}
@@ -356,27 +356,27 @@ func (x *ContentBlock) GetText() string {
 	return ""
 }
 
-type PromptSessionResponse struct {
+type SendUserMessageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	StopReason    string                 `protobuf:"bytes,1,opt,name=stop_reason,json=stopReason,proto3" json:"stop_reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PromptSessionResponse) Reset() {
-	*x = PromptSessionResponse{}
+func (x *SendUserMessageResponse) Reset() {
+	*x = SendUserMessageResponse{}
 	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PromptSessionResponse) String() string {
+func (x *SendUserMessageResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PromptSessionResponse) ProtoMessage() {}
+func (*SendUserMessageResponse) ProtoMessage() {}
 
-func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
+func (x *SendUserMessageResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_v1_worker_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -388,12 +388,12 @@ func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PromptSessionResponse.ProtoReflect.Descriptor instead.
-func (*PromptSessionResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendUserMessageResponse.ProtoReflect.Descriptor instead.
+func (*SendUserMessageResponse) Descriptor() ([]byte, []int) {
 	return file_worker_v1_worker_service_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PromptSessionResponse) GetStopReason() string {
+func (x *SendUserMessageResponse) GetStopReason() string {
 	if x != nil {
 		return x.StopReason
 	}
@@ -2249,15 +2249,15 @@ var File_worker_v1_worker_service_proto protoreflect.FileDescriptor
 
 const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"~\n" +
-	"\x14PromptSessionRequest\x12&\n" +
+	"\x1eworker/v1/worker_service.proto\x12\tworker.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15worker/v1/agent.proto\"\x80\x01\n" +
+	"\x16SendUserMessageRequest\x12&\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\tsessionId\x12>\n" +
 	"\x0econtent_blocks\x18\x02 \x03(\v2\x17.worker.v1.ContentBlockR\rcontentBlocks\"6\n" +
 	"\fContentBlock\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"8\n" +
-	"\x15PromptSessionResponse\x12\x1f\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\":\n" +
+	"\x17SendUserMessageResponse\x12\x1f\n" +
 	"\vstop_reason\x18\x01 \x01(\tR\n" +
 	"stopReason\">\n" +
 	"\x14CancelSessionRequest\x12&\n" +
@@ -2413,14 +2413,14 @@ const file_worker_v1_worker_service_proto_rawDesc = "" +
 	"\x16TOOL_CALL_KIND_EXECUTE\x10\x06\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_THINK\x10\a\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_FETCH\x10\b\x12\x18\n" +
-	"\x14TOOL_CALL_KIND_OTHER\x10\t2\xf0\x04\n" +
+	"\x14TOOL_CALL_KIND_OTHER\x10\t2\xf6\x04\n" +
 	"\rWorkerService\x12K\n" +
 	"\n" +
 	"NewSession\x12\x1c.worker.v1.NewSessionRequest\x1a\x1d.worker.v1.NewSessionResponse\"\x00\x12Q\n" +
 	"\fListSessions\x12\x1e.worker.v1.ListSessionsRequest\x1a\x1f.worker.v1.ListSessionsResponse\"\x00\x12L\n" +
 	"\tStateSync\x12\x1b.worker.v1.StateSyncRequest\x1a\x1c.worker.v1.StateSyncResponse\"\x00(\x010\x01\x12W\n" +
-	"\x0eSetSessionMode\x12 .worker.v1.SetSessionModeRequest\x1a!.worker.v1.SetSessionModeResponse\"\x00\x12T\n" +
-	"\rPromptSession\x12\x1f.worker.v1.PromptSessionRequest\x1a .worker.v1.PromptSessionResponse\"\x00\x12T\n" +
+	"\x0eSetSessionMode\x12 .worker.v1.SetSessionModeRequest\x1a!.worker.v1.SetSessionModeResponse\"\x00\x12Z\n" +
+	"\x0fSendUserMessage\x12!.worker.v1.SendUserMessageRequest\x1a\".worker.v1.SendUserMessageResponse\"\x00\x12T\n" +
 	"\rCancelSession\x12\x1f.worker.v1.CancelSessionRequest\x1a .worker.v1.CancelSessionResponse\"\x00\x12l\n" +
 	"\x15CheckSessionResumable\x12'.worker.v1.CheckSessionResumableRequest\x1a(.worker.v1.CheckSessionResumableResponse\"\x00B\xb0\x01\n" +
 	"\rcom.worker.v1B\x12WorkerServiceProtoP\x01ZFgithub.com/sebastianm/flowgentic/internal/proto/gen/worker/v1;workerv1\xa2\x02\x03WXX\xaa\x02\tWorker.V1\xca\x02\tWorker\\V1\xe2\x02\x15Worker\\V1\\GPBMetadata\xea\x02\n" +
@@ -2445,9 +2445,9 @@ var file_worker_v1_worker_service_proto_goTypes = []any{
 	(SessionMode)(0),                      // 1: worker.v1.SessionMode
 	(ToolCallStatus)(0),                   // 2: worker.v1.ToolCallStatus
 	(ToolCallKind)(0),                     // 3: worker.v1.ToolCallKind
-	(*PromptSessionRequest)(nil),          // 4: worker.v1.PromptSessionRequest
+	(*SendUserMessageRequest)(nil),        // 4: worker.v1.SendUserMessageRequest
 	(*ContentBlock)(nil),                  // 5: worker.v1.ContentBlock
-	(*PromptSessionResponse)(nil),         // 6: worker.v1.PromptSessionResponse
+	(*SendUserMessageResponse)(nil),       // 6: worker.v1.SendUserMessageResponse
 	(*CancelSessionRequest)(nil),          // 7: worker.v1.CancelSessionRequest
 	(*CancelSessionResponse)(nil),         // 8: worker.v1.CancelSessionResponse
 	(*SetSessionModeRequest)(nil),         // 9: worker.v1.SetSessionModeRequest
@@ -2479,7 +2479,7 @@ var file_worker_v1_worker_service_proto_goTypes = []any{
 	(Agent)(0),                            // 35: worker.v1.Agent
 }
 var file_worker_v1_worker_service_proto_depIdxs = []int32{
-	5,  // 0: worker.v1.PromptSessionRequest.content_blocks:type_name -> worker.v1.ContentBlock
+	5,  // 0: worker.v1.SendUserMessageRequest.content_blocks:type_name -> worker.v1.ContentBlock
 	35, // 1: worker.v1.NewSessionRequest.agent:type_name -> worker.v1.Agent
 	35, // 2: worker.v1.NewSessionResponse.agent:type_name -> worker.v1.Agent
 	35, // 3: worker.v1.SessionInfo.agent:type_name -> worker.v1.Agent
@@ -2515,14 +2515,14 @@ var file_worker_v1_worker_service_proto_depIdxs = []int32{
 	14, // 33: worker.v1.WorkerService.ListSessions:input_type -> worker.v1.ListSessionsRequest
 	16, // 34: worker.v1.WorkerService.StateSync:input_type -> worker.v1.StateSyncRequest
 	9,  // 35: worker.v1.WorkerService.SetSessionMode:input_type -> worker.v1.SetSessionModeRequest
-	4,  // 36: worker.v1.WorkerService.PromptSession:input_type -> worker.v1.PromptSessionRequest
+	4,  // 36: worker.v1.WorkerService.SendUserMessage:input_type -> worker.v1.SendUserMessageRequest
 	7,  // 37: worker.v1.WorkerService.CancelSession:input_type -> worker.v1.CancelSessionRequest
 	33, // 38: worker.v1.WorkerService.CheckSessionResumable:input_type -> worker.v1.CheckSessionResumableRequest
 	12, // 39: worker.v1.WorkerService.NewSession:output_type -> worker.v1.NewSessionResponse
 	15, // 40: worker.v1.WorkerService.ListSessions:output_type -> worker.v1.ListSessionsResponse
 	17, // 41: worker.v1.WorkerService.StateSync:output_type -> worker.v1.StateSyncResponse
 	10, // 42: worker.v1.WorkerService.SetSessionMode:output_type -> worker.v1.SetSessionModeResponse
-	6,  // 43: worker.v1.WorkerService.PromptSession:output_type -> worker.v1.PromptSessionResponse
+	6,  // 43: worker.v1.WorkerService.SendUserMessage:output_type -> worker.v1.SendUserMessageResponse
 	8,  // 44: worker.v1.WorkerService.CancelSession:output_type -> worker.v1.CancelSessionResponse
 	34, // 45: worker.v1.WorkerService.CheckSessionResumable:output_type -> worker.v1.CheckSessionResumableResponse
 	39, // [39:46] is the sub-list for method output_type

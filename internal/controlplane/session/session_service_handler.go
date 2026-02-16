@@ -145,10 +145,10 @@ func (h *sessionServiceHandler) SetSessionMode(
 	return connect.NewResponse(&controlplanev1.SetSessionModeResponse{}), nil
 }
 
-func (h *sessionServiceHandler) PromptSession(
+func (h *sessionServiceHandler) SendUserMessage(
 	ctx context.Context,
-	req *connect.Request[controlplanev1.PromptSessionRequest],
-) (*connect.Response[controlplanev1.PromptSessionResponse], error) {
+	req *connect.Request[controlplanev1.SendUserMessageRequest],
+) (*connect.Response[controlplanev1.SendUserMessageResponse], error) {
 	threadID := req.Msg.ThreadId
 	if threadID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("thread_id is required"))
@@ -160,16 +160,16 @@ func (h *sessionServiceHandler) PromptSession(
 
 	sess, err := h.svc.FindActiveSessionForThread(ctx, threadID)
 	if err != nil {
-		h.log.Error("PromptSession: no active session", "thread_id", threadID, "error", err)
+		h.log.Error("SendUserMessage: no active session", "thread_id", threadID, "error", err)
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("no active session: %w", err))
 	}
 
-	h.log.Info("PromptSession: forwarding to worker", "thread_id", threadID, "session_id", sess.ID, "worker_id", sess.WorkerID, "session_status", sess.Status)
+	h.log.Info("SendUserMessage: forwarding to worker", "thread_id", threadID, "session_id", sess.ID, "worker_id", sess.WorkerID, "session_status", sess.Status)
 
 	// Forward to the worker.
 	workerURL, secret, ok := h.svc.LookupWorker(sess.WorkerID)
 	if !ok {
-		h.log.Error("PromptSession: worker not reachable", "worker_id", sess.WorkerID)
+		h.log.Error("SendUserMessage: worker not reachable", "worker_id", sess.WorkerID)
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("worker %s not reachable", sess.WorkerID))
 	}
 
@@ -178,19 +178,19 @@ func (h *sessionServiceHandler) PromptSession(
 		workerURL,
 		connect.WithInterceptors(secretInterceptor(secret)),
 	)
-	_, err = client.PromptSession(ctx, connect.NewRequest(&workerv1.PromptSessionRequest{
+	_, err = client.SendUserMessage(ctx, connect.NewRequest(&workerv1.SendUserMessageRequest{
 		SessionId: sess.ID,
 		ContentBlocks: []*workerv1.ContentBlock{
 			{Type: "text", Text: text},
 		},
 	}))
 	if err != nil {
-		h.log.Error("PromptSession: forward to worker failed", "session_id", sess.ID, "error", err)
+		h.log.Error("SendUserMessage: forward to worker failed", "session_id", sess.ID, "error", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("forward to worker: %w", err))
 	}
-	h.log.Info("PromptSession: completed", "session_id", sess.ID)
+	h.log.Info("SendUserMessage: completed", "session_id", sess.ID)
 
-	return connect.NewResponse(&controlplanev1.PromptSessionResponse{}), nil
+	return connect.NewResponse(&controlplanev1.SendUserMessageResponse{}), nil
 }
 
 func (h *sessionServiceHandler) WatchSessionEvents(

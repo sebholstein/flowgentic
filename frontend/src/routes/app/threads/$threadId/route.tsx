@@ -6,7 +6,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { GitBranch, Activity, Workflow, Inbox, Loader2, FileCode2, Brain, Plus, Bot } from "lucide-react";
+import { GitBranch, Activity, Workflow, Inbox, FileCode2, Brain, Plus, Bot } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getHarnessIcon } from "@/components/icons/agent-icons";
@@ -79,6 +79,44 @@ function normalizeAgentId(agent: string): string {
   return agent.toLowerCase().replace(/_/g, "-");
 }
 
+type ChatPhase = "loading" | "setup" | "connecting" | "ready";
+
+function useChatPhase(opts: {
+  threadId: string;
+  threadLoading: boolean;
+  sessionsLoading: boolean;
+  hasAnySession: boolean;
+  hasReceivedUpdate: boolean;
+  hasBootstrapState: boolean;
+  hasContent: boolean;
+  isSessionResponding: boolean;
+}): { phase: ChatPhase; isStreaming: boolean } {
+  const [connectingExpired, setConnectingExpired] = useState(false);
+  const [trackedThreadId, setTrackedThreadId] = useState(opts.threadId);
+
+  // Reset timeout when threadId changes (sync state during render)
+  if (trackedThreadId !== opts.threadId) {
+    setTrackedThreadId(opts.threadId);
+    setConnectingExpired(false);
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setConnectingExpired(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, [opts.threadId]);
+
+  const phase: ChatPhase = (() => {
+    if (opts.threadLoading || opts.sessionsLoading) return "loading";
+    if (!opts.hasAnySession && !opts.hasBootstrapState) return "setup";
+    if (!opts.hasReceivedUpdate && !connectingExpired && !opts.hasContent) return "connecting";
+    return "ready";
+  })();
+
+  const isStreaming = opts.isSessionResponding || phase === "connecting";
+
+  return { phase, isStreaming };
+}
+
 function mapBackendTask(t: TaskConfig): Task {
   return {
     id: t.id,
@@ -115,23 +153,13 @@ function ThreadLayout() {
     queryFn: () => threadClient.getThread({ id: threadId }),
   });
 
-  const [showLoading, setShowLoading] = useState(false);
-  useEffect(() => {
-    if (!isLoading) {
-      setShowLoading(false);
-      return;
-    }
-    const timer = setTimeout(() => setShowLoading(true), 200);
-    return () => clearTimeout(timer);
-  }, [isLoading]);
-
   const thread = threadData?.thread;
 
   // Task and session queries
   const taskClient = useClient(TaskService);
   const sessionClient = useClient(SessionService);
   const { data: tasksData } = useQuery(tasksQueryOptions(taskClient, threadId));
-  const { data: sessionsData } = useQuery(sessionsQueryOptions(sessionClient, threadId));
+  const { data: sessionsData, isLoading: sessionsLoading } = useQuery(sessionsQueryOptions(sessionClient, threadId));
 
   const tasks = useMemo<Task[]>(() => {
     return (tasksData?.tasks ?? []).map(mapBackendTask);
@@ -165,6 +193,17 @@ function ThreadLayout() {
     threadId,
   ]);
 
+  const { phase, isStreaming } = useChatPhase({
+    threadId,
+    threadLoading: isLoading,
+    sessionsLoading,
+    hasAnySession,
+    hasReceivedUpdate: hasReceivedSessionUpdate,
+    hasBootstrapState: Boolean(bootstrapState),
+    hasContent: sessionMessages.length > 0 || !!pendingAgentText || !!pendingThoughtText,
+    isSessionResponding,
+  });
+
   const hasRealUserMessage = useMemo(
     () => sessionMessages.some((message) => message.type === "user"),
     [sessionMessages],
@@ -190,29 +229,6 @@ function ThreadLayout() {
       queryClient.removeQueries({ queryKey: ["thread-bootstrap", threadId], exact: true });
     }
   }, [bootstrapState, hasRealUserMessage, queryClient, threadId]);
-
-  const [hasPrimingWindowExpired, setHasPrimingWindowExpired] = useState(false);
-  useEffect(() => {
-    setHasPrimingWindowExpired(false);
-    const timer = window.setTimeout(() => {
-      setHasPrimingWindowExpired(true);
-    }, 1200);
-    return () => window.clearTimeout(timer);
-  }, [threadId]);
-
-  const isAwaitingBootstrapResponse =
-    Boolean(bootstrapState) &&
-    sessionMessages.length === 0 &&
-    !pendingAgentText &&
-    !pendingThoughtText;
-  const isPrimingExistingSession =
-    hasAnySession && !hasReceivedSessionUpdate && !hasPrimingWindowExpired;
-  const isPanelStreaming =
-    isSessionResponding || isAwaitingBootstrapResponse || isPrimingExistingSession;
-
-  // Hide chat panel while priming an existing session with no content yet to avoid flicker
-  const isChatReady =
-    !isPrimingExistingSession || sessionMessages.length > 0 || !!pendingAgentText || !!pendingThoughtText;
 
   // --- Session setup state (shown when no sessions exist) ---
   const projectClient = useClient(ProjectService);
@@ -319,7 +335,7 @@ function ThreadLayout() {
 
   // Follow-up message mutation
   const promptMutation = useMutation({
-    mutationFn: (text: string) => sessionClient.promptSession({ threadId, text }),
+    mutationFn: (text: string) => sessionClient.sendUserMessage({ threadId, text }),
   });
 
   const handleSendMessage = useCallback(
@@ -345,15 +361,7 @@ function ThreadLayout() {
 
   const pendingCheckInsCount = 0;
 
-  if (isLoading && showLoading) {
-    return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        <Loader2 className="size-5 animate-spin" />
-      </div>
-    );
-  }
-
-  if (isLoading) {
+  if (phase === "loading") {
     return null;
   }
 
@@ -392,7 +400,7 @@ function ThreadLayout() {
     parsedPlan: threadParsedPlan,
   };
 
-  const setupFormContent = !hasAnySession ? (
+  const setupFormContent = phase === "setup" ? (
     <ThreadSetupForm
       threadModel={threadModel}
       onModelChange={setThreadModel}
@@ -425,7 +433,7 @@ function ThreadLayout() {
       externalMessages={displayMessages}
       pendingAgentText={pendingAgentText}
       pendingThoughtText={pendingThoughtText}
-      isStreaming={isPanelStreaming}
+      isStreaming={isStreaming}
       onSend={handleSendMessage}
       selectedModel={threadModel}
       availableModels={modelsData?.models ?? []}
@@ -440,12 +448,12 @@ function ThreadLayout() {
   return (
     <ThreadContext value={contextValue}>
       <div className="flex h-full flex-col">
-        {/* Header with tabs */}
-        <div className="flex border-b h-10 shrink-0 select-none" style={dragStyle}>
+        {/* Header with tabs — sits on dark base background */}
+        <div className="flex h-10 shrink-0 select-none" style={dragStyle}>
           {/* Left section - thread title */}
           {!isTaskDetailPage && (
             <div
-              className="flex items-center gap-2 px-4 shrink-0"
+              className="flex items-center gap-2 pl-1 pr-4 shrink-0"
               style={{ width: `${leftPanelPercent}%` }}
             >
               <Badge
@@ -533,6 +541,8 @@ function ThreadLayout() {
           </div>
         </div>
 
+        {/* Content area in rounded surface panel */}
+        <div className="flex-1 min-h-0 flex flex-col bg-surface rounded-lg overflow-hidden">
         {/* Session tab strip - below the header, aligned with chat panel */}
         {!isTaskDetailPage && (sessions.length > 0 || hasAnySession) && (
           <div className="flex shrink-0 select-none border-b" style={dragStyle}>
@@ -607,7 +617,7 @@ function ThreadLayout() {
                 className="flex-shrink-0 h-full overflow-hidden"
                 style={{ width: `${leftPanelPercent}%` }}
               >
-                {isChatReady && chatPanel}
+                {chatPanel}
               </div>
               {/* Resize handle */}
               <div
@@ -652,6 +662,7 @@ function ThreadLayout() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </ThreadContext>

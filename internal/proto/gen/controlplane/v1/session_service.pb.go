@@ -1633,7 +1633,7 @@ func (x *CreateSessionResponse) GetSession() *SessionConfig {
 	return nil
 }
 
-type PromptSessionRequest struct {
+type SendUserMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ThreadId      string                 `protobuf:"bytes,1,opt,name=thread_id,json=threadId,proto3" json:"thread_id,omitempty"`
 	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
@@ -1641,20 +1641,20 @@ type PromptSessionRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PromptSessionRequest) Reset() {
-	*x = PromptSessionRequest{}
+func (x *SendUserMessageRequest) Reset() {
+	*x = SendUserMessageRequest{}
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PromptSessionRequest) String() string {
+func (x *SendUserMessageRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PromptSessionRequest) ProtoMessage() {}
+func (*SendUserMessageRequest) ProtoMessage() {}
 
-func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
+func (x *SendUserMessageRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1666,45 +1666,45 @@ func (x *PromptSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PromptSessionRequest.ProtoReflect.Descriptor instead.
-func (*PromptSessionRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendUserMessageRequest.ProtoReflect.Descriptor instead.
+func (*SendUserMessageRequest) Descriptor() ([]byte, []int) {
 	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *PromptSessionRequest) GetThreadId() string {
+func (x *SendUserMessageRequest) GetThreadId() string {
 	if x != nil {
 		return x.ThreadId
 	}
 	return ""
 }
 
-func (x *PromptSessionRequest) GetText() string {
+func (x *SendUserMessageRequest) GetText() string {
 	if x != nil {
 		return x.Text
 	}
 	return ""
 }
 
-type PromptSessionResponse struct {
+type SendUserMessageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PromptSessionResponse) Reset() {
-	*x = PromptSessionResponse{}
+func (x *SendUserMessageResponse) Reset() {
+	*x = SendUserMessageResponse{}
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PromptSessionResponse) String() string {
+func (x *SendUserMessageResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PromptSessionResponse) ProtoMessage() {}
+func (*SendUserMessageResponse) ProtoMessage() {}
 
-func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
+func (x *SendUserMessageResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_controlplane_v1_session_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1716,8 +1716,8 @@ func (x *PromptSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PromptSessionResponse.ProtoReflect.Descriptor instead.
-func (*PromptSessionResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendUserMessageResponse.ProtoReflect.Descriptor instead.
+func (*SendUserMessageResponse) Descriptor() ([]byte, []int) {
 	return file_controlplane_v1_session_service_proto_rawDescGZIP(), []int{24}
 }
 
@@ -1830,11 +1830,11 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x04mode\x18\x06 \x01(\tR\x04mode\x12!\n" +
 	"\fsession_mode\x18\a \x01(\tR\vsessionMode\"Q\n" +
 	"\x15CreateSessionResponse\x128\n" +
-	"\asession\x18\x01 \x01(\v2\x1e.controlplane.v1.SessionConfigR\asession\"Y\n" +
-	"\x14PromptSessionRequest\x12$\n" +
+	"\asession\x18\x01 \x01(\v2\x1e.controlplane.v1.SessionConfigR\asession\"[\n" +
+	"\x16SendUserMessageRequest\x12$\n" +
 	"\tthread_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\bthreadId\x12\x1b\n" +
-	"\x04text\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04text\"\x17\n" +
-	"\x15PromptSessionResponse*\x91\x01\n" +
+	"\x04text\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04text\"\x19\n" +
+	"\x17SendUserMessageResponse*\x91\x01\n" +
 	"\x0eToolCallStatus\x12 \n" +
 	"\x1cTOOL_CALL_STATUS_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cTOOL_CALL_STATUS_IN_PROGRESS\x10\x01\x12\x1e\n" +
@@ -1850,15 +1850,15 @@ const file_controlplane_v1_session_service_proto_rawDesc = "" +
 	"\x16TOOL_CALL_KIND_EXECUTE\x10\x06\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_THINK\x10\a\x12\x18\n" +
 	"\x14TOOL_CALL_KIND_FETCH\x10\b\x12\x18\n" +
-	"\x14TOOL_CALL_KIND_OTHER\x10\t2\xe4\x04\n" +
+	"\x14TOOL_CALL_KIND_OTHER\x10\t2\xea\x04\n" +
 	"\x0eSessionService\x12`\n" +
 	"\rCreateSession\x12%.controlplane.v1.CreateSessionRequest\x1a&.controlplane.v1.CreateSessionResponse\"\x00\x12W\n" +
 	"\n" +
 	"GetSession\x12\".controlplane.v1.GetSessionRequest\x1a#.controlplane.v1.GetSessionResponse\"\x00\x12]\n" +
 	"\fListSessions\x12$.controlplane.v1.ListSessionsRequest\x1a%.controlplane.v1.ListSessionsResponse\"\x00\x12c\n" +
 	"\x0eSetSessionMode\x12&.controlplane.v1.SetSessionModeRequest\x1a'.controlplane.v1.SetSessionModeResponse\"\x00\x12q\n" +
-	"\x12WatchSessionEvents\x12*.controlplane.v1.WatchSessionEventsRequest\x1a+.controlplane.v1.WatchSessionEventsResponse\"\x000\x01\x12`\n" +
-	"\rPromptSession\x12%.controlplane.v1.PromptSessionRequest\x1a&.controlplane.v1.PromptSessionResponse\"\x00B\xdb\x01\n" +
+	"\x12WatchSessionEvents\x12*.controlplane.v1.WatchSessionEventsRequest\x1a+.controlplane.v1.WatchSessionEventsResponse\"\x000\x01\x12f\n" +
+	"\x0fSendUserMessage\x12'.controlplane.v1.SendUserMessageRequest\x1a(.controlplane.v1.SendUserMessageResponse\"\x00B\xdb\x01\n" +
 	"\x13com.controlplane.v1B\x13SessionServiceProtoP\x01ZRgithub.com/sebastianm/flowgentic/internal/proto/gen/controlplane/v1;controlplanev1\xa2\x02\x03CXX\xaa\x02\x0fControlplane.V1\xca\x02\x0fControlplane\\V1\xe2\x02\x1bControlplane\\V1\\GPBMetadata\xea\x02\x10Controlplane::V1b\x06proto3"
 
 var (
@@ -1901,8 +1901,8 @@ var file_controlplane_v1_session_service_proto_goTypes = []any{
 	(*WatchSessionEventsResponse)(nil), // 22: controlplane.v1.WatchSessionEventsResponse
 	(*CreateSessionRequest)(nil),       // 23: controlplane.v1.CreateSessionRequest
 	(*CreateSessionResponse)(nil),      // 24: controlplane.v1.CreateSessionResponse
-	(*PromptSessionRequest)(nil),       // 25: controlplane.v1.PromptSessionRequest
-	(*PromptSessionResponse)(nil),      // 26: controlplane.v1.PromptSessionResponse
+	(*SendUserMessageRequest)(nil),     // 25: controlplane.v1.SendUserMessageRequest
+	(*SendUserMessageResponse)(nil),    // 26: controlplane.v1.SendUserMessageResponse
 }
 var file_controlplane_v1_session_service_proto_depIdxs = []int32{
 	2,  // 0: controlplane.v1.GetSessionResponse.session:type_name -> controlplane.v1.SessionConfig
@@ -1930,13 +1930,13 @@ var file_controlplane_v1_session_service_proto_depIdxs = []int32{
 	5,  // 22: controlplane.v1.SessionService.ListSessions:input_type -> controlplane.v1.ListSessionsRequest
 	7,  // 23: controlplane.v1.SessionService.SetSessionMode:input_type -> controlplane.v1.SetSessionModeRequest
 	21, // 24: controlplane.v1.SessionService.WatchSessionEvents:input_type -> controlplane.v1.WatchSessionEventsRequest
-	25, // 25: controlplane.v1.SessionService.PromptSession:input_type -> controlplane.v1.PromptSessionRequest
+	25, // 25: controlplane.v1.SessionService.SendUserMessage:input_type -> controlplane.v1.SendUserMessageRequest
 	24, // 26: controlplane.v1.SessionService.CreateSession:output_type -> controlplane.v1.CreateSessionResponse
 	4,  // 27: controlplane.v1.SessionService.GetSession:output_type -> controlplane.v1.GetSessionResponse
 	6,  // 28: controlplane.v1.SessionService.ListSessions:output_type -> controlplane.v1.ListSessionsResponse
 	8,  // 29: controlplane.v1.SessionService.SetSessionMode:output_type -> controlplane.v1.SetSessionModeResponse
 	22, // 30: controlplane.v1.SessionService.WatchSessionEvents:output_type -> controlplane.v1.WatchSessionEventsResponse
-	26, // 31: controlplane.v1.SessionService.PromptSession:output_type -> controlplane.v1.PromptSessionResponse
+	26, // 31: controlplane.v1.SessionService.SendUserMessage:output_type -> controlplane.v1.SendUserMessageResponse
 	26, // [26:32] is the sub-list for method output_type
 	20, // [20:26] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name
