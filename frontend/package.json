@@ -2,6 +2,7 @@
   "name": "flowgentic",
   "productName": "Flowgentic",
   "version": "0.1.0",
+  "description": "AI agent orchestration platform",
   "private": true,
   "type": "module",
   "main": ".vite/build/main.cjs",
