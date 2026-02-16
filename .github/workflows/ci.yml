@@ -45,6 +45,10 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Generate proto
+        working-directory: frontend
+        run: pnpm proto
+
       - name: Build
         working-directory: frontend
         run: pnpm build
