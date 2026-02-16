@@ -37,10 +37,7 @@ function RouteComponent() {
       <div className="flex h-full min-h-0 flex-1">
         {visible && <SidebarWrapper />}
         <div
-          className={cn(
-            "relative min-w-0 flex-1 overflow-auto bg-background",
-            !visible && isMacOS && "pl-24",
-          )}
+          className="relative min-w-0 flex-1 overflow-auto bg-background"
         >
           <Outlet context={{ sidebarVisible: visible, isMacOS }} />
           {!visible && (
