@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +17,7 @@ func TestSessionMCPServers_InjectsFlowgenticServer(t *testing.T) {
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":    "http://127.0.0.1:9999",
 			"AGENTCTL_WORKER_SECRET": "secret",
-			"AGENTCTL_AGENT_RUN_ID":  "run-1",
+			"AGENTCTL_SESSION_ID":  "run-1",
 			"AGENTCTL_AGENT":         "codex",
 		},
 	})
@@ -29,7 +30,7 @@ func TestSessionMCPServers_InjectsFlowgenticServer(t *testing.T) {
 	assert.Equal(t, []acp.EnvVariable{
 		{Name: "AGENTCTL_WORKER_URL", Value: "http://127.0.0.1:9999"},
 		{Name: "AGENTCTL_WORKER_SECRET", Value: "secret"},
-		{Name: "AGENTCTL_AGENT_RUN_ID", Value: "run-1"},
+		{Name: "AGENTCTL_SESSION_ID", Value: "run-1"},
 		{Name: "AGENTCTL_AGENT", Value: "codex"},
 	}, servers[0].Stdio.Env)
 }
@@ -43,7 +44,7 @@ func TestSessionMCPServers_UsesAgentctlBinOverride(t *testing.T) {
 		SystemPrompt: "## Flowgentic MCP",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
-			"AGENTCTL_AGENT_RUN_ID": "run-1",
+			"AGENTCTL_SESSION_ID": "run-1",
 			"AGENTCTL_BIN":          agentctlPath,
 		},
 	})
@@ -78,7 +79,7 @@ func TestSessionMCPServers_DoesNotDuplicateFlowgenticServer(t *testing.T) {
 		},
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
-			"AGENTCTL_AGENT_RUN_ID": "run-1",
+			"AGENTCTL_SESSION_ID": "run-1",
 		},
 	})
 
@@ -92,7 +93,7 @@ func TestSessionMCPServers_NoDefaultInjectionWithoutMarker(t *testing.T) {
 		SystemPrompt: "normal chat session",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
-			"AGENTCTL_AGENT_RUN_ID": "run-1",
+			"AGENTCTL_SESSION_ID": "run-1",
 		},
 	})
 
@@ -104,7 +105,7 @@ func TestSessionMCPServers_InjectsWithEnvOverride(t *testing.T) {
 		SystemPrompt: "normal chat session",
 		EnvVars: map[string]string{
 			"AGENTCTL_WORKER_URL":           "http://127.0.0.1:9999",
-			"AGENTCTL_AGENT_RUN_ID":         "run-1",
+			"AGENTCTL_SESSION_ID":         "run-1",
 			"FLOWGENTIC_ENABLE_DEFAULT_MCP": "1",
 		},
 	})
@@ -121,4 +122,31 @@ func TestSessionMCPServers_PreservesExplicitEmptySlice(t *testing.T) {
 
 	require.NotNil(t, servers)
 	assert.Empty(t, servers)
+}
+
+func TestDefaultFlowgenticMCPServer_ArgsSerializeAsEmptyArray(t *testing.T) {
+	// Regression test: Args must serialize as JSON [] (not null).
+	// OpenCode's ACP Zod schema uses z.array(z.string()) which rejects null.
+	server, ok := defaultFlowgenticMCPServer(map[string]string{
+		"AGENTCTL_WORKER_URL":   "http://127.0.0.1:9999",
+		"AGENTCTL_SESSION_ID": "run-1",
+	})
+	require.True(t, ok)
+	require.NotNil(t, server.Stdio)
+
+	b, err := json.Marshal(server)
+	require.NoError(t, err)
+
+	var raw map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(b, &raw))
+
+	assert.JSONEq(t, `[]`, string(raw["args"]),
+		"args must serialize as [] not null; ACP agents using Zod validation reject null arrays")
+}
+
+func TestResolveAgentctlInvocation_ArgsNeverNil(t *testing.T) {
+	// Ensure resolveAgentctlInvocation always returns a non-nil slice so that
+	// JSON serialization produces [] instead of null.
+	_, args := resolveAgentctlInvocation(map[string]string{})
+	require.NotNil(t, args, "args slice must be non-nil to serialize as [] in JSON")
 }

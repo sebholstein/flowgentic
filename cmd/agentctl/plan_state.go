@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	agentCtlSessionIDEnv = "AGENTCTL_AGENT_RUN_ID"
+	agentCtlSessionIDEnv = "AGENTCTL_SESSION_ID"
 	planRootSuffix       = ".agentflow/plans"
 	stateDirName         = ".agentctl"
 )

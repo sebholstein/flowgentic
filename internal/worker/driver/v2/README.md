@@ -112,7 +112,7 @@ The `MetaBuilder` function on `AgentConfig` controls how `LaunchOpts` fields are
 ## Session-Scoped MCP Servers
 
 - `LaunchOpts.MCPServers` is passed through to ACP `NewSession`/`LoadSession`.
-- The worker injects a default Flowgentic MCP stdio server (`agentctl mcp serve`) only when Flowgentic MCP mode is requested (`SystemPrompt` contains `## Flowgentic MCP`, or `FLOWGENTIC_ENABLE_DEFAULT_MCP=1`) and `AGENTCTL_WORKER_URL` plus `AGENTCTL_AGENT_RUN_ID` are present in `LaunchOpts.EnvVars`.
+- The worker injects a default Flowgentic MCP stdio server (`agentctl mcp serve`) only when Flowgentic MCP mode is requested (`SystemPrompt` contains `## Flowgentic MCP`, or `FLOWGENTIC_ENABLE_DEFAULT_MCP=1`) and `AGENTCTL_WORKER_URL` plus `AGENTCTL_SESSION_ID` are present in `LaunchOpts.EnvVars`.
 - Model discovery intentionally uses an empty MCP server list.
 
 ## Pre-built Configs

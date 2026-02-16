@@ -262,7 +262,7 @@ func (d *acpDriver) runSession(ctx context.Context, sess *acpSession, conn *acp.
 
 	// Step 2: NewSession (or LoadSession if resuming)
 	meta := d.buildMeta(opts)
-	mcpServers := sessionMCPServers(opts)
+	mcpServers := filterMCPServers(sessionMCPServers(opts), initResp.AgentCapabilities.McpCapabilities)
 	var sessionID acp.SessionId
 
 	if opts.ResumeSessionID != "" {
@@ -418,14 +418,14 @@ func shouldInjectDefaultFlowgenticMCP(opts LaunchOpts) bool {
 }
 
 func defaultFlowgenticMCPServer(envVars map[string]string) (acp.McpServer, bool) {
-	if strings.TrimSpace(envVars["AGENTCTL_WORKER_URL"]) == "" || strings.TrimSpace(envVars["AGENTCTL_AGENT_RUN_ID"]) == "" {
+	if strings.TrimSpace(envVars["AGENTCTL_WORKER_URL"]) == "" || strings.TrimSpace(envVars["AGENTCTL_SESSION_ID"]) == "" {
 		return acp.McpServer{}, false
 	}
 
 	env := []acp.EnvVariable{
 		{Name: "AGENTCTL_WORKER_URL", Value: envVars["AGENTCTL_WORKER_URL"]},
 		{Name: "AGENTCTL_WORKER_SECRET", Value: envVars["AGENTCTL_WORKER_SECRET"]},
-		{Name: "AGENTCTL_AGENT_RUN_ID", Value: envVars["AGENTCTL_AGENT_RUN_ID"]},
+		{Name: "AGENTCTL_SESSION_ID", Value: envVars["AGENTCTL_SESSION_ID"]},
 		{Name: "AGENTCTL_AGENT", Value: envVars["AGENTCTL_AGENT"]},
 	}
 
@@ -466,7 +466,7 @@ func resolveAgentctlInvocation(envVars map[string]string) (string, []string) {
 
 	for _, candidate := range candidates {
 		if commandSupportsMCPServe(candidate) {
-			return candidate, nil
+			return candidate, []string{}
 		}
 	}
 
@@ -477,7 +477,7 @@ func resolveAgentctlInvocation(envVars map[string]string) (string, []string) {
 		}
 	}
 
-	return "agentctl", nil
+	return "agentctl", []string{}
 }
 
 func commandSupportsMCPServe(command string) bool {
@@ -498,4 +498,54 @@ func hasStdioMCPServerNamed(servers []acp.McpServer, name string) bool {
 		}
 	}
 	return false
+}
+
+// filterMCPServers removes MCP servers whose transport is not supported by the
+// agent based on the capabilities advertised during initialize.
+//
+// Per the ACP spec, stdio is always supported. However, some agents (e.g.
+// OpenCode) don't actually handle stdio MCP servers and reject them during
+// validation. When an agent advertises no MCP capabilities at all (both http
+// and sse are false), we conservatively drop all MCP servers to avoid session
+// creation failures.
+func filterMCPServers(servers []acp.McpServer, caps acp.McpCapabilities) []acp.McpServer {
+	// If the agent didn't advertise any MCP capability, don't send any servers.
+	// This works around agents that technically should support stdio per spec
+	// but don't (e.g. OpenCode's validator rejects stdio servers).
+	if !caps.Http && !caps.Sse {
+		if len(servers) > 0 {
+			slog.Default().Warn("agent advertises no MCP capabilities; dropping all MCP servers",
+				"count", len(servers))
+		}
+		return nil
+	}
+
+	filtered := make([]acp.McpServer, 0, len(servers))
+	for _, s := range servers {
+		switch {
+		case s.Stdio != nil:
+			// Stdio is universally required per spec.
+			filtered = append(filtered, s)
+		case s.Http != nil && caps.Http:
+			filtered = append(filtered, s)
+		case s.Sse != nil && caps.Sse:
+			filtered = append(filtered, s)
+		default:
+			slog.Default().Warn("dropping MCP server unsupported by agent", "name", mcpServerName(s))
+		}
+	}
+	return filtered
+}
+
+func mcpServerName(s acp.McpServer) string {
+	switch {
+	case s.Stdio != nil:
+		return s.Stdio.Name
+	case s.Http != nil:
+		return s.Http.Name
+	case s.Sse != nil:
+		return s.Sse.Name
+	default:
+		return "<unknown>"
+	}
 }

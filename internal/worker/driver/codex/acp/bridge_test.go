@@ -152,7 +152,7 @@ func TestCodexMCPServers(t *testing.T) {
 				Command: "agentctl",
 				Args:    nil,
 				Env: []acpsdk.EnvVariable{
-					{Name: "AGENTCTL_AGENT_RUN_ID", Value: "sess-1"},
+					{Name: "AGENTCTL_SESSION_ID", Value: "sess-1"},
 				},
 			},
 		},
@@ -173,7 +173,7 @@ func TestCodexMCPServers(t *testing.T) {
 	assert.Equal(t, "stdio", flow["type"])
 	assert.Equal(t, "agentctl", flow["command"])
 	assert.Equal(t, []string{}, flow["args"])
-	assert.Equal(t, map[string]string{"AGENTCTL_AGENT_RUN_ID": "sess-1"}, flow["env"])
+	assert.Equal(t, map[string]string{"AGENTCTL_SESSION_ID": "sess-1"}, flow["env"])
 
 	httpSrv, ok := servers["remote-http"].(map[string]any)
 	require.True(t, ok)

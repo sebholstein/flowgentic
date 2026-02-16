@@ -113,7 +113,7 @@ func TestSessionManager_Launch(t *testing.T) {
 
 		assert.Equal(t, "http://127.0.0.1:7777", launchOpts.EnvVars["AGENTCTL_WORKER_URL"])
 		assert.Equal(t, "worker-secret", launchOpts.EnvVars["AGENTCTL_WORKER_SECRET"])
-		assert.Equal(t, "sess-env", launchOpts.EnvVars["AGENTCTL_AGENT_RUN_ID"])
+		assert.Equal(t, "sess-env", launchOpts.EnvVars["AGENTCTL_SESSION_ID"])
 		assert.Equal(t, "codex", launchOpts.EnvVars["AGENTCTL_AGENT"])
 	})
 }

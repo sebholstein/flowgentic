@@ -104,7 +104,7 @@ func (m *SessionManager) Launch(_ context.Context, sessionID, agentID string, op
 	}
 	opts.EnvVars["AGENTCTL_WORKER_URL"] = m.ctlURL
 	opts.EnvVars["AGENTCTL_WORKER_SECRET"] = m.ctlSecret
-	opts.EnvVars["AGENTCTL_AGENT_RUN_ID"] = sessionID
+	opts.EnvVars["AGENTCTL_SESSION_ID"] = sessionID
 	opts.EnvVars["AGENTCTL_AGENT"] = agentID
 
 	entry := &sessionEntry{}

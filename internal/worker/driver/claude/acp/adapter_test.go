@@ -390,7 +390,7 @@ func TestConvertMCPServers(t *testing.T) {
 				Command: "agentctl",
 				Args:    nil,
 				Env: []acpsdk.EnvVariable{
-					{Name: "AGENTCTL_AGENT_RUN_ID", Value: "sess-1"},
+					{Name: "AGENTCTL_SESSION_ID", Value: "sess-1"},
 				},
 			},
 		},
@@ -417,7 +417,7 @@ func TestConvertMCPServers(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "agentctl", stdio.Command)
 	assert.Nil(t, stdio.Args)
-	assert.Equal(t, map[string]string{"AGENTCTL_AGENT_RUN_ID": "sess-1"}, stdio.Env)
+	assert.Equal(t, map[string]string{"AGENTCTL_SESSION_ID": "sess-1"}, stdio.Env)
 
 	httpCfg, ok := converted["remote-http"].(*claudecode.McpHTTPServerConfig)
 	require.True(t, ok)
