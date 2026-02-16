@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
+import Fuse from "fuse.js";
 
 export interface SearchableSelectItem {
   id: string;
@@ -34,10 +35,23 @@ export function SearchableSelect({
   placeholder = "Search…",
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const selected = items.find((item) => item.id === selectedId);
 
+  const fuse = useMemo(
+    () =>
+      new Fuse(items, {
+        keys: ["id", "name", "description"],
+        threshold: 0.4,
+        ignoreLocation: true,
+      }),
+    [items],
+  );
+
+  const filtered = query ? fuse.search(query).map((r) => r.item) : items;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) setQuery(""); }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -58,19 +72,24 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command className="p-0">
-          <CommandInput placeholder={placeholder} className="h-7 text-xs" />
+        <Command shouldFilter={false} className="p-0">
+          <CommandInput
+            placeholder={placeholder}
+            className="h-7 text-xs"
+            value={query}
+            onValueChange={setQuery}
+          />
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup className="p-1">
-              {items.map((item) => (
+              {filtered.map((item) => (
                 <CommandItem
                   key={item.id}
                   value={item.id}
-                  keywords={[item.name]}
                   onSelect={(val) => {
                     onSelect(val);
                     setOpen(false);
+                    setQuery("");
                   }}
                   className="py-1 px-2 gap-1.5"
                 >
@@ -84,7 +103,7 @@ export function SearchableSelect({
                   <div className="flex-1 min-w-0">
                     <span className="truncate block">{item.name}</span>
                     {item.description && (
-                      <span className="text-[10px] text-muted-foreground truncate block">{item.description}</span>
+                      <span className="text-xs text-muted-foreground truncate block">{item.description}</span>
                     )}
                   </div>
                   {item.trailing}

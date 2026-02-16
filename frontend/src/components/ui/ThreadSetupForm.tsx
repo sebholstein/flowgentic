@@ -66,7 +66,7 @@ export function ThreadSetupForm({
 }: ThreadSetupFormProps) {
   const modelItems = availableModels.map((model) => ({
     id: model.id,
-    name: model.displayName || model.id,
+    name: (model.displayName || model.id).replace(/\s*\(recommended\)/i, ""),
     description: model.description,
     icon: <Bot className="size-3" />,
   }));

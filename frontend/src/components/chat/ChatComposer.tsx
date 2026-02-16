@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import Fuse from "fuse.js";
 import type { ModelInfo } from "@/proto/gen/worker/v1/system_service_pb";
 
 export function ChatComposer({
@@ -111,6 +112,7 @@ export function ChatComposer({
                 models={availableModels}
                 selectedModel={selectedModel}
                 onModelChange={onModelChange}
+                textareaRef={textareaRef}
               />
             ) : null)}
 
@@ -165,18 +167,33 @@ function ModelSelect({
   models,
   selectedModel,
   onModelChange,
+  textareaRef,
 }: {
   models: ModelInfo[];
   selectedModel?: string;
   onModelChange: (model: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const displayName = (m: ModelInfo) =>
     (m.displayName || m.id).replace(/\s*\(recommended\)/i, "");
   const selected = models.find((m) => m.id === selectedModel);
 
+  const fuse = useMemo(
+    () =>
+      new Fuse(models, {
+        keys: ["id", "displayName", "description"],
+        threshold: 0.4,
+        ignoreLocation: true,
+      }),
+    [models],
+  );
+
+  const filtered = query ? fuse.search(query).map((r) => r.item) : models;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) setQuery(""); }}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -189,21 +206,27 @@ function ModelSelect({
         </button>
       </PopoverTrigger>
       <PopoverContent side="top" align="end" className="w-[400px] p-0">
-        <Command>
-          <CommandInput placeholder="Search models…" className="h-8 text-xs" />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search models…"
+            className="h-8 text-xs"
+            value={query}
+            onValueChange={setQuery}
+          />
           <CommandList>
             <CommandEmpty className="py-3 text-xs text-center text-muted-foreground">
               No models found.
             </CommandEmpty>
             <CommandGroup>
-              {models.map((model) => (
+              {filtered.map((model) => (
                 <CommandItem
                   key={model.id}
                   value={model.id}
-                  keywords={[model.displayName || "", model.id]}
                   onSelect={(val) => {
                     onModelChange(val);
                     setOpen(false);
+                    setQuery("");
+                    requestAnimationFrame(() => textareaRef.current?.focus());
                   }}
                   className="gap-2"
                 >
