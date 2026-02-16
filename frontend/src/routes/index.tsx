@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Rocket } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/")({
@@ -18,8 +19,14 @@ function RootComponent() {
   }, []);
 
   return (
-    <>
-      <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-4 items-center justify-center z-30" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
+    <div className="w-full h-full overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 2, ease: "easeOut" }}
+        className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-4 items-center justify-center z-30"
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
         <FlowgenticLogo></FlowgenticLogo>
         <div className="flex gap-3 flex-col text-sm mt-8" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <div className="flex gap-2 items-center text-muted-foreground">
@@ -34,7 +41,7 @@ function RootComponent() {
             <Rocket className="size-4 mr-1" /> Lets go
           </Link>
         </Button>
-      </div>
+      </motion.div>
       <video
         src="./bg-animated3.mp4"
         ref={ref}
@@ -43,7 +50,7 @@ function RootComponent() {
         loop
         className="fixed inset-0 -z-10 w-full h-full object-cover pointer-events-none blur-in-lg grayscale-100 opacity-10"
       />
-    </>
+    </div>
   );
 }
 
