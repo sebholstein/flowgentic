@@ -22,9 +22,12 @@ jobs:
       - name: Build
         run: make build
 
-  frontend-build:
-    name: Frontend build
-    runs-on: ubuntu-latest
+  electron-build:
+    name: Electron build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,6 +52,6 @@ jobs:
         working-directory: frontend
         run: pnpm proto
 
-      - name: Build
+      - name: Build Electron app
         working-directory: frontend
-        run: pnpm build
+        run: pnpm electron:make
