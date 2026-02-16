@@ -53,11 +53,11 @@ export function InboxPanel({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex items-center border-t border-border shrink-0">
+      <div className="flex items-center border-t border-border shrink-0 pr-2 hover:bg-muted/50 transition-colors">
         <button
           type="button"
           onClick={onToggle}
-          className="flex flex-1 items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+          className="flex flex-1 items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           <motion.span
             animate={{ rotate: isCollapsed ? 180 : 0 }}
@@ -85,7 +85,7 @@ export function InboxPanel({
               <button
                 type="button"
                 className={cn(
-                  "mr-2 p-1 rounded transition-colors",
+                  "p-1 rounded transition-colors",
                   projectFilter
                     ? "text-primary hover:text-primary/80"
                     : "text-muted-foreground hover:text-foreground",
