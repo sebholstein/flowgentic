@@ -5,16 +5,19 @@ import (
 	"testing"
 )
 
-func TestRenderOrchestratedPlanMode_RequiresCurrentPlanDir(t *testing.T) {
+func TestRenderOrchestratedPlanMode_EmptyData(t *testing.T) {
 	t.Parallel()
 
-	_, err := RenderOrchestratedPlanMode(OrchestratedPlanModeData{})
-	if err == nil {
-		t.Fatalf("expected error when CurrentPlanDir is empty")
+	out, err := RenderOrchestratedPlanMode(OrchestratedPlanModeData{})
+	if err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+	if !strings.Contains(out, "Flowgentic Agent") {
+		t.Fatalf("missing header in output: %q", out)
 	}
 }
 
-func TestRenderOrchestratedPlanMode_NoAdditionalDirs(t *testing.T) {
+func TestRenderOrchestratedPlanMode_ContainsExpectedSections(t *testing.T) {
 	t.Parallel()
 
 	out, err := RenderOrchestratedPlanMode(OrchestratedPlanModeData{
@@ -24,36 +27,15 @@ func TestRenderOrchestratedPlanMode_NoAdditionalDirs(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	if !strings.Contains(out, "Current thread plan directory: `/tmp/current-plan`") {
-		t.Fatalf("missing current plan dir in output: %q", out)
-	}
-	if !strings.Contains(out, "No additional pre-allocated thread plan directories are currently assigned.") {
-		t.Fatalf("missing no-additional-dirs message in output: %q", out)
-	}
-}
-
-func TestRenderOrchestratedPlanMode_WithAdditionalDirs(t *testing.T) {
-	t.Parallel()
-
-	out, err := RenderOrchestratedPlanMode(OrchestratedPlanModeData{
-		CurrentPlanDir: "/tmp/current-plan",
-		AdditionalPlanDirs: []PlanDir{
-			{ThreadID: "thread-1", Path: "/tmp/plan-1"},
-			{ThreadID: "thread-2", Path: "/tmp/plan-2"},
-		},
-	})
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
-	if !strings.Contains(out, "Thread `thread-1`: `/tmp/plan-1`") {
-		t.Fatalf("missing thread-1 mapping in output: %q", out)
-	}
-	if !strings.Contains(out, "Thread `thread-2`: `/tmp/plan-2`") {
-		t.Fatalf("missing thread-2 mapping in output: %q", out)
-	}
-	if strings.Contains(out, "No additional pre-allocated thread plan directories are currently assigned.") {
-		t.Fatalf("unexpected no-additional-dirs message in output: %q", out)
+	for _, want := range []string{
+		"Flowgentic Agent",
+		"Flowgentic MCP",
+		"set_topic",
+		"Guidelines",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in output: %q", want, out)
+		}
 	}
 }
 

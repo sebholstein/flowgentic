@@ -30,10 +30,6 @@ func DefaultPlanDirForSession(sessionID string) string {
 }
 
 func RenderOrchestratedPlanMode(data OrchestratedPlanModeData) (string, error) {
-	if data.CurrentPlanDir == "" {
-		return "", fmt.Errorf("current plan dir is required")
-	}
-
 	var b bytes.Buffer
 	if err := orchestratedPlanModeTemplate.Execute(&b, data); err != nil {
 		return "", fmt.Errorf("render orchestrated plan mode prompt: %w", err)
