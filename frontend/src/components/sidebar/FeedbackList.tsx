@@ -89,7 +89,7 @@ export function FeedbackList({
   const selectedFeedbackId = search.feedback ?? null;
 
   return (
-    <ScrollArea className="flex-1 overflow-hidden">
+    <ScrollArea className="h-full overflow-hidden">
       <div className="space-y-0.5 p-1">
         <AnimatePresence initial={false}>
           {items.map((item) => {
