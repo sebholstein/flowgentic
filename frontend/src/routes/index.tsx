@@ -36,7 +36,7 @@ function RootComponent() {
         </Button>
       </div>
       <video
-        src="/bg-animated3.mp4"
+        src="./bg-animated3.mp4"
         ref={ref}
         autoPlay
         muted

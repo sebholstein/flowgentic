@@ -31,7 +31,7 @@ export function InboxPanel({
 
   useEffect(() => {
     if (pendingCount > prevPendingCount.current) {
-      const audio = new Audio("/sounds/done4.mp3");
+      const audio = new Audio("./sounds/done4.mp3");
       audio.volume = 0.7;
       audio.play().catch(() => {});
     }
