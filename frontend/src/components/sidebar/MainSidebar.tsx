@@ -117,7 +117,7 @@ function ProjectRow({
       ref={sortableRef}
       className={cn(
         "group/project flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors text-left select-none",
-        "text-foreground font-medium",
+        "text-foreground",
         isDragging && "opacity-30",
       )}
       style={{ paddingLeft: "8px" }}
@@ -167,7 +167,7 @@ function ProjectRowOverlay({ project, threadCount }: { project: Project; threadC
     <div
       className={cn(
         "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm",
-        "text-foreground font-medium",
+        "text-foreground",
         "bg-sidebar shadow-lg border border-border cursor-grabbing",
       )}
       style={{ paddingLeft: "8px" }}
@@ -239,7 +239,7 @@ function ThreadRow({
         )}
       >
         <MessagesSquare className="size-3 shrink-0 text-muted-foreground" />
-        <span className="truncate flex-1 text-xs font-medium">{animatedTopic}</span>
+        <span className="truncate flex-1 text-xs">{animatedTopic}</span>
       </Link>
       <div
         className={cn(
