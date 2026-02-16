@@ -81,7 +81,7 @@ export function ThreadTree({
         case "project":
           return 36;
         case "thread":
-          return 32;
+          return 28;
         case "task":
           return 28;
       }

@@ -65,7 +65,7 @@ export const ThreadRow = memo(function ThreadRow({
       <Link
         {...linkProps}
         className={cn(
-          "flex flex-1 items-center gap-1.5 px-1.5 py-1.5 text-sm transition-colors text-left min-w-0 select-none",
+          "flex flex-1 items-center gap-1.5 px-1.5 py-1 text-sm transition-colors text-left min-w-0 select-none",
           isArchived && "opacity-60",
         )}
       >
@@ -87,7 +87,7 @@ export const ThreadRow = memo(function ThreadRow({
             onTogglePin();
           }}
           className={cn(
-            "rounded p-1 transition-colors",
+            "rounded p-0.5 transition-colors",
             isArchived && "opacity-40 cursor-not-allowed",
             !isArchived &&
               (isPinned
@@ -98,7 +98,7 @@ export const ThreadRow = memo(function ThreadRow({
           title={isPinned ? "Unpin thread" : "Pin thread"}
           disabled={isArchived}
         >
-          <Pin className={cn("size-3.5", isPinned && "-rotate-45")} />
+          <Pin className={cn("size-3", isPinned && "-rotate-45")} />
         </button>
         <button
           type="button"
@@ -108,7 +108,7 @@ export const ThreadRow = memo(function ThreadRow({
             onToggleArchive();
           }}
           className={cn(
-            "rounded p-1 transition-colors",
+            "rounded p-0.5 transition-colors",
             isArchived
               ? "text-muted-foreground hover:text-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -116,7 +116,7 @@ export const ThreadRow = memo(function ThreadRow({
           aria-label={isArchived ? "Unarchive thread" : "Archive thread"}
           title={isArchived ? "Unarchive thread" : "Archive thread"}
         >
-          <Archive className="size-3.5" />
+          <Archive className="size-3" />
         </button>
       </div>
     </div>
