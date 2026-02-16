@@ -3,7 +3,9 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: "*.{mp4,mp3}",
+    },
     name: "Flowgentic",
     executableName: "Flowgentic",
   },
