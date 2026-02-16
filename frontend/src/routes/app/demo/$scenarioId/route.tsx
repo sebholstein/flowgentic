@@ -24,7 +24,7 @@ function DemoScenarioPage() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-surface rounded-lg overflow-hidden">
       <DemoHeader thread={thread} />
       <ScenarioView thread={thread} />
     </div>

@@ -1,9 +1,11 @@
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useParams, useRouterState } from "@tanstack/react-router";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { MainSidebar } from "@/components/sidebar/MainSidebar";
 import { SettingsSidebarContent } from "@/components/settings/SettingsSidebarContent";
 import { SidebarFooter } from "@/components/layout/SidebarFooter";
+import { ActivityBar } from "@/components/layout/ActivityBar";
+import type { SidebarView } from "@/components/sidebar/sidebar-types";
 
 export function SidebarWrapper() {
   const width = useSidebarStore((s) => s.width);
@@ -17,6 +19,8 @@ export function SidebarWrapper() {
   const selectedTaskId = (params as { taskId?: string }).taskId ?? null;
 
   const isSettings = pathname.startsWith("/app/settings");
+
+  const [activeView, setActiveView] = useState<SidebarView>("threads");
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -41,22 +45,32 @@ export function SidebarWrapper() {
 
   return (
     <>
-      <div className="flex-shrink-0 overflow-hidden flex flex-col" style={{ width }}>
-        <div className="flex-1 min-h-0">
-          {isSettings ? (
-            <SettingsSidebarContent />
-          ) : (
-            <MainSidebar selectedThreadId={selectedThreadId} selectedTaskId={selectedTaskId} />
-          )}
+      <ActivityBar
+        activeView={activeView}
+        onViewChange={setActiveView}
+      />
+      <div className="flex-shrink-0 flex flex-col my-1.5" style={{ width }}>
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-sidebar rounded-lg">
+          <div className="flex-1 min-h-0">
+            {isSettings ? (
+              <SettingsSidebarContent />
+            ) : (
+              <MainSidebar
+                selectedThreadId={selectedThreadId}
+                selectedTaskId={selectedTaskId}
+                activeView={activeView}
+              />
+            )}
+          </div>
+          <SidebarFooter />
         </div>
-        <SidebarFooter />
       </div>
       {/* Resize handle */}
       <div
-        className="w-3 -ml-[6px] -mr-[5px] flex-shrink-0 cursor-col-resize flex justify-center group relative z-10"
+        className="w-2 flex-shrink-0 cursor-col-resize flex justify-center group relative z-10"
         onMouseDown={handleMouseDown}
       >
-        <div className="w-px h-full bg-border group-hover:bg-primary/30 transition-colors pointer-events-none" />
+        <div className="w-px h-full bg-transparent group-hover:bg-primary/30 transition-colors pointer-events-none" />
       </div>
     </>
   );

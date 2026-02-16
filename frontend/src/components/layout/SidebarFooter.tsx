@@ -31,7 +31,7 @@ export function SidebarFooter() {
   const isOnSettings = pathname.startsWith("/app/settings");
 
   return (
-    <div className="border-t bg-sidebar p-2 flex items-center justify-between">
+    <div className="border-t border-sidebar-border p-2 flex items-center justify-between">
       <Link
         to={isOnSettings ? "/app/threads" : "/app/settings"}
         className={cn(

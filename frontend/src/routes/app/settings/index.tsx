@@ -85,7 +85,7 @@ function SettingsPage() {
   }, [showSidebar]);
 
   return (
-    <div className="flex h-full flex-col bg-background select-none overflow-hidden relative">
+    <div className="flex h-full flex-col bg-surface rounded-lg select-none overflow-hidden relative">
       {/* Header with drag region */}
       <div className="flex border-b h-10 shrink-0 items-center gap-2 px-4" style={dragStyle}>
         <span className="font-medium text-sm">{sectionTitle}</span>

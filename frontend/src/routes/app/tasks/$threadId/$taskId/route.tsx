@@ -94,8 +94,8 @@ function TaskLayout() {
   return (
     <TaskContext.Provider value={contextValue}>
       <div className="flex h-full flex-col">
-        {/* Compact Header with integrated tabs - aligned with panels below */}
-        <div className="flex border-b h-10 shrink-0 select-none" style={dragStyle}>
+        {/* Compact Header with integrated tabs - sits on dark base */}
+        <div className="flex h-10 shrink-0 select-none" style={dragStyle}>
           {/* Left section - matches chat panel width */}
           <div
             className="flex items-center gap-2 px-4 shrink-0"
@@ -182,7 +182,7 @@ function TaskLayout() {
         </div>
 
         {/* Main content area with chat on left and content on right */}
-        <div className="flex flex-1 min-h-0" ref={containerRef}>
+        <div className="flex flex-1 min-h-0 bg-surface rounded-lg overflow-hidden" ref={containerRef}>
           {/* Chat panel - always visible */}
           <div className="flex-shrink-0 overflow-hidden" style={{ width: `${chatPanelPercent}%` }}>
             <TabbedChatPanel

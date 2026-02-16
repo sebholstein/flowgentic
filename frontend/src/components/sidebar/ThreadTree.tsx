@@ -119,13 +119,10 @@ export function ThreadTree({
             <button
               type="button"
               onClick={onAddProject}
-              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors text-left select-none text-muted-foreground mb-1 mx-2"
-              style={{ paddingLeft: "8px" }}
+              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs hover:bg-muted/50 transition-colors text-left select-none text-muted-foreground hover:text-foreground mb-1"
             >
-              <span className="size-4 flex items-center justify-center shrink-0">
-                <Plus className="size-3.5" />
-              </span>
-              <span className="truncate flex-1">Add Project</span>
+              <Plus className="size-3" />
+              <span>Add Project</span>
             </button>
           )}
           <div

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Filter, Check } from "lucide-react";
@@ -27,6 +27,16 @@ export function InboxPanel({
   selectedTaskId: string | null;
 }) {
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const prevPendingCount = useRef(pendingCount);
+
+  useEffect(() => {
+    if (pendingCount > prevPendingCount.current) {
+      const audio = new Audio("/sounds/done4.mp3");
+      audio.volume = 0.7;
+      audio.play().catch(() => {});
+    }
+    prevPendingCount.current = pendingCount;
+  }, [pendingCount]);
 
   const projectNames = useMemo(() => {
     const names = new Set<string>();

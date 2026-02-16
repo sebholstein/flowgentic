@@ -38,14 +38,15 @@ import type { FlatTreeNode } from "./sidebar-types";
 export function MainSidebar({
   selectedThreadId,
   selectedTaskId,
+  activeView,
 }: {
   selectedThreadId: string | null;
   selectedTaskId: string | null;
+  activeView: "threads" | "templates";
 }) {
   const { fetchedProjects, backendThreads, workersData } = useSidebarData();
 
   // --- UI state ---
-  const [activeView, setActiveView] = useState<"threads" | "templates">("threads");
   const [activeTab, setActiveTab] = useState<"threads" | "archived">("threads");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -341,10 +342,9 @@ export function MainSidebar({
 
   // --- Render ---
   return (
-    <div className="flex h-full flex-col bg-sidebar select-none">
+    <div className="flex h-full flex-col select-none">
       <SidebarHeader
         activeView={activeView}
-        onViewChange={setActiveView}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         searchQuery={searchQuery}
