@@ -35,6 +35,11 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
+
+  // Close DevTools if the forge plugin opens them automatically, but allow manual opens after
+  mainWindow.webContents.once("devtools-opened", () => {
+    mainWindow.webContents.closeDevTools();
+  });
 }
 
 app.whenReady().then(createWindow);
