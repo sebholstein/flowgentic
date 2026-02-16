@@ -7,6 +7,6 @@ export function threadsQueryOptions(client: Client<typeof ThreadService>, projec
     queryKey: ["threads", projectId],
     queryFn: () => client.listThreads({ projectId }),
     enabled: !!projectId,
-    refetchInterval: 2000,
+    refetchInterval: 5000,
   });
 }

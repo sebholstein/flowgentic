@@ -7,6 +7,6 @@ export function sessionsQueryOptions(client: Client<typeof SessionService>, thre
     queryKey: ["sessions", threadId],
     queryFn: () => client.listSessions({ threadId }),
     enabled: !!threadId,
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
 }

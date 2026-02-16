@@ -7,6 +7,6 @@ export function tasksQueryOptions(client: Client<typeof TaskService>, threadId: 
     queryKey: ["tasks", threadId],
     queryFn: () => client.listTasks({ threadId }),
     enabled: !!threadId,
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
 }

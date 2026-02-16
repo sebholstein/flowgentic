@@ -744,14 +744,14 @@ function EmbeddedWorkerItem({
     queryKey: ["agents", worker.id],
     queryFn: () => client.listAgents({ disableCache: false }),
     enabled: isConnected,
-    refetchInterval: 2000,
+    refetchInterval: 5000,
     placeholderData: (prev) => prev,
   });
   const ping = useQuery({
     queryKey: ["ping", worker.id],
     queryFn: () => cpClient.pingWorker({ workerId: worker.id }),
     enabled: isConnected,
-    refetchInterval: 1000,
+    refetchInterval: 5000,
   });
 
   const rttLabel = ping.isError ? "unreachable" : (ping.data?.duration ?? "--");
@@ -848,7 +848,7 @@ function WorkerWithAgents({
     queryKey: ["ping", worker.id],
     queryFn: () => cpClient.pingWorker({ workerId: worker.id }),
     enabled: worker.status === "connected",
-    refetchInterval: 1000,
+    refetchInterval: 5000,
   });
 
   const rttLabel = ping.isError ? "unreachable" : (ping.data?.duration ?? "--");

@@ -42,6 +42,7 @@ export function useSessionEvents({
   const [pendingAgentText, setPendingAgentText] = useState("");
   const [pendingThoughtText, setPendingThoughtText] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const isConnectedRef = useRef(false);
   const [isResponding, setIsResponding] = useState(false);
   const [hasReceivedUpdate, setHasReceivedUpdate] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -194,6 +195,7 @@ export function useSessionEvents({
     setPendingAgentText("");
     setPendingThoughtText("");
     setError(null);
+    isConnectedRef.current = false;
     setIsConnected(false);
     setIsResponding(false);
     setHasReceivedUpdate(false);
@@ -210,7 +212,10 @@ export function useSessionEvents({
           signal: controller.signal,
         })) {
           setHasReceivedUpdate(true);
-          if (!isConnected) setIsConnected(true);
+          if (!isConnectedRef.current) {
+            isConnectedRef.current = true;
+            setIsConnected(true);
+          }
 
           // Unified: both history and live arrive as SessionEvent.
           if (res.event) {
