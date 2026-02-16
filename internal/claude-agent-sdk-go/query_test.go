@@ -934,6 +934,10 @@ func (q *queryMockTransport) SupportedCommands(_ context.Context) ([]SlashComman
 	return nil, nil
 }
 
+func (q *queryMockTransport) SupportedModels(_ context.Context) ([]ModelInfo, error) {
+	return nil, nil
+}
+
 func (q *queryMockTransport) Close() error {
 	q.mu.Lock()
 	defer q.mu.Unlock()

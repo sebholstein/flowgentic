@@ -309,10 +309,70 @@ func (x *GetAgentModelsRequest) GetDisableCache() bool {
 	return false
 }
 
+type ModelInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ModelInfo) Reset() {
+	*x = ModelInfo{}
+	mi := &file_worker_v1_system_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ModelInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ModelInfo) ProtoMessage() {}
+
+func (x *ModelInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_v1_system_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ModelInfo.ProtoReflect.Descriptor instead.
+func (*ModelInfo) Descriptor() ([]byte, []int) {
+	return file_worker_v1_system_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ModelInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ModelInfo) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *ModelInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 type GetAgentModelsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Agent         Agent                  `protobuf:"varint,1,opt,name=agent,proto3,enum=worker.v1.Agent" json:"agent,omitempty"`
-	Models        []string               `protobuf:"bytes,2,rep,name=models,proto3" json:"models,omitempty"`
+	Models        []*ModelInfo           `protobuf:"bytes,2,rep,name=models,proto3" json:"models,omitempty"`
 	DefaultModel  string                 `protobuf:"bytes,3,opt,name=default_model,json=defaultModel,proto3" json:"default_model,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -320,7 +380,7 @@ type GetAgentModelsResponse struct {
 
 func (x *GetAgentModelsResponse) Reset() {
 	*x = GetAgentModelsResponse{}
-	mi := &file_worker_v1_system_service_proto_msgTypes[6]
+	mi := &file_worker_v1_system_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -332,7 +392,7 @@ func (x *GetAgentModelsResponse) String() string {
 func (*GetAgentModelsResponse) ProtoMessage() {}
 
 func (x *GetAgentModelsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_v1_system_service_proto_msgTypes[6]
+	mi := &file_worker_v1_system_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -345,7 +405,7 @@ func (x *GetAgentModelsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAgentModelsResponse.ProtoReflect.Descriptor instead.
 func (*GetAgentModelsResponse) Descriptor() ([]byte, []int) {
-	return file_worker_v1_system_service_proto_rawDescGZIP(), []int{6}
+	return file_worker_v1_system_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetAgentModelsResponse) GetAgent() Agent {
@@ -355,7 +415,7 @@ func (x *GetAgentModelsResponse) GetAgent() Agent {
 	return Agent_AGENT_UNSPECIFIED
 }
 
-func (x *GetAgentModelsResponse) GetModels() []string {
+func (x *GetAgentModelsResponse) GetModels() []*ModelInfo {
 	if x != nil {
 		return x.Models
 	}
@@ -387,10 +447,14 @@ const file_worker_v1_system_service_proto_rawDesc = "" +
 	"\aenabled\x18\x04 \x01(\bR\aenabled\"d\n" +
 	"\x15GetAgentModelsRequest\x12&\n" +
 	"\x05agent\x18\x01 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12#\n" +
-	"\rdisable_cache\x18\x02 \x01(\bR\fdisableCache\"}\n" +
+	"\rdisable_cache\x18\x02 \x01(\bR\fdisableCache\"`\n" +
+	"\tModelInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"\x93\x01\n" +
 	"\x16GetAgentModelsResponse\x12&\n" +
-	"\x05agent\x18\x01 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12\x16\n" +
-	"\x06models\x18\x02 \x03(\tR\x06models\x12#\n" +
+	"\x05agent\x18\x01 \x01(\x0e2\x10.worker.v1.AgentR\x05agent\x12,\n" +
+	"\x06models\x18\x02 \x03(\v2\x14.worker.v1.ModelInfoR\x06models\x12#\n" +
 	"\rdefault_model\x18\x03 \x01(\tR\fdefaultModel2\xf0\x01\n" +
 	"\rSystemService\x12K\n" +
 	"\n" +
@@ -412,7 +476,7 @@ func file_worker_v1_system_service_proto_rawDescGZIP() []byte {
 	return file_worker_v1_system_service_proto_rawDescData
 }
 
-var file_worker_v1_system_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_worker_v1_system_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_worker_v1_system_service_proto_goTypes = []any{
 	(*ListAgentsRequest)(nil),      // 0: worker.v1.ListAgentsRequest
 	(*ListAgentsResponse)(nil),     // 1: worker.v1.ListAgentsResponse
@@ -420,24 +484,26 @@ var file_worker_v1_system_service_proto_goTypes = []any{
 	(*PingResponse)(nil),           // 3: worker.v1.PingResponse
 	(*AgentInfo)(nil),              // 4: worker.v1.AgentInfo
 	(*GetAgentModelsRequest)(nil),  // 5: worker.v1.GetAgentModelsRequest
-	(*GetAgentModelsResponse)(nil), // 6: worker.v1.GetAgentModelsResponse
-	(Agent)(0),                     // 7: worker.v1.Agent
+	(*ModelInfo)(nil),              // 6: worker.v1.ModelInfo
+	(*GetAgentModelsResponse)(nil), // 7: worker.v1.GetAgentModelsResponse
+	(Agent)(0),                     // 8: worker.v1.Agent
 }
 var file_worker_v1_system_service_proto_depIdxs = []int32{
 	4, // 0: worker.v1.ListAgentsResponse.agents:type_name -> worker.v1.AgentInfo
-	7, // 1: worker.v1.GetAgentModelsRequest.agent:type_name -> worker.v1.Agent
-	7, // 2: worker.v1.GetAgentModelsResponse.agent:type_name -> worker.v1.Agent
-	0, // 3: worker.v1.SystemService.ListAgents:input_type -> worker.v1.ListAgentsRequest
-	5, // 4: worker.v1.SystemService.GetAgentModels:input_type -> worker.v1.GetAgentModelsRequest
-	2, // 5: worker.v1.SystemService.Ping:input_type -> worker.v1.PingRequest
-	1, // 6: worker.v1.SystemService.ListAgents:output_type -> worker.v1.ListAgentsResponse
-	6, // 7: worker.v1.SystemService.GetAgentModels:output_type -> worker.v1.GetAgentModelsResponse
-	3, // 8: worker.v1.SystemService.Ping:output_type -> worker.v1.PingResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	8, // 1: worker.v1.GetAgentModelsRequest.agent:type_name -> worker.v1.Agent
+	8, // 2: worker.v1.GetAgentModelsResponse.agent:type_name -> worker.v1.Agent
+	6, // 3: worker.v1.GetAgentModelsResponse.models:type_name -> worker.v1.ModelInfo
+	0, // 4: worker.v1.SystemService.ListAgents:input_type -> worker.v1.ListAgentsRequest
+	5, // 5: worker.v1.SystemService.GetAgentModels:input_type -> worker.v1.GetAgentModelsRequest
+	2, // 6: worker.v1.SystemService.Ping:input_type -> worker.v1.PingRequest
+	1, // 7: worker.v1.SystemService.ListAgents:output_type -> worker.v1.ListAgentsResponse
+	7, // 8: worker.v1.SystemService.GetAgentModels:output_type -> worker.v1.GetAgentModelsResponse
+	3, // 9: worker.v1.SystemService.Ping:output_type -> worker.v1.PingResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_worker_v1_system_service_proto_init() }
@@ -452,7 +518,7 @@ func file_worker_v1_system_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worker_v1_system_service_proto_rawDesc), len(file_worker_v1_system_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

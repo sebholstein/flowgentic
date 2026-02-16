@@ -10,9 +10,16 @@ import (
 // EventCallback receives ACP session notifications.
 type EventCallback func(acp.SessionNotification)
 
+// ModelMeta describes a single model with optional display metadata.
+type ModelMeta struct {
+	ID          string
+	DisplayName string
+	Description string
+}
+
 // ModelInventory is authoritative model metadata from an ACP agent.
 type ModelInventory struct {
-	Models       []string
+	Models       []ModelMeta
 	DefaultModel string
 }
 

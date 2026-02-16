@@ -49,8 +49,14 @@ message GetAgentModelsRequest {
   bool disable_cache = 2;
 }
 
+message ModelInfo {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+}
+
 message GetAgentModelsResponse {
   Agent agent = 1;
-  repeated string models = 2;
+  repeated ModelInfo models = 2;
   string default_model = 3;
 }

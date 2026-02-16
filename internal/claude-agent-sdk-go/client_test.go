@@ -1218,6 +1218,10 @@ func (c *clientMockTransport) SupportedCommands(_ context.Context) ([]SlashComma
 	return nil, nil
 }
 
+func (c *clientMockTransport) SupportedModels(_ context.Context) ([]ModelInfo, error) {
+	return nil, nil
+}
+
 // Streamlined Mock Transport Options - reduced from 11 to 6 essential functions
 type ClientMockTransportOption func(*clientMockTransport)
 

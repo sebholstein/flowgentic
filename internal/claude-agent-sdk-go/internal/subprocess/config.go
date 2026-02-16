@@ -169,6 +169,29 @@ func (t *Transport) SupportedCommands(ctx context.Context) ([]control.SlashComma
 	return append([]control.SlashCommand(nil), initResp.Commands...), nil
 }
 
+// SupportedModels returns the list of available models for this session.
+// This requires streaming mode and control protocol initialization.
+func (t *Transport) SupportedModels(ctx context.Context) ([]control.ModelInfo, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	if !t.connected {
+		return nil, fmt.Errorf("transport not connected")
+	}
+	if t.closeStdin {
+		return nil, fmt.Errorf("SupportedModels not available in one-shot mode")
+	}
+	if t.protocol == nil {
+		return nil, fmt.Errorf("control protocol not initialized")
+	}
+
+	initResp, err := t.protocol.Initialize(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return append([]control.ModelInfo(nil), initResp.Models...), nil
+}
+
 // buildProtocolOptions constructs control protocol options from transport configuration.
 // This extracts callback wiring logic from Connect to reduce cyclomatic complexity.
 func (t *Transport) buildProtocolOptions() []control.ProtocolOption {

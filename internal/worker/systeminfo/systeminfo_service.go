@@ -19,7 +19,7 @@ var (
 
 // AgentModels describes available/default model metadata for one agent.
 type AgentModels struct {
-	Models       []string
+	Models       []v2.ModelMeta
 	DefaultModel string
 }
 
@@ -88,7 +88,7 @@ func (s *SystemInfoService) GetAgentModels(ctx context.Context, agent driver.Age
 	}
 
 	value := AgentModels{
-		Models:       append([]string(nil), inv.Models...),
+		Models:       append([]v2.ModelMeta(nil), inv.Models...),
 		DefaultModel: inv.DefaultModel,
 	}
 	s.mu.Lock()
@@ -102,7 +102,7 @@ func (s *SystemInfoService) GetAgentModels(ctx context.Context, agent driver.Age
 
 func cloneAgentModels(v AgentModels) AgentModels {
 	return AgentModels{
-		Models:       append([]string(nil), v.Models...),
+		Models:       append([]v2.ModelMeta(nil), v.Models...),
 		DefaultModel: v.DefaultModel,
 	}
 }

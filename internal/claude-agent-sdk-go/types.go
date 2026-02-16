@@ -128,6 +128,8 @@ type Transport interface {
 	RewindFiles(ctx context.Context, userMessageID string) error
 	// SupportedCommands returns slash commands/skills available for this session.
 	SupportedCommands(ctx context.Context) ([]SlashCommand, error)
+	// SupportedModels returns the list of available models.
+	SupportedModels(ctx context.Context) ([]ModelInfo, error)
 	Close() error
 	GetValidator() *StreamValidator
 }
@@ -157,6 +159,9 @@ type InitializeResponse = control.InitializeResponse
 
 // SlashCommand describes an available slash command/skill.
 type SlashCommand = control.SlashCommand
+
+// ModelInfo describes an available model.
+type ModelInfo = control.ModelInfo
 
 // InterruptRequest to interrupt current operation via control protocol.
 type InterruptRequest = control.InterruptRequest

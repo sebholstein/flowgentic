@@ -381,24 +381,43 @@ func parseModelState(raw json.RawMessage) *acpsdk.SessionModelState {
 		return nil
 	}
 
-	var (
-		modelIDs     []string
-		currentModel string
-	)
+	var currentModel string
+
+	type modelEntry struct {
+		id          string
+		displayName string
+		description string
+	}
+	var modelEntries []modelEntry
 
 	appendModel := func(v any) {
 		switch m := v.(type) {
 		case string:
 			if m != "" {
-				modelIDs = append(modelIDs, m)
+				modelEntries = append(modelEntries, modelEntry{id: m})
 			}
 		case map[string]any:
+			var id string
 			for _, key := range []string{"id", "model", "modelId", "name"} {
 				if mv, ok := m[key].(string); ok && mv != "" {
-					modelIDs = append(modelIDs, mv)
-					return
+					id = mv
+					break
 				}
 			}
+			if id == "" {
+				return
+			}
+			e := modelEntry{id: id}
+			for _, key := range []string{"displayName", "display_name", "name"} {
+				if mv, ok := m[key].(string); ok && mv != "" {
+					e.displayName = mv
+					break
+				}
+			}
+			if mv, ok := m["description"].(string); ok {
+				e.description = mv
+			}
+			modelEntries = append(modelEntries, e)
 		}
 	}
 
@@ -441,14 +460,14 @@ func parseModelState(raw json.RawMessage) *acpsdk.SessionModelState {
 		}
 	}
 
-	uniq := make([]string, 0, len(modelIDs))
+	uniq := make([]modelEntry, 0, len(modelEntries))
 	seen := map[string]struct{}{}
-	for _, m := range modelIDs {
-		if _, ok := seen[m]; ok {
+	for _, e := range modelEntries {
+		if _, ok := seen[e.id]; ok {
 			continue
 		}
-		seen[m] = struct{}{}
-		uniq = append(uniq, m)
+		seen[e.id] = struct{}{}
+		uniq = append(uniq, e)
 	}
 	if len(uniq) == 0 || currentModel == "" {
 		return nil
@@ -458,10 +477,15 @@ func parseModelState(raw json.RawMessage) *acpsdk.SessionModelState {
 		AvailableModels: make([]acpsdk.ModelInfo, 0, len(uniq)),
 		CurrentModelId:  acpsdk.ModelId(currentModel),
 	}
-	for _, model := range uniq {
-		state.AvailableModels = append(state.AvailableModels, acpsdk.ModelInfo{
-			ModelId: acpsdk.ModelId(model),
-		})
+	for _, e := range uniq {
+		info := acpsdk.ModelInfo{
+			ModelId: acpsdk.ModelId(e.id),
+			Name:    e.displayName,
+		}
+		if e.description != "" {
+			info.Description = &e.description
+		}
+		state.AvailableModels = append(state.AvailableModels, info)
 	}
 	return state
 }

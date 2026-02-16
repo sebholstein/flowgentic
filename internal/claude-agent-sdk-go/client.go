@@ -38,6 +38,8 @@ type Client interface {
 	RewindFiles(ctx context.Context, messageUUID string) error
 	// SupportedCommands returns slash commands/skills available in this session.
 	SupportedCommands(ctx context.Context) ([]SlashCommand, error)
+	// SupportedModels returns the list of available models.
+	SupportedModels(ctx context.Context) ([]ModelInfo, error)
 	GetStreamIssues() []StreamIssue
 	GetStreamStats() StreamStats
 	GetServerInfo(ctx context.Context) (map[string]interface{}, error)
@@ -553,6 +555,25 @@ func (c *ClientImpl) SupportedCommands(ctx context.Context) ([]SlashCommand, err
 	}
 
 	return transport.SupportedCommands(ctx)
+}
+
+// SupportedModels returns the list of available models.
+// Only works in streaming mode (after Connect()).
+func (c *ClientImpl) SupportedModels(ctx context.Context) ([]ModelInfo, error) {
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	c.mu.RLock()
+	connected := c.connected
+	transport := c.transport
+	c.mu.RUnlock()
+
+	if !connected || transport == nil {
+		return nil, fmt.Errorf("client not connected")
+	}
+
+	return transport.SupportedModels(ctx)
 }
 
 // clientIterator implements MessageIterator for client message reception

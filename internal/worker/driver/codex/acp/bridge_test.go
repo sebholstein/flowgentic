@@ -100,6 +100,31 @@ func TestBridgeReadStderrLoop_LogsDebugLines(t *testing.T) {
 	assert.Contains(t, output, "second line")
 }
 
+func TestParseModelState_ExtractsDisplayNameAndDescription(t *testing.T) {
+	raw := map[string]any{
+		"models": map[string]any{
+			"available": []any{
+				map[string]any{"id": "gpt-5", "displayName": "GPT-5", "description": "flagship model"},
+				map[string]any{"id": "gpt-5-mini", "name": "GPT-5 Mini"},
+			},
+			"default": "gpt-5",
+		},
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+
+	state := parseModelState(b)
+	require.NotNil(t, state)
+	require.Len(t, state.AvailableModels, 2)
+
+	assert.Equal(t, "GPT-5", state.AvailableModels[0].Name)
+	require.NotNil(t, state.AvailableModels[0].Description)
+	assert.Equal(t, "flagship model", *state.AvailableModels[0].Description)
+
+	assert.Equal(t, "GPT-5 Mini", state.AvailableModels[1].Name)
+	assert.Nil(t, state.AvailableModels[1].Description)
+}
+
 func TestParseModelState_ReturnsNilWhenIncomplete(t *testing.T) {
 	raw := map[string]any{
 		"models": map[string]any{

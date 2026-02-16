@@ -68,9 +68,18 @@ func (h *systemServiceHandler) GetAgentModels(
 		}
 	}
 
+	protoModels := make([]*workerv1.ModelInfo, len(models.Models))
+	for i, m := range models.Models {
+		protoModels[i] = &workerv1.ModelInfo{
+			Id:          m.ID,
+			DisplayName: m.DisplayName,
+			Description: m.Description,
+		}
+	}
+
 	return connect.NewResponse(&workerv1.GetAgentModelsResponse{
 		Agent:        req.Msg.Agent,
-		Models:       models.Models,
+		Models:       protoModels,
 		DefaultModel: models.DefaultModel,
 	}), nil
 }

@@ -403,6 +403,7 @@ func (p *Protocol) Initialize(ctx context.Context) (*InitializeResponse, error) 
 		if len(initResp.Commands) == 0 {
 			initResp.Commands = parseSlashCommands(resultMap["availableCommands"])
 		}
+		initResp.Models = parseModelInfoList(resultMap["models"])
 	}
 
 	p.mu.Lock()
@@ -492,6 +493,33 @@ func parseSlashCommands(raw any) []SlashCommand {
 	}
 }
 
+func parseModelInfoList(raw any) []ModelInfo {
+	list, ok := raw.([]any)
+	if !ok || len(list) == 0 {
+		return nil
+	}
+
+	out := make([]ModelInfo, 0, len(list))
+	for _, item := range list {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		value, _ := m["value"].(string)
+		if value == "" {
+			continue
+		}
+		displayName, _ := m["displayName"].(string)
+		description, _ := m["description"].(string)
+		out = append(out, ModelInfo{
+			Value:       value,
+			DisplayName: displayName,
+			Description: description,
+		})
+	}
+	return out
+}
+
 // Interrupt sends an interrupt control request to the CLI.
 func (p *Protocol) Interrupt(ctx context.Context) error {
 	_, err := p.SendControlRequest(ctx, InterruptRequest{
@@ -541,6 +569,16 @@ func (p *Protocol) RewindFiles(ctx context.Context, userMessageID string) error 
 	}, 5*time.Second)
 
 	return err
+}
+
+// SupportedModels returns the list of available models from the initialization response.
+// This triggers Initialize if not already done.
+func (p *Protocol) SupportedModels(ctx context.Context) ([]ModelInfo, error) {
+	initResp, err := p.Initialize(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return append([]ModelInfo(nil), initResp.Models...), nil
 }
 
 // ReceiveMessages returns a channel for receiving regular (non-control) messages.

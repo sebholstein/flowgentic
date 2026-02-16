@@ -18,7 +18,9 @@ func TestSystemServiceHandler_GetAgentModels(t *testing.T) {
 		d := &fakeModelDriver{
 			agent: string(driver.AgentTypeCodex),
 			inv: v2.ModelInventory{
-				Models:       []string{"gpt-5"},
+				Models: []v2.ModelMeta{
+					{ID: "gpt-5", DisplayName: "GPT-5", Description: "flagship model"},
+				},
 				DefaultModel: "gpt-5",
 			},
 		}
@@ -30,7 +32,10 @@ func TestSystemServiceHandler_GetAgentModels(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		assert.Equal(t, workerv1.Agent_AGENT_CODEX, resp.Msg.Agent)
-		assert.Equal(t, []string{"gpt-5"}, resp.Msg.Models)
+		require.Len(t, resp.Msg.Models, 1)
+		assert.Equal(t, "gpt-5", resp.Msg.Models[0].Id)
+		assert.Equal(t, "GPT-5", resp.Msg.Models[0].DisplayName)
+		assert.Equal(t, "flagship model", resp.Msg.Models[0].Description)
 		assert.Equal(t, "gpt-5", resp.Msg.DefaultModel)
 	})
 

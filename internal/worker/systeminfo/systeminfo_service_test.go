@@ -59,7 +59,10 @@ func TestSystemInfoService_GetAgentModels_CacheBehavior(t *testing.T) {
 	d := &fakeModelDriver{
 		agent: string(driver.AgentTypeCodex),
 		inv: v2.ModelInventory{
-			Models:       []string{"gpt-5", "gpt-5-mini"},
+			Models: []v2.ModelMeta{
+				{ID: "gpt-5", DisplayName: "GPT-5"},
+				{ID: "gpt-5-mini", DisplayName: "GPT-5 Mini"},
+			},
 			DefaultModel: "gpt-5",
 		},
 	}
@@ -68,7 +71,10 @@ func TestSystemInfoService_GetAgentModels_CacheBehavior(t *testing.T) {
 
 	first, err := svc.GetAgentModels(context.Background(), driver.AgentTypeCodex, false)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"gpt-5", "gpt-5-mini"}, first.Models)
+	assert.Equal(t, []v2.ModelMeta{
+		{ID: "gpt-5", DisplayName: "GPT-5"},
+		{ID: "gpt-5-mini", DisplayName: "GPT-5 Mini"},
+	}, first.Models)
 	assert.Equal(t, "gpt-5", first.DefaultModel)
 	assert.Equal(t, 1, d.calls)
 

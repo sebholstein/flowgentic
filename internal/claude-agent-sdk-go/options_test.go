@@ -892,6 +892,9 @@ func (m *mockTransportForOptions) RewindFiles(_ context.Context, _ string) error
 func (m *mockTransportForOptions) SupportedCommands(_ context.Context) ([]SlashCommand, error) {
 	return nil, nil
 }
+func (m *mockTransportForOptions) SupportedModels(_ context.Context) ([]ModelInfo, error) {
+	return nil, nil
+}
 func (m *mockTransportForOptions) Close() error                   { return nil }
 func (m *mockTransportForOptions) GetValidator() *StreamValidator { return &StreamValidator{} }
 

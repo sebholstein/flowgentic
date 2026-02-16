@@ -106,6 +106,8 @@ type InitializeResponse struct {
 	SupportedCommands []string `json:"supported_commands,omitempty"`
 	// Commands lists slash commands/skills available in the current session.
 	Commands []SlashCommand `json:"commands,omitempty"`
+	// Models lists available models for this session.
+	Models []ModelInfo `json:"models,omitempty"`
 }
 
 // SetPermissionModeRequest changes the permission mode at runtime.
@@ -124,6 +126,13 @@ type SetModelRequest struct {
 	// Model is the new model to use. Use nil to reset to default.
 	// Examples: "claude-sonnet-4-5", "claude-opus-4-1-20250805"
 	Model *string `json:"model"`
+}
+
+// ModelInfo describes an available model.
+type ModelInfo struct {
+	Value       string `json:"value"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description,omitempty"`
 }
 
 // RewindFilesRequest requests rewinding files to a specific user message state.

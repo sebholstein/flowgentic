@@ -155,6 +155,16 @@ func (a *Adapter) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (a
 	resp := acpsdk.NewSessionResponse{
 		SessionId: acpsdk.SessionId(a.sessionID),
 	}
+	// Eagerly connect so we can discover models and forward startup commands.
+	if a.conn != nil {
+		go func() {
+			if err := a.ensureClientConnected(context.Background()); err != nil {
+				a.log.Debug("background sdk connect failed", "error", err)
+				return
+			}
+			a.emitAvailableCommandsFromSDK(context.Background(), acpsdk.SessionId(a.sessionID))
+		}()
+	}
 	if a.modelProvider != nil {
 		state, err := a.modelProvider.SessionModelState(context.Background())
 		if err != nil {
@@ -165,18 +175,25 @@ func (a *Adapter) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (a
 			cloned.AvailableModels = append([]acpsdk.ModelInfo(nil), state.AvailableModels...)
 			resp.Models = &cloned
 		}
-	}
-	// Eagerly connect in the background for runtime sessions so SDK startup
-	// messages (including available commands) can be forwarded soon after
-	// session creation without blocking NewSession.
-	if a.conn != nil {
-		go func() {
-			if err := a.ensureClientConnected(context.Background()); err != nil {
-				a.log.Debug("background sdk connect failed", "error", err)
-				return
+	} else if a.conn != nil {
+		// No pre-existing model provider — try to discover models from the SDK.
+		// ensureClientConnected may already be in progress from the goroutine above;
+		// this call will wait for it to finish.
+		if err := a.ensureClientConnected(context.Background()); err == nil {
+			a.mu.Lock()
+			provider := a.modelProvider
+			a.mu.Unlock()
+			if provider != nil {
+				state, err := provider.SessionModelState(context.Background())
+				if err != nil {
+					a.log.Debug("model discovery failed", "error", err)
+				} else if state != nil {
+					cloned := *state
+					cloned.AvailableModels = append([]acpsdk.ModelInfo(nil), state.AvailableModels...)
+					resp.Models = &cloned
+				}
 			}
-			a.emitAvailableCommandsFromSDK(context.Background(), acpsdk.SessionId(a.sessionID))
-		}()
+		}
 	}
 
 	return resp, nil
@@ -300,6 +317,7 @@ func (a *Adapter) ensureClientConnected(ctx context.Context) error {
 		return err
 	}
 	a.client = client
+	a.modelProvider = &sdkModelProvider{client: client}
 	a.msgChan = client.ReceiveMessages(sessionCtx)
 	msgChan := a.msgChan
 	sessionID := acpsdk.SessionId(a.sessionID)
@@ -986,6 +1004,40 @@ func (a *Adapter) appendSubprocessDebugLine(stream, line string) {
 		a.sessionID,
 		line,
 	)
+}
+
+// sdkModelProvider implements modelStateProvider using the SDK's SupportedModels method.
+type sdkModelProvider struct {
+	client claudecode.Client
+}
+
+func (p *sdkModelProvider) SessionModelState(ctx context.Context) (*acpsdk.SessionModelState, error) {
+	models, err := p.client.SupportedModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(models) == 0 {
+		return nil, nil
+	}
+
+	available := make([]acpsdk.ModelInfo, 0, len(models))
+	for _, m := range models {
+		info := acpsdk.ModelInfo{
+			ModelId: acpsdk.ModelId(m.Value),
+			Name:    m.DisplayName,
+		}
+		if m.Description != "" {
+			desc := m.Description
+			info.Description = &desc
+		}
+		available = append(available, info)
+	}
+
+	state := &acpsdk.SessionModelState{
+		AvailableModels: available,
+		CurrentModelId:  available[0].ModelId,
+	}
+	return state, nil
 }
 
 // Ensure compile-time interface compliance.

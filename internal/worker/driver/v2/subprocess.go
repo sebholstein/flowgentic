@@ -87,12 +87,19 @@ func (d *acpDriver) DiscoverModels(ctx context.Context, cwd string) (ModelInvent
 		return ModelInventory{}, fmt.Errorf("ACP agent %s returned no model metadata", d.config.AgentID)
 	}
 
-	models := make([]string, 0, len(resp.Models.AvailableModels))
+	models := make([]ModelMeta, 0, len(resp.Models.AvailableModels))
 	for _, m := range resp.Models.AvailableModels {
 		if m.ModelId == "" {
 			continue
 		}
-		models = append(models, string(m.ModelId))
+		meta := ModelMeta{
+			ID:          string(m.ModelId),
+			DisplayName: m.Name,
+		}
+		if m.Description != nil {
+			meta.Description = *m.Description
+		}
+		models = append(models, meta)
 	}
 	defaultModel := string(resp.Models.CurrentModelId)
 	if len(models) == 0 || defaultModel == "" {

@@ -35,7 +35,7 @@ func (d *fakeDriver) Agent() string                     { return d.id }
 func (d *fakeDriver) Capabilities() driver.Capabilities { return d.caps }
 func (d *fakeDriver) DiscoverModels(_ context.Context, _ string) (v2.ModelInventory, error) {
 	return v2.ModelInventory{
-		Models:       []string{"test-model"},
+		Models:       []v2.ModelMeta{{ID: "test-model"}},
 		DefaultModel: "test-model",
 	}, nil
 }

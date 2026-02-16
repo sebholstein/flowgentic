@@ -46,14 +46,15 @@ func (a *modelAgent) SetSessionMode(context.Context, acp.SetSessionModeRequest) 
 }
 
 func TestDiscoverModels(t *testing.T) {
+	descB := "smaller model"
 	d := NewDriver(testLogger(), AgentConfig{
 		AgentID: "test-agent",
 		AdapterFactory: func(_ *slog.Logger) acp.Agent {
 			return &modelAgent{
 				state: &acp.SessionModelState{
 					AvailableModels: []acp.ModelInfo{
-						{ModelId: "model-a"},
-						{ModelId: "model-b"},
+						{ModelId: "model-a", Name: "Model A"},
+						{ModelId: "model-b", Name: "Model B", Description: &descB},
 					},
 					CurrentModelId: "model-a",
 				},
@@ -63,7 +64,10 @@ func TestDiscoverModels(t *testing.T) {
 
 	inventory, err := d.DiscoverModels(context.Background(), "/tmp")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"model-a", "model-b"}, inventory.Models)
+	assert.Equal(t, []ModelMeta{
+		{ID: "model-a", DisplayName: "Model A"},
+		{ID: "model-b", DisplayName: "Model B", Description: "smaller model"},
+	}, inventory.Models)
 	assert.Equal(t, "model-a", inventory.DefaultModel)
 }
 
