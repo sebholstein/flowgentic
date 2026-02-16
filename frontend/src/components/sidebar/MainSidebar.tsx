@@ -239,7 +239,7 @@ function ThreadRow({
         )}
       >
         <MessagesSquare className="size-3 shrink-0 text-muted-foreground" />
-        <span className="truncate flex-1 text-xs">{animatedTopic}</span>
+        <span className="truncate flex-1 text-[13px]">{animatedTopic}</span>
       </Link>
       <div
         className={cn(
