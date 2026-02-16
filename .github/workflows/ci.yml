@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: ["main", "master"]
+    tags: ["v*"]
   pull_request:
 
 jobs:
@@ -27,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: ${{ startsWith(github.ref, 'refs/tags/') && fromJSON('["macos-latest", "ubuntu-latest", "windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
