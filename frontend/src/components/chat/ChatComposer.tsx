@@ -67,7 +67,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="px-6 lg:px-10 pb-3 pt-2">
+    <div className="px-3  pb-3 pt-2">
       <input
         ref={fileInputRef}
         type="file"
