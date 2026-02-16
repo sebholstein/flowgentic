@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
 import { ExecutionProgressPanel } from "./ExecutionProgressPanel";
-import type { DemoThread } from "@/data/mockAgentFlowData";
-import { getDemoMessages, demoExecutionTasks } from "@/data/mockAgentFlowData";
+import type { DemoThread } from "@/data/mockFlowgenticData";
+import { getDemoMessages, demoExecutionTasks } from "@/data/mockFlowgenticData";
 
 export function PlanExecutionView({ thread }: { thread: DemoThread }) {
   const messages = getDemoMessages(thread.id);

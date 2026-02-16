@@ -11,7 +11,7 @@ import (
 //go:embed ORCHESTRATED_PLAN_MODE.md
 var orchestratedPlanModeTemplateText string
 
-const planRootDir = "~/.agentflow/plans"
+const planRootDir = "~/.Flowgentic/plans"
 
 type PlanDir struct {
 	ThreadID string

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getDemoThread, getDemoPlan } from "@/data/mockAgentFlowData";
+import { getDemoThread, getDemoPlan } from "@/data/mockFlowgenticData";
 import { DemoHeader } from "@/components/demo/DemoHeader";
 import { QuickModeView } from "@/components/demo/QuickModeView";
 import { PlanSinglePlanningView } from "@/components/demo/PlanSinglePlanningView";

@@ -141,7 +141,7 @@ export const demoPatchData: Record<string, string> = {
 
 export const demoProject = {
   id: "demo-project",
-  name: "AgentFlow Demo",
+  name: "Flowgentic Demo",
   color: "text-cyan-400",
 };
 

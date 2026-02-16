@@ -12,7 +12,7 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react";
-import type { DemoPlan } from "@/data/mockAgentFlowData";
+import type { DemoPlan } from "@/data/mockFlowgenticData";
 
 type PlanTab = "description" | "tasks" | "graph";
 

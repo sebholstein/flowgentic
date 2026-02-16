@@ -43,7 +43,7 @@ import {
   Pin,
   Archive,
   Plus,
-  MessageSquare,
+  MessagesSquare,
   LayoutTemplate,
   Search,
   Clock,
@@ -79,7 +79,7 @@ import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
 import { projectsQueryOptions } from "@/lib/queries/projects";
 import { workersQueryOptions } from "@/lib/queries/workers";
 import { threadsQueryOptions } from "@/lib/queries/threads";
-import { demoProject, demoThreads } from "@/data/mockAgentFlowData";
+import { demoProject, demoThreads } from "@/data/mockFlowgenticData";
 
 // Flattened tree node types for virtualization
 type FlatTreeNode =
@@ -215,7 +215,7 @@ function ThreadRow({
         "group flex items-center gap-1 pr-2 rounded-md transition-colors",
         isSelected ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50",
       )}
-      style={{ paddingLeft: "24px" }}
+      style={{ paddingLeft: "4px" }}
     >
       {hasChildren ? (
         <button
@@ -238,14 +238,14 @@ function ThreadRow({
           isArchived && "opacity-60",
         )}
       >
-        <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
+        <MessagesSquare className="size-3 shrink-0 text-muted-foreground" />
         <span className="truncate flex-1 text-xs font-medium">{animatedTopic}</span>
       </Link>
       <div
         className={cn(
-          "flex items-center gap-1 opacity-0 transition-opacity",
-          "group-hover:opacity-100",
-          (isPinned || isArchived) && "opacity-100",
+          "items-center gap-1 hidden",
+          "group-hover:flex",
+          (isPinned || isArchived) && "flex",
         )}
       >
         <button
@@ -312,7 +312,7 @@ function TaskRow({
         isSelected && "bg-muted text-foreground",
         !isSelected && "text-foreground hover:text-foreground",
       )}
-      style={{ paddingLeft: "48px" }}
+      style={{ paddingLeft: "24px" }}
     >
       <StatusIcon
         className={cn(
@@ -747,7 +747,7 @@ export function MainSidebar({
     }
 
     // Inject demo project with fake threads
-    if (!searchQuery || "agentflow demo".includes(searchQuery.toLowerCase())) {
+    if (!searchQuery || "Flowgentic demo".includes(searchQuery.toLowerCase())) {
       const demoProjectNode: Project = {
         id: demoProject.id,
         name: demoProject.name,
@@ -991,7 +991,7 @@ export function MainSidebar({
             )}
             title="Threads"
           >
-            <MessageSquare className="size-3.5" />
+            <MessagesSquare className="size-3.5" />
           </button>
           <button
             type="button"

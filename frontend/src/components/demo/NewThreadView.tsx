@@ -15,7 +15,7 @@ import {
   demoPlanTemplates,
   type DemoAvailableAgent,
   type DemoPlanTemplate,
-} from "@/data/mockAgentFlowData";
+} from "@/data/mockFlowgenticData";
 
 type ThreadMode = "quick" | "plan";
 

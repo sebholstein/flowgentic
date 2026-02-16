@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Zap, ClipboardList, Play, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DemoThread, DemoAgent } from "@/data/mockAgentFlowData";
+import type { DemoThread, DemoAgent } from "@/data/mockFlowgenticData";
 import { ClaudeIcon, CodexIcon, GeminiIcon } from "@/components/icons/agent-icons";
 import type { SVGProps } from "react";
 

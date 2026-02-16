@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
 import { FileChangesPanel } from "./FileChangesPanel";
-import type { DemoThread } from "@/data/mockAgentFlowData";
-import { getDemoMessages } from "@/data/mockAgentFlowData";
+import type { DemoThread } from "@/data/mockFlowgenticData";
+import { getDemoMessages } from "@/data/mockFlowgenticData";
 
 export function QuickModeView({ thread }: { thread: DemoThread }) {
   const messages = getDemoMessages(thread.id);

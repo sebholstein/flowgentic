@@ -1,4 +1,4 @@
-import type { DemoComment } from "@/data/mockAgentFlowData";
+import type { DemoComment } from "@/data/mockFlowgenticData";
 
 export const mockThreadPatchData: Record<string, string> = {
   "src/middleware/auth.ts": `--- a/src/middleware/auth.ts

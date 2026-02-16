@@ -43,7 +43,7 @@ func TestDefaultPlanDirForSession(t *testing.T) {
 	t.Parallel()
 
 	got := DefaultPlanDirForSession("sess-123")
-	want := "~/.agentflow/plans/sess-123"
+	want := "~/.Flowgentic/plans/sess-123"
 	if got != want {
 		t.Fatalf("unexpected default plan dir: got %q want %q", got, want)
 	}

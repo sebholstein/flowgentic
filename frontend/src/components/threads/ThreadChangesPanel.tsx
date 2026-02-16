@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Send, FileText, Folder } from "lucide-react";
-import type { DemoComment } from "@/data/mockAgentFlowData";
+import type { DemoComment } from "@/data/mockFlowgenticData";
 
 // --- Derive changed file tree from patch data ---
 

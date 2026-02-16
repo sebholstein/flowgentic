@@ -12,8 +12,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
-import type { DemoThread } from "@/data/mockAgentFlowData";
-import { getDemoPlan, getDemoMessages, type DemoPlan } from "@/data/mockAgentFlowData";
+import type { DemoThread } from "@/data/mockFlowgenticData";
+import { getDemoPlan, getDemoMessages, type DemoPlan } from "@/data/mockFlowgenticData";
 
 const complexityColors = {
   low: "text-emerald-400 border-emerald-500/30",

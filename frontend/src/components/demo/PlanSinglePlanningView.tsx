@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { AgentChatPanel } from "@/components/chat/AgentChatPanel";
 import { PlanProposalPanel } from "./PlanProposalPanel";
-import type { DemoThread, DemoPlan } from "@/data/mockAgentFlowData";
-import { getDemoMessages } from "@/data/mockAgentFlowData";
+import type { DemoThread, DemoPlan } from "@/data/mockFlowgenticData";
+import { getDemoMessages } from "@/data/mockFlowgenticData";
 
 export function PlanSinglePlanningView({
   thread,
