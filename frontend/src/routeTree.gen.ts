@@ -22,9 +22,9 @@ import { Route as AppOverseerIndexRouteImport } from './routes/app/overseer/inde
 import { Route as AppThreadsThreadIdRouteRouteImport } from './routes/app/threads/$threadId/route'
 import { Route as AppDemoScenarioIdRouteRouteImport } from './routes/app/demo/$scenarioId/route'
 import { Route as AppThreadsThreadIdIndexRouteImport } from './routes/app/threads/$threadId/index'
-import { Route as AppThreadsThreadIdResourcesRouteImport } from './routes/app/threads/$threadId/resources'
 import { Route as AppThreadsThreadIdMemoryRouteImport } from './routes/app/threads/$threadId/memory'
 import { Route as AppThreadsThreadIdCheckinsRouteImport } from './routes/app/threads/$threadId/checkins'
+import { Route as AppThreadsThreadIdChangesRouteImport } from './routes/app/threads/$threadId/changes'
 import { Route as AppThreadsThreadIdTasksRouteRouteImport } from './routes/app/threads/$threadId/tasks/route'
 import { Route as AppTasksThreadIdTaskIdRouteRouteImport } from './routes/app/tasks/$threadId/$taskId/route'
 import { Route as AppThreadsThreadIdTasksIndexRouteImport } from './routes/app/threads/$threadId/tasks/index'
@@ -98,12 +98,6 @@ const AppThreadsThreadIdIndexRoute = AppThreadsThreadIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppThreadsThreadIdRouteRoute,
 } as any)
-const AppThreadsThreadIdResourcesRoute =
-  AppThreadsThreadIdResourcesRouteImport.update({
-    id: '/resources',
-    path: '/resources',
-    getParentRoute: () => AppThreadsThreadIdRouteRoute,
-  } as any)
 const AppThreadsThreadIdMemoryRoute =
   AppThreadsThreadIdMemoryRouteImport.update({
     id: '/memory',
@@ -114,6 +108,12 @@ const AppThreadsThreadIdCheckinsRoute =
   AppThreadsThreadIdCheckinsRouteImport.update({
     id: '/checkins',
     path: '/checkins',
+    getParentRoute: () => AppThreadsThreadIdRouteRoute,
+  } as any)
+const AppThreadsThreadIdChangesRoute =
+  AppThreadsThreadIdChangesRouteImport.update({
+    id: '/changes',
+    path: '/changes',
     getParentRoute: () => AppThreadsThreadIdRouteRoute,
   } as any)
 const AppThreadsThreadIdTasksRouteRoute =
@@ -174,9 +174,9 @@ export interface FileRoutesByFullPath {
   '/app/threads/': typeof AppThreadsIndexRoute
   '/app/tasks/$threadId/$taskId': typeof AppTasksThreadIdTaskIdRouteRouteWithChildren
   '/app/threads/$threadId/tasks': typeof AppThreadsThreadIdTasksRouteRouteWithChildren
+  '/app/threads/$threadId/changes': typeof AppThreadsThreadIdChangesRoute
   '/app/threads/$threadId/checkins': typeof AppThreadsThreadIdCheckinsRoute
   '/app/threads/$threadId/memory': typeof AppThreadsThreadIdMemoryRoute
-  '/app/threads/$threadId/resources': typeof AppThreadsThreadIdResourcesRoute
   '/app/threads/$threadId/': typeof AppThreadsThreadIdIndexRoute
   '/app/tasks/$threadId/$taskId/changes': typeof AppTasksThreadIdTaskIdChangesRoute
   '/app/tasks/$threadId/$taskId/memory': typeof AppTasksThreadIdTaskIdMemoryRoute
@@ -194,9 +194,9 @@ export interface FileRoutesByTo {
   '/app/overseer': typeof AppOverseerIndexRoute
   '/app/settings': typeof AppSettingsIndexRoute
   '/app/threads': typeof AppThreadsIndexRoute
+  '/app/threads/$threadId/changes': typeof AppThreadsThreadIdChangesRoute
   '/app/threads/$threadId/checkins': typeof AppThreadsThreadIdCheckinsRoute
   '/app/threads/$threadId/memory': typeof AppThreadsThreadIdMemoryRoute
-  '/app/threads/$threadId/resources': typeof AppThreadsThreadIdResourcesRoute
   '/app/threads/$threadId': typeof AppThreadsThreadIdIndexRoute
   '/app/tasks/$threadId/$taskId/changes': typeof AppTasksThreadIdTaskIdChangesRoute
   '/app/tasks/$threadId/$taskId/memory': typeof AppTasksThreadIdTaskIdMemoryRoute
@@ -220,9 +220,9 @@ export interface FileRoutesById {
   '/app/threads/': typeof AppThreadsIndexRoute
   '/app/tasks/$threadId/$taskId': typeof AppTasksThreadIdTaskIdRouteRouteWithChildren
   '/app/threads/$threadId/tasks': typeof AppThreadsThreadIdTasksRouteRouteWithChildren
+  '/app/threads/$threadId/changes': typeof AppThreadsThreadIdChangesRoute
   '/app/threads/$threadId/checkins': typeof AppThreadsThreadIdCheckinsRoute
   '/app/threads/$threadId/memory': typeof AppThreadsThreadIdMemoryRoute
-  '/app/threads/$threadId/resources': typeof AppThreadsThreadIdResourcesRoute
   '/app/threads/$threadId/': typeof AppThreadsThreadIdIndexRoute
   '/app/tasks/$threadId/$taskId/changes': typeof AppTasksThreadIdTaskIdChangesRoute
   '/app/tasks/$threadId/$taskId/memory': typeof AppTasksThreadIdTaskIdMemoryRoute
@@ -247,9 +247,9 @@ export interface FileRouteTypes {
     | '/app/threads/'
     | '/app/tasks/$threadId/$taskId'
     | '/app/threads/$threadId/tasks'
+    | '/app/threads/$threadId/changes'
     | '/app/threads/$threadId/checkins'
     | '/app/threads/$threadId/memory'
-    | '/app/threads/$threadId/resources'
     | '/app/threads/$threadId/'
     | '/app/tasks/$threadId/$taskId/changes'
     | '/app/tasks/$threadId/$taskId/memory'
@@ -267,9 +267,9 @@ export interface FileRouteTypes {
     | '/app/overseer'
     | '/app/settings'
     | '/app/threads'
+    | '/app/threads/$threadId/changes'
     | '/app/threads/$threadId/checkins'
     | '/app/threads/$threadId/memory'
-    | '/app/threads/$threadId/resources'
     | '/app/threads/$threadId'
     | '/app/tasks/$threadId/$taskId/changes'
     | '/app/tasks/$threadId/$taskId/memory'
@@ -292,9 +292,9 @@ export interface FileRouteTypes {
     | '/app/threads/'
     | '/app/tasks/$threadId/$taskId'
     | '/app/threads/$threadId/tasks'
+    | '/app/threads/$threadId/changes'
     | '/app/threads/$threadId/checkins'
     | '/app/threads/$threadId/memory'
-    | '/app/threads/$threadId/resources'
     | '/app/threads/$threadId/'
     | '/app/tasks/$threadId/$taskId/changes'
     | '/app/tasks/$threadId/$taskId/memory'
@@ -402,13 +402,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppThreadsThreadIdIndexRouteImport
       parentRoute: typeof AppThreadsThreadIdRouteRoute
     }
-    '/app/threads/$threadId/resources': {
-      id: '/app/threads/$threadId/resources'
-      path: '/resources'
-      fullPath: '/app/threads/$threadId/resources'
-      preLoaderRoute: typeof AppThreadsThreadIdResourcesRouteImport
-      parentRoute: typeof AppThreadsThreadIdRouteRoute
-    }
     '/app/threads/$threadId/memory': {
       id: '/app/threads/$threadId/memory'
       path: '/memory'
@@ -421,6 +414,13 @@ declare module '@tanstack/react-router' {
       path: '/checkins'
       fullPath: '/app/threads/$threadId/checkins'
       preLoaderRoute: typeof AppThreadsThreadIdCheckinsRouteImport
+      parentRoute: typeof AppThreadsThreadIdRouteRoute
+    }
+    '/app/threads/$threadId/changes': {
+      id: '/app/threads/$threadId/changes'
+      path: '/changes'
+      fullPath: '/app/threads/$threadId/changes'
+      preLoaderRoute: typeof AppThreadsThreadIdChangesRouteImport
       parentRoute: typeof AppThreadsThreadIdRouteRoute
     }
     '/app/threads/$threadId/tasks': {
@@ -524,9 +524,9 @@ const AppThreadsThreadIdTasksRouteRouteWithChildren =
 
 interface AppThreadsThreadIdRouteRouteChildren {
   AppThreadsThreadIdTasksRouteRoute: typeof AppThreadsThreadIdTasksRouteRouteWithChildren
+  AppThreadsThreadIdChangesRoute: typeof AppThreadsThreadIdChangesRoute
   AppThreadsThreadIdCheckinsRoute: typeof AppThreadsThreadIdCheckinsRoute
   AppThreadsThreadIdMemoryRoute: typeof AppThreadsThreadIdMemoryRoute
-  AppThreadsThreadIdResourcesRoute: typeof AppThreadsThreadIdResourcesRoute
   AppThreadsThreadIdIndexRoute: typeof AppThreadsThreadIdIndexRoute
 }
 
@@ -534,9 +534,9 @@ const AppThreadsThreadIdRouteRouteChildren: AppThreadsThreadIdRouteRouteChildren
   {
     AppThreadsThreadIdTasksRouteRoute:
       AppThreadsThreadIdTasksRouteRouteWithChildren,
+    AppThreadsThreadIdChangesRoute: AppThreadsThreadIdChangesRoute,
     AppThreadsThreadIdCheckinsRoute: AppThreadsThreadIdCheckinsRoute,
     AppThreadsThreadIdMemoryRoute: AppThreadsThreadIdMemoryRoute,
-    AppThreadsThreadIdResourcesRoute: AppThreadsThreadIdResourcesRoute,
     AppThreadsThreadIdIndexRoute: AppThreadsThreadIdIndexRoute,
   }
 
@@ -591,3 +591,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

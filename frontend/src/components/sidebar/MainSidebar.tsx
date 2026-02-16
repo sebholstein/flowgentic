@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSetAtom } from "jotai";
-import { Link, useSearch, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   DndContext,
@@ -23,12 +24,20 @@ import {
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PanelLeftClose,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
+  Filter,
   Folder,
   FolderOpen,
   Pin,
@@ -40,11 +49,11 @@ import {
   Clock,
   Star,
   Settings,
+  Check,
 } from "lucide-react";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
-import { inboxItems } from "@/data/mockInboxData";
 import { taskStatusConfig } from "@/constants/taskStatusConfig";
-import { FeedbackList } from "./FeedbackList";
+import { FeedbackList, useDemoInboxItems } from "./FeedbackList";
 import { PlanTemplates } from "./PlanTemplates";
 import { commandPaletteOpenAtom } from "@/stores/atoms";
 import type { ThreadConfig } from "@/proto/gen/controlplane/v1/thread_service_pb";
@@ -54,6 +63,14 @@ import { useSidebarStore } from "@/stores/sidebarStore";
 import { WindowDragHeader } from "@/components/layout/WindowDragHeader";
 import { useIsMacOS } from "@/hooks/use-electron";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
+import {
+  Separator as PanelResizeHandle,
+  usePanelRef,
+} from "react-resizable-panels";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+} from "@/components/ui/resizable";
 import { useClient } from "@/lib/connect";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { ProjectService } from "@/proto/gen/controlplane/v1/project_service_pb";
@@ -419,8 +436,122 @@ function TreeNodeRow({
 }
 
 // Tab types
-type SidebarTab = "threads" | "feedback" | "archived";
+type SidebarTab = "threads" | "archived";
 type SidebarView = "threads" | "templates";
+
+// Collapsible inbox bottom panel
+function InboxPanel({
+  isCollapsed,
+  pendingCount,
+  onToggle,
+  items,
+  selectedThreadId,
+  selectedTaskId,
+}: {
+  isCollapsed: boolean;
+  pendingCount: number;
+  onToggle: () => void;
+  items: import("@/types/inbox").InboxItem[];
+  selectedThreadId: string | null;
+  selectedTaskId: string | null;
+}) {
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
+
+  const projectNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const item of items) {
+      if (item.threadName) names.add(item.threadName);
+    }
+    return Array.from(names).sort();
+  }, [items]);
+
+  const filteredItems = useMemo(
+    () => projectFilter ? items.filter((i) => i.threadName === projectFilter) : items,
+    [items, projectFilter],
+  );
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex items-center border-t border-border shrink-0">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex flex-1 items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+        >
+          <motion.span
+            animate={{ rotate: isCollapsed ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="inline-flex"
+          >
+            <ChevronDown className="size-3" />
+          </motion.span>
+          <span>Inbox</span>
+          {pendingCount > 0 && (
+            <motion.span
+              key={pendingCount}
+              initial={{ scale: 1.3 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2 }}
+              className="text-[0.6rem] px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center bg-rose-400/20 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 font-medium"
+            >
+              {pendingCount}
+            </motion.span>
+          )}
+        </button>
+        {!isCollapsed && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "mr-2 p-1 rounded transition-colors",
+                  projectFilter
+                    ? "text-primary hover:text-primary/80"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                title="Filter by project"
+              >
+                <Filter className="size-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[160px]">
+              <DropdownMenuItem
+                className="text-xs gap-2"
+                onClick={() => setProjectFilter(null)}
+              >
+                <Check className={cn("size-3", projectFilter === null ? "opacity-100" : "opacity-0")} />
+                All projects
+              </DropdownMenuItem>
+              {projectNames.map((name) => (
+                <DropdownMenuItem
+                  key={name}
+                  className="text-xs gap-2"
+                  onClick={() => setProjectFilter(name)}
+                >
+                  <Check className={cn("size-3", projectFilter === name ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{name}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex-1 min-h-0"
+          >
+            <FeedbackList items={filteredItems} selectedThreadId={selectedThreadId} selectedTaskId={selectedTaskId} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 // Main sidebar component
 export function MainSidebar({
@@ -435,7 +566,6 @@ export function MainSidebar({
   const isMacOS = useIsMacOS();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { feedback?: string };
   const queryClient = useQueryClient();
   const projectClient = useClient(ProjectService);
   const workerClient = useClient(WorkerService);
@@ -470,9 +600,7 @@ export function MainSidebar({
   }, [threadQueries]);
 
   const [activeView, setActiveView] = useState<SidebarView>("threads");
-  const [activeTab, setActiveTab] = useState<SidebarTab>(() =>
-    search.feedback ? "feedback" : "threads",
-  );
+  const [activeTab, setActiveTab] = useState<SidebarTab>("threads");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [overProjectId, setOverProjectId] = useState<string | null>(null);
@@ -499,6 +627,8 @@ export function MainSidebar({
     [backendThreads],
   );
   const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
+  const [isInboxCollapsed, setIsInboxCollapsed] = useState(false);
+  const inboxPanelRef = usePanelRef();
   // showArchived is now derived from activeTab
   const showArchived = activeTab === "archived";
 
@@ -554,17 +684,9 @@ export function MainSidebar({
     }
   }, [selectedThreadId]);
 
-  // Keep feedback tab active when navigating between feedback items
-  useEffect(() => {
-    if (search.feedback) {
-      setActiveTab("feedback");
-    }
-  }, [search.feedback]);
-
-  // Count pending feedback items
-  const pendingFeedbackCount = useMemo(() => {
-    return inboxItems.filter((item) => item.status === "pending").length;
-  }, []);
+  // Demo inbox items (trickle in over time)
+  const demoInboxItems = useDemoInboxItems();
+  const pendingFeedbackCount = demoInboxItems.length;
 
   // Group threads by project
   const threadsByProject = useMemo(() => {
@@ -792,7 +914,7 @@ export function MainSidebar({
 
   const createThreadMutation = useMutation({
     mutationFn: (data: { projectId: string }) =>
-      threadClient.createThread({ projectId: data.projectId, mode: "plan" }),
+      threadClient.createThread({ projectId: data.projectId }),
     onSuccess: (resp) => {
       const id = resp.thread?.id ?? "";
       queryClient.invalidateQueries({ queryKey: ["threads"] });
@@ -933,23 +1055,6 @@ export function MainSidebar({
                 >
                   Browse
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("feedback")}
-                  className={cn(
-                    "px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer flex items-center gap-1.5",
-                    activeTab === "feedback"
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                  )}
-                >
-                  Inbox
-                  {pendingFeedbackCount > 0 && (
-                    <span className="text-[0.6rem] px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center bg-rose-400/20 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 font-medium">
-                      {pendingFeedbackCount}
-                    </span>
-                  )}
-                </button>
               </div>
               <button
                 type="button"
@@ -964,14 +1069,12 @@ export function MainSidebar({
                 Archived
               </button>
             </div>
-            {(activeTab === "threads" || activeTab === "archived") && (
-              <Input
-                placeholder="Search threads..."
-                className="h-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            )}
+            <Input
+              placeholder="Search threads..."
+              className="h-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </>
         ) : (
           <div className="text-sm font-medium text-foreground">Plan Templates</div>
@@ -980,112 +1083,143 @@ export function MainSidebar({
 
       {activeView === "templates" ? (
         <PlanTemplates />
-      ) : activeTab === "feedback" ? (
-        <FeedbackList selectedThreadId={selectedThreadId} selectedTaskId={selectedTaskId} />
       ) : (
-        <>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <SortableContext items={projectIds} strategy={verticalListSortingStrategy}>
-              <ScrollArea
-                className="flex-1 overflow-hidden px-2 pt-2"
-                viewportRef={scrollRef}
-                viewportClassName="!overflow-y-auto"
-              >
-                {activeTab === "threads" && (
-                  <button
-                    type="button"
-                    onClick={() => setNewProjectDialogOpen(true)}
-                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors text-left select-none text-muted-foreground mb-1 mx-2"
-                    style={{ paddingLeft: "8px" }}
-                  >
-                    <span className="size-4 flex items-center justify-center shrink-0">
-                      <Plus className="size-3.5" />
-                    </span>
-                    <span className="truncate flex-1">Add Project</span>
-                  </button>
-                )}
-                <div
-                  className="p-2"
-                  style={{
-                    height: `${virtualizer.getTotalSize()}px`,
-                    width: "100%",
-                    position: "relative",
-                  }}
+        <ResizablePanelGroup orientation="vertical" className="flex-1">
+          {/* Top panel: Thread tree (Browse/Archived) */}
+          <ResizablePanel defaultSize={60} minSize={30}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <SortableContext items={projectIds} strategy={verticalListSortingStrategy}>
+                <ScrollArea
+                  className="h-full overflow-hidden px-2 pt-2"
+                  viewportRef={scrollRef}
+                  viewportClassName="!overflow-y-auto"
                 >
-                  {virtualizer.getVirtualItems().map((virtualRow) => {
-                    const node = flattenedNodes[virtualRow.index];
-                    return (
-                      <div
-                        key={virtualRow.key}
-                        data-index={virtualRow.index}
-                        ref={virtualizer.measureElement}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                      >
-                        <TreeNodeRow
-                          node={node}
-                          selectedThreadId={selectedThreadId}
-                          selectedTaskId={selectedTaskId}
-                          expandedProjects={expandedProjects}
-                          expandedThreads={expandedThreads}
-                          pinnedThreads={pinnedThreads}
-                          archivedThreads={archivedThreads}
-                          onToggleProject={toggleProject}
-                          onToggleThread={toggleThread}
-                          onTogglePin={togglePin}
-                          onToggleArchive={toggleArchive}
-                          onAddThread={handleAddThread}
-                        />
-                      </div>
-                    );
-                  })}
-                  {dropIndicator &&
-                    (() => {
-                      const items = virtualizer.getVirtualItems();
-                      const target = items.find((item) => item.index === dropIndicator.nodeIndex);
-                      if (!target) return null;
-                      const y =
-                        dropIndicator.position === "above"
-                          ? target.start
-                          : target.start + target.size;
+                  {activeTab === "threads" && (
+                    <button
+                      type="button"
+                      onClick={() => setNewProjectDialogOpen(true)}
+                      className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors text-left select-none text-muted-foreground mb-1 mx-2"
+                      style={{ paddingLeft: "8px" }}
+                    >
+                      <span className="size-4 flex items-center justify-center shrink-0">
+                        <Plus className="size-3.5" />
+                      </span>
+                      <span className="truncate flex-1">Add Project</span>
+                    </button>
+                  )}
+                  <div
+                    className="p-2"
+                    style={{
+                      height: `${virtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                      const node = flattenedNodes[virtualRow.index];
                       return (
                         <div
-                          className="absolute left-2 right-2 z-10 pointer-events-none"
-                          style={{ top: `${y - 1}px` }}
+                          key={virtualRow.key}
+                          data-index={virtualRow.index}
+                          ref={virtualizer.measureElement}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
                         >
-                          <div className="h-0.5 bg-primary rounded-full" />
+                          <TreeNodeRow
+                            node={node}
+                            selectedThreadId={selectedThreadId}
+                            selectedTaskId={selectedTaskId}
+                            expandedProjects={expandedProjects}
+                            expandedThreads={expandedThreads}
+                            pinnedThreads={pinnedThreads}
+                            archivedThreads={archivedThreads}
+                            onToggleProject={toggleProject}
+                            onToggleThread={toggleThread}
+                            onTogglePin={togglePin}
+                            onToggleArchive={toggleArchive}
+                            onAddThread={handleAddThread}
+                          />
                         </div>
                       );
-                    })()}
-                </div>
-              </ScrollArea>
-            </SortableContext>
-            <DragOverlay dropAnimation={null}>
-              {activeProject ? (
-                <ProjectRowOverlay project={activeProject} threadCount={activeDragThreadCount} />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-          <NewProjectDialog
-            open={newProjectDialogOpen}
-            onOpenChange={setNewProjectDialogOpen}
-            onSave={handleCreateProject}
-            workers={workersData?.workers ?? []}
-          />
-        </>
+                    })}
+                    {dropIndicator &&
+                      (() => {
+                        const items = virtualizer.getVirtualItems();
+                        const target = items.find((item) => item.index === dropIndicator.nodeIndex);
+                        if (!target) return null;
+                        const y =
+                          dropIndicator.position === "above"
+                            ? target.start
+                            : target.start + target.size;
+                        return (
+                          <div
+                            className="absolute left-2 right-2 z-10 pointer-events-none"
+                            style={{ top: `${y - 1}px` }}
+                          >
+                            <div className="h-0.5 bg-primary rounded-full" />
+                          </div>
+                        );
+                      })()}
+                  </div>
+                </ScrollArea>
+              </SortableContext>
+              <DragOverlay dropAnimation={null}>
+                {activeProject ? (
+                  <ProjectRowOverlay project={activeProject} threadCount={activeDragThreadCount} />
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </ResizablePanel>
+
+          <PanelResizeHandle className="h-px w-full shrink-0 bg-border hover:bg-primary/20 data-[resize-handle-state=drag]:bg-primary/30 cursor-row-resize" />
+
+          {/* Bottom panel: Inbox */}
+          <ResizablePanel
+            panelRef={inboxPanelRef}
+            defaultSize={40}
+            minSize="32px"
+            collapsible
+            collapsedSize="32px"
+            onResize={({ asPercentage }) => {
+              setIsInboxCollapsed(asPercentage <= 5);
+            }}
+          >
+            <InboxPanel
+              isCollapsed={isInboxCollapsed}
+              pendingCount={pendingFeedbackCount}
+              items={demoInboxItems}
+              onToggle={() => {
+                if (isInboxCollapsed) {
+                  inboxPanelRef.current?.expand();
+                } else {
+                  inboxPanelRef.current?.collapse();
+                }
+              }}
+              selectedThreadId={selectedThreadId}
+              selectedTaskId={selectedTaskId}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )}
+
+      <NewProjectDialog
+        open={newProjectDialogOpen}
+        onOpenChange={setNewProjectDialogOpen}
+        onSave={handleCreateProject}
+        workers={workersData?.workers ?? []}
+      />
     </div>
   );
 }

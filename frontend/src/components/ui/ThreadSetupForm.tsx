@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
-import { Bot, Cpu, Folder, Shield, ShieldOff, User, Users } from "lucide-react";
+import { Bot, Cpu, Folder } from "lucide-react";
 import { Agent } from "@/proto/gen/worker/v1/agent_pb";
 import type { Project } from "@/types/project";
 import type { Worker } from "@/types/server";
@@ -12,10 +12,9 @@ import {
   OpenCodeIcon,
 } from "@/components/icons/agent-icons";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Button } from "@/components/ui/button";
 
 interface ThreadSetupFormProps {
-  threadMode: "plan" | "build";
-  onModeChange: (mode: "plan" | "build") => void;
   threadModel: string;
   onModelChange: (model: string) => void;
   project?: Project;
@@ -26,12 +25,15 @@ interface ThreadSetupFormProps {
   onWorkerChange: (workerId: string) => void;
   agent: Agent;
   onAgentChange: (agent: Agent) => void;
-  sessionMode: string;
-  onSessionModeChange: (mode: string) => void;
   availableModels: string[];
   defaultModel: string;
   modelsLoading: boolean;
   modelsError: string | null;
+  /** Hide project and worker fields (e.g. in the new-session popover) */
+  compact?: boolean;
+  /** Show a submit button with this label */
+  submitLabel?: string;
+  onSubmit?: () => void;
 }
 
 const availableAgents: { id: Agent; name: string; icon: typeof ClaudeIcon }[] = [
@@ -43,8 +45,6 @@ const availableAgents: { id: Agent; name: string; icon: typeof ClaudeIcon }[] = 
 ];
 
 export function ThreadSetupForm({
-  threadMode,
-  onModeChange,
   threadModel,
   onModelChange,
   project,
@@ -55,12 +55,13 @@ export function ThreadSetupForm({
   onWorkerChange,
   agent,
   onAgentChange,
-  sessionMode,
-  onSessionModeChange,
   availableModels,
   defaultModel,
   modelsLoading,
   modelsError,
+  compact,
+  submitLabel,
+  onSubmit,
 }: ThreadSetupFormProps) {
   const modelItems = availableModels.map((model) => ({
     id: model,
@@ -70,7 +71,7 @@ export function ThreadSetupForm({
 
   return (
     <div className="w-full max-w-[480px] grid grid-cols-2 gap-x-3 gap-y-3 mb-5 text-left">
-      {project && projects && (
+      {!compact && project && projects && (
         <div className="col-span-2">
           <ConfigField label="Project">
             <SearchableSelect
@@ -86,30 +87,7 @@ export function ThreadSetupForm({
           </ConfigField>
         </div>
       )}
-      <ConfigField label="Mode">
-        <SearchableSelect
-          items={[
-            { id: "plan", name: "Plan", icon: <Users className="size-3" /> },
-            { id: "build", name: "Build", icon: <User className="size-3" /> },
-          ]}
-          selectedId={threadMode}
-          onSelect={(id) => onModeChange(id as "plan" | "build")}
-          placeholder="Search modes…"
-        />
-      </ConfigField>
-      <ConfigField label="Session Mode">
-        <SearchableSelect
-          items={[
-            { id: "ask", name: "Ask", icon: <Shield className="size-3" /> },
-            { id: "architect", name: "Architect", icon: <Shield className="size-3" /> },
-            { id: "code", name: "Code", icon: <ShieldOff className="size-3" /> },
-          ]}
-          selectedId={sessionMode}
-          onSelect={onSessionModeChange}
-          placeholder="Search modes…"
-        />
-      </ConfigField>
-      {workers.length > 0 && (
+      {!compact && workers.length > 0 && (
         <ConfigField label="Worker">
           <SearchableSelect
             items={workers.map((w) => ({
@@ -124,7 +102,7 @@ export function ThreadSetupForm({
           />
         </ConfigField>
       )}
-      <ConfigField label="Agent">
+      <ConfigField label="Agent" className={compact ? "col-span-2" : undefined}>
         <SearchableSelect
           items={availableAgents.map((a) => ({
             id: String(a.id),
@@ -136,7 +114,7 @@ export function ThreadSetupForm({
           placeholder="Search agents…"
         />
       </ConfigField>
-      <ConfigField label="Model">
+      <ConfigField label="Model" className="col-span-2">
         {modelsLoading ? (
           <input
             type="text"
@@ -156,19 +134,25 @@ export function ThreadSetupForm({
             type="text"
             value={threadModel}
             onChange={(e) => onModelChange(e.target.value)}
-            placeholder={defaultModel || "model-id"}
+            placeholder={defaultModel || "default"}
             className="h-7 w-full rounded-md border border-input bg-input/20 dark:bg-input/30 px-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         )}
-        {modelsError && <span className="text-[11px] text-muted-foreground">{modelsError}</span>}
       </ConfigField>
+      {onSubmit && (
+        <div className="col-span-2">
+          <Button size="sm" className="w-full" onClick={onSubmit}>
+            {submitLabel ?? "Create Session"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
-function ConfigField({ label, children }: { label: string; children: React.ReactNode }) {
+function ConfigField({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn("flex flex-col gap-1", className)}>
       <span className="text-[0.6rem] font-medium uppercase tracking-wider text-muted-foreground/60">
         {label}
       </span>

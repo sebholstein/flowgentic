@@ -19,9 +19,9 @@ function RootComponent() {
 
   return (
     <>
-      <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-4 items-center justify-center z-30">
+      <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-4 items-center justify-center z-30" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
         <FlowgenticLogo></FlowgenticLogo>
-        <div className="flex gap-3 flex-col text-sm mt-8">
+        <div className="flex gap-3 flex-col text-sm mt-8" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <div className="flex gap-2 items-center text-muted-foreground">
             <Switch checked></Switch> Start Control Plane
           </div>
@@ -29,7 +29,7 @@ function RootComponent() {
             <Switch checked></Switch> Start Worker
           </div>
         </div>
-        <Button size={"lg"} asChild className="mt-1">
+        <Button size={"lg"} asChild className="mt-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <Link to="/app">
             <Rocket className="size-4 mr-1" /> Lets go
           </Link>

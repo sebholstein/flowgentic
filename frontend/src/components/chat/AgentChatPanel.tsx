@@ -1,8 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Loader2, X, ImagePlus, Bell, ArrowUp } from "lucide-react";
+import { Bot, Loader2, X, ImagePlus, Bell, ArrowUp, ChevronDown, Map } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { ToolCallBlock } from "./ToolCallBlock";
 import { McpToolCallBlock } from "./McpToolCallBlock";
 import { ThinkingBlock } from "./ThinkingBlock";
@@ -51,7 +60,38 @@ interface AgentChatPanelProps {
   pendingThoughtText?: string;
   /** Whether the stream is actively connected / producing output */
   isStreaming?: boolean;
+  /** Currently selected model name */
+  selectedModel?: string;
+  /** Available models for the dropdown */
+  availableModels?: string[];
+  /** Callback when model changes */
+  onModelChange?: (model: string) => void;
+  /** Current session mode */
+  sessionMode?: string;
+  /** Callback when session mode changes */
+  onSessionModeChange?: (mode: string) => void;
 }
+
+const StreamingSpinner = memo(function StreamingSpinner() {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startRef.current);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      <span className="text-[12px] font-mono text-muted-foreground tabular-nums">
+        {(elapsed / 1000).toFixed(1)}s
+      </span>
+    </div>
+  );
+});
 
 export function AgentChatPanel({
   target,
@@ -67,6 +107,11 @@ export function AgentChatPanel({
   pendingAgentText = "",
   pendingThoughtText = "",
   isStreaming = false,
+  selectedModel,
+  availableModels,
+  onModelChange,
+  sessionMode = "code",
+  onSessionModeChange,
 }: AgentChatPanelProps) {
   const [internalMessages, setInternalMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -89,9 +134,6 @@ export function AgentChatPanel({
   // Use external messages when provided, otherwise fall back to internal state
   const messages = externalMessages ?? internalMessages;
 
-  // Track session tokens (rough estimate: ~4 chars per token)
-  const [sessionTokens, setSessionTokens] = useState(0);
-
   // Auto-scroll to bottom when new messages arrive or pending text changes
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -99,30 +141,15 @@ export function AgentChatPanel({
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     });
-  }, [messages, pendingAgentText, pendingThoughtText]);
+  }, [messages, pendingAgentText, pendingThoughtText, showStreamingIndicator]);
 
   // Reset messages and focus when target changes
   useEffect(() => {
     if (!externalMessages) {
       setInternalMessages([]);
     }
-    setSessionTokens(0);
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [target.entityId, externalMessages]);
-
-  // Update session tokens when messages change
-  useEffect(() => {
-    const totalChars = messages.reduce((acc, msg) => {
-      if (msg.type === "user" || msg.type === "agent") {
-        return acc + msg.content.length;
-      }
-      if (msg.type === "thinking" && msg.thinking.content) {
-        return acc + msg.thinking.content.length;
-      }
-      return acc;
-    }, 0);
-    setSessionTokens(Math.ceil(totalChars / 4));
-  }, [messages]);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -161,6 +188,11 @@ export function AgentChatPanel({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab" && e.shiftKey && onSessionModeChange) {
+      e.preventDefault();
+      onSessionModeChange(sessionMode === "code" ? "plan" : "code");
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSend();
@@ -311,29 +343,12 @@ export function AgentChatPanel({
               <span className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
               <div className="min-w-0 flex-1">
                 <Markdown className="text-sm">{pendingAgentText}</Markdown>
-                <span className="inline-block w-1.5 h-4 bg-foreground/70 animate-pulse ml-0.5 -mb-0.5" />
               </div>
             </div>
           )}
 
           {showTypingIndicator && !pendingAgentText && !pendingThoughtText && (
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
-              <div className="flex items-center gap-1">
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
-              </div>
-            </div>
+            <StreamingSpinner />
           )}
         </div>
       </div>
@@ -349,7 +364,7 @@ export function AgentChatPanel({
           multiple
         />
 
-        <div className="relative rounded-xl border border-input bg-muted/30 focus-within:ring-1 focus-within:ring-ring">
+        <div className="relative rounded-xl border border-input bg-muted/30 focus-within:ring-1 focus-within:ring-ring/50 focus-within:border-ring/50">
           <textarea
             ref={textareaRef}
             placeholder={`How can I help you today?`}
@@ -357,8 +372,8 @@ export function AgentChatPanel({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping}
-            rows={1}
-            className="w-full resize-none bg-transparent px-4 pt-3 pb-10 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            rows={4}
+            className="w-full resize-none bg-transparent px-4 pt-3 pb-10 text-sm min-h-[120px] placeholder:text-muted-foreground/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
@@ -373,10 +388,59 @@ export function AgentChatPanel({
                 <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground/40">
-                ~{sessionTokens.toLocaleString()} tokens
-              </span>
+            <div className="flex items-center gap-1">
+              {availableModels && availableModels.length > 0 && onModelChange && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-0.5 rounded-md px-1.5 h-7 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+                    >
+                      <span className="max-w-[120px] truncate">{selectedModel || "Model"}</span>
+                      <ChevronDown className="size-3 shrink-0 opacity-60" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" align="end" className="min-w-[180px]">
+                    <DropdownMenuLabel>Model</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={selectedModel} onValueChange={onModelChange}>
+                      {availableModels.map((model) => (
+                        <DropdownMenuRadioItem key={model} value={model}>
+                          {model}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {onSessionModeChange && (
+                <button
+                  type="button"
+                  onClick={() => onSessionModeChange(sessionMode === "code" ? "plan" : "code")}
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-1.5 h-7 text-[11px] transition-colors cursor-pointer",
+                    sessionMode === "plan"
+                      ? "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  )}
+                  title="Toggle plan mode (Shift+Tab)"
+                >
+                  <Map className="size-3 shrink-0" />
+                  <AnimatePresence>
+                    {sessionMode === "plan" && (
+                      <motion.span
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: "auto", opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="overflow-hidden whitespace-nowrap"
+                      >
+                        Plan mode active
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              )}
               <Button
                 size="icon"
                 className="h-7 w-7 rounded-lg"

@@ -6,8 +6,10 @@ import "@xyflow/react/dist/style.css";
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { GitBranch, Activity, Workflow, Inbox, User, Loader2 } from "lucide-react";
+import { GitBranch, Activity, Workflow, Inbox, Loader2, FileCode2, Brain, Plus, Bot } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getHarnessIcon } from "@/components/icons/agent-icons";
 import { useClient } from "@/lib/connect";
 import { ThreadService } from "@/proto/gen/controlplane/v1/thread_service_pb";
 import type { ThreadConfig } from "@/proto/gen/controlplane/v1/thread_service_pb";
@@ -28,7 +30,8 @@ import { projectsQueryOptions } from "@/lib/queries/projects";
 import { workersQueryOptions } from "@/lib/queries/workers";
 import type { Project } from "@/types/project";
 import type { Worker } from "@/types/server";
-
+import { useResizePanel } from "@/hooks/use-resize-panel";
+import { deriveThreadViewState, parsePlan, type ThreadViewState, type ParsedPlan } from "@/lib/thread-state";
 import type { Task } from "@/types/task";
 import type { TaskConfig } from "@/proto/gen/controlplane/v1/task_service_pb";
 
@@ -51,12 +54,14 @@ export const Route = createFileRoute("/app/threads/$threadId")({
 });
 
 // Context for sharing thread data with child routes
-interface ThreadContextValue {
+export interface ThreadContextValue {
   thread: ThreadConfig;
   tasks: Task[];
   selectedTaskId?: string;
   onSelectTask: (taskId: string) => void;
   pendingCheckInsCount: number;
+  viewState: ThreadViewState;
+  parsedPlan: ParsedPlan | null;
 }
 
 export const ThreadContext = createContext<ThreadContextValue | null>(null);
@@ -67,6 +72,11 @@ export function useThreadContext() {
     throw new Error("useThreadContext must be used within ThreadLayout");
   }
   return context;
+}
+
+/** Normalize agent ID strings like "CLAUDE_CODE" → "claude-code" */
+function normalizeAgentId(agent: string): string {
+  return agent.toLowerCase().replace(/_/g, "-");
 }
 
 function mapBackendTask(t: TaskConfig): Task {
@@ -90,8 +100,14 @@ function ThreadLayout() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<"page" | "graph">("page");
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(undefined);
-  const [leftPanelPercent, setLeftPanelPercent] = useState(60);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { percent: leftPanelPercent, handleMouseDown, containerRef } = useResizePanel({
+    initial: 60,
+    min: 30,
+    max: 70,
+  });
+
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
+  const [newSessionPopoverOpen, setNewSessionPopoverOpen] = useState(false);
 
   const threadClient = useClient(ThreadService);
   const { data: threadData, isLoading } = useQuery({
@@ -121,7 +137,19 @@ function ThreadLayout() {
     return (tasksData?.tasks ?? []).map(mapBackendTask);
   }, [tasksData]);
 
-  const isBuildMode = thread?.mode === "build";
+  const hasAnySession = (sessionsData?.sessions?.length ?? 0) > 0;
+  const sessions = sessionsData?.sessions ?? [];
+
+  // Default active session to first session
+  useEffect(() => {
+    if (sessions.length > 0 && !activeSessionId) {
+      setActiveSessionId(sessions[0].id);
+    }
+  }, [sessions, activeSessionId]);
+
+  // Derive view state from thread data
+  const viewState = deriveThreadViewState(thread, tasks);
+  const threadParsedPlan = thread?.plan ? parsePlan(thread.plan) : null;
 
   // Stream session events for the thread chat
   const {
@@ -177,7 +205,6 @@ function ThreadLayout() {
     sessionMessages.length === 0 &&
     !pendingAgentText &&
     !pendingThoughtText;
-  const hasAnySession = (sessionsData?.sessions?.length ?? 0) > 0;
   const isPrimingExistingSession =
     hasAnySession && !hasReceivedSessionUpdate && !hasPrimingWindowExpired;
   const isPanelStreaming =
@@ -258,7 +285,10 @@ function ThreadLayout() {
     setWorkerId(workers[0].id);
   }
 
-  // Create session mutation (first message on a new thread)
+  // Reset mutation state when navigating between threads (component re-renders
+  // but doesn't unmount, so stale isSuccess from a previous thread would cause
+  // handleSendMessage to route through promptMutation instead of createSession).
+  const prevThreadIdRef = useRef(threadId);
   const createSessionMutation = useMutation({
     mutationFn: (prompt: string) =>
       sessionClient.createSession({
@@ -280,6 +310,11 @@ function ThreadLayout() {
       queryClient.invalidateQueries({ queryKey: ["thread", threadId] });
     },
   });
+
+  if (prevThreadIdRef.current !== threadId) {
+    prevThreadIdRef.current = threadId;
+    createSessionMutation.reset();
+  }
 
   // Follow-up message mutation
   const promptMutation = useMutation({
@@ -306,32 +341,6 @@ function ThreadLayout() {
   const handleCloseTaskDetail = useCallback(() => {
     setSelectedTaskId(undefined);
   }, []);
-
-  // Resize handle for left panel (chat)
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const startX = e.clientX;
-      const startPercent = leftPanelPercent;
-      const containerWidth = containerRef.current?.offsetWidth ?? 1;
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        const deltaX = moveEvent.clientX - startX;
-        const deltaPercent = (deltaX / containerWidth) * 100;
-        // Clamp between 30% and 70%
-        setLeftPanelPercent(Math.min(70, Math.max(30, startPercent + deltaPercent)));
-      };
-
-      const handleMouseUp = () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [leftPanelPercent],
-  );
 
   const pendingCheckInsCount = 0;
 
@@ -361,6 +370,7 @@ function ThreadLayout() {
     if (currentPath.includes("/tasks")) return "tasks";
     if (currentPath.includes("/checkins")) return "checkins";
     if (currentPath.includes("/memory")) return "memory";
+    if (currentPath.includes("/changes")) return "changes";
     return "overview";
   };
   const activeTab = getActiveTab();
@@ -377,18 +387,64 @@ function ThreadLayout() {
     selectedTaskId,
     onSelectTask: handleSelectTask,
     pendingCheckInsCount,
+    viewState,
+    parsedPlan: threadParsedPlan,
   };
 
+  const setupFormContent = !hasAnySession ? (
+    <ThreadSetupForm
+      threadModel={threadModel}
+      onModelChange={setThreadModel}
+      project={projects.find((p) => p.id === thread.projectId)}
+      projects={projects}
+      onProjectChange={() => {}}
+      workerId={workerId}
+      workers={workers}
+      onWorkerChange={setWorkerId}
+      agent={agent}
+      onAgentChange={setAgent}
+      availableModels={modelsData?.models ?? []}
+      defaultModel={modelsData?.defaultModel ?? ""}
+      modelsLoading={modelsLoading}
+      modelsError={modelsIsError ? "Could not load models for this agent" : null}
+    />
+  ) : undefined;
+
+  const chatPanel = (
+    <AgentChatPanel
+      target={{
+        type: "thread_overseer",
+        entityId: thread.id,
+        agentName: "Agent",
+        title: thread.topic || "Untitled",
+        agentColor: "bg-violet-500",
+      }}
+      hideHeader
+      emptyStateContent={setupFormContent}
+      externalMessages={displayMessages}
+      pendingAgentText={pendingAgentText}
+      pendingThoughtText={pendingThoughtText}
+      isStreaming={isPanelStreaming}
+      onSend={handleSendMessage}
+      selectedModel={threadModel}
+      availableModels={modelsData?.models ?? []}
+      onModelChange={setThreadModel}
+      sessionMode={sessionMode}
+      onSessionModeChange={setSessionMode}
+    />
+  );
+
+  // --- Always render split layout: chat (left) + tabbed content (right) ---
   return (
     <ThreadContext value={contextValue}>
       <div className="flex h-full flex-col">
-        {/* Compact Header with integrated tabs - aligned with panels below */}
+        {/* Header with tabs */}
         <div className="flex border-b h-10 shrink-0 select-none" style={dragStyle}>
-          {/* Left section - matches chat panel width */}
+          {/* Left section - thread title */}
           {!isTaskDetailPage && (
             <div
               className="flex items-center gap-2 px-4 shrink-0"
-              style={isBuildMode ? undefined : { width: `${leftPanelPercent}%` }}
+              style={{ width: `${leftPanelPercent}%` }}
             >
               <Badge
                 variant="outline"
@@ -396,220 +452,204 @@ function ThreadLayout() {
               >
                 Thread
               </Badge>
-              {isBuildMode && (
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-5 shrink-0 font-medium text-slate-400 border-slate-500/30 gap-0.5"
-                >
-                  <User className="size-2.5" />
-                  Build
-                </Badge>
-              )}
               <span className="font-medium text-sm truncate">{thread.topic || "Untitled"}</span>
             </div>
           )}
 
-          {/* Right section - tab navigation (hidden for build mode) */}
-          {!isBuildMode && (
-            <div className="flex-1 min-w-0 flex items-center px-4">
-              {/* Tab Navigation */}
-              <nav className="flex items-center gap-4 h-full" style={noDragStyle}>
+          {/* Right section - tab navigation */}
+          <div className="flex-1 min-w-0 flex items-center px-4">
+            <nav className="flex items-center gap-4 h-full" style={noDragStyle}>
+              <Link
+                to="/app/threads/$threadId"
+                params={{ threadId }}
+                className={cn(tabTriggerClass)}
+                data-active={activeTab === "overview" && view === "page"}
+                onClick={() => setView("page")}
+              >
+                <Activity className="size-3.5" />
+                Overview
+              </Link>
+              <Link
+                to="/app/threads/$threadId/tasks"
+                params={{ threadId }}
+                className={cn(tabTriggerClass)}
+                data-active={activeTab === "tasks" && view === "page"}
+                onClick={() => setView("page")}
+              >
+                <Workflow className="size-3.5" />
+                Tasks
+                <span className="text-muted-foreground">({tasks.length})</span>
+              </Link>
+              <Link
+                to="/app/threads/$threadId/changes"
+                params={{ threadId }}
+                className={cn(tabTriggerClass)}
+                data-active={activeTab === "changes" && view === "page"}
+                onClick={() => setView("page")}
+              >
+                <FileCode2 className="size-3.5" />
+                Changes
+              </Link>
+              <Link
+                to="/app/threads/$threadId/memory"
+                params={{ threadId }}
+                className={cn(tabTriggerClass)}
+                data-active={activeTab === "memory" && view === "page"}
+                onClick={() => setView("page")}
+              >
+                <Brain className="size-3.5" />
+                Memory
+              </Link>
+              {pendingCheckInsCount > 0 && (
                 <Link
-                  to="/app/threads/$threadId"
+                  to="/app/threads/$threadId/checkins"
                   params={{ threadId }}
                   className={cn(tabTriggerClass)}
-                  data-active={activeTab === "overview" && view === "page"}
+                  data-active={activeTab === "checkins" && view === "page"}
                   onClick={() => setView("page")}
                 >
-                  <Activity className="size-3.5" />
-                  Overview
-                </Link>
-                <Link
-                  to="/app/threads/$threadId/tasks"
-                  params={{ threadId }}
-                  className={cn(tabTriggerClass)}
-                  data-active={activeTab === "tasks" && view === "page"}
-                  onClick={() => setView("page")}
-                >
-                  <Workflow className="size-3.5" />
-                  Tasks
-                  <span className="text-muted-foreground">({tasks.length})</span>
-                </Link>
-                {pendingCheckInsCount > 0 && (
-                  <Link
-                    to="/app/threads/$threadId/checkins"
-                    params={{ threadId }}
-                    className={cn(tabTriggerClass)}
-                    data-active={activeTab === "checkins" && view === "page"}
-                    onClick={() => setView("page")}
+                  <Inbox className="size-3.5" />
+                  Check-ins
+                  <Badge
+                    variant="outline"
+                    className="ml-1 text-xs px-1.5 py-0 h-5 text-amber-400 border-amber-500/30"
                   >
-                    <Inbox className="size-3.5" />
-                    Check-ins
-                    <Badge
-                      variant="outline"
-                      className="ml-1 text-xs px-1.5 py-0 h-5 text-amber-400 border-amber-500/30"
-                    >
-                      {pendingCheckInsCount}
-                    </Badge>
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  className={cn(tabTriggerClass)}
-                  data-active={view === "graph"}
-                  onClick={() => setView("graph")}
-                >
-                  <GitBranch className="size-3.5" />
-                  Graph
-                </button>
-              </nav>
-            </div>
-          )}
+                    {pendingCheckInsCount}
+                  </Badge>
+                </Link>
+              )}
+              <button
+                type="button"
+                className={cn(tabTriggerClass)}
+                data-active={view === "graph"}
+                onClick={() => setView("graph")}
+              >
+                <GitBranch className="size-3.5" />
+                Graph
+              </button>
+            </nav>
+          </div>
         </div>
 
-        <div className="flex flex-1 min-h-0" ref={containerRef}>
-          {/* Build mode - full-width chat */}
-          {isBuildMode && !isTaskDetailPage ? (
-            <div className="flex-1 h-full overflow-hidden">
-              {isChatReady && (
-                <AgentChatPanel
-                  target={{
-                    type: "thread_overseer",
-                    entityId: thread.id,
-                    agentName: "Agent",
-                    title: thread.topic || "Untitled",
-                    agentColor: "bg-violet-500",
-                  }}
-                  hideHeader
-                  emptyStateContent={
-                    !hasAnySession ? (
-                      <ThreadSetupForm
-                        threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
-                        onModeChange={() => {}}
-                        threadModel={threadModel}
-                        onModelChange={setThreadModel}
-                        project={projects.find((p) => p.id === thread.projectId)}
-                        projects={projects}
-                        onProjectChange={() => {}}
-                        workerId={workerId}
-                        workers={workers}
-                        onWorkerChange={setWorkerId}
-                        agent={agent}
-                        onAgentChange={setAgent}
-                        sessionMode={sessionMode}
-                        onSessionModeChange={setSessionMode}
-                        availableModels={modelsData?.models ?? []}
-                        defaultModel={modelsData?.defaultModel ?? ""}
-                        modelsLoading={modelsLoading}
-                        modelsError={modelsIsError ? "Could not load models for this agent" : null}
-                      />
-                    ) : undefined
-                  }
-                  externalMessages={displayMessages}
-                  pendingAgentText={pendingAgentText}
-                  pendingThoughtText={pendingThoughtText}
-                  isStreaming={isPanelStreaming}
-                  onSend={handleSendMessage}
-                />
-              )}
+        {/* Session tab strip - below the header, aligned with chat panel */}
+        {!isTaskDetailPage && (sessions.length > 0 || hasAnySession) && (
+          <div className="flex shrink-0 select-none border-b" style={dragStyle}>
+            <div
+              className="flex items-center gap-0.5 px-2 h-9 shrink-0"
+              style={{ width: `${leftPanelPercent}%` }}
+            >
+              {sessions.map((session) => {
+                const IconComponent = getHarnessIcon(normalizeAgentId(session.agent)) ?? Bot;
+                const isActive = session.id === activeSessionId;
+                return (
+                  <button
+                    key={session.id}
+                    type="button"
+                    className={cn(
+                      "h-full flex items-center gap-1.5 px-2 border-b-2 transition-colors cursor-pointer text-xs",
+                      isActive
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
+                    )}
+                    style={noDragStyle}
+                    onClick={() => setActiveSessionId(session.id)}
+                    title={`${session.agent} — ${session.model || "default"}`}
+                  >
+                    <IconComponent className="size-3" />
+                    <span className="truncate max-w-28">{session.prompt?.slice(0, 30) || session.agent}</span>
+                  </button>
+                );
+              })}
+              <Popover open={newSessionPopoverOpen} onOpenChange={setNewSessionPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-full flex items-center px-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    style={noDragStyle}
+                    title="New session"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-4" align="start">
+                  <ThreadSetupForm
+                    compact
+                    threadModel={threadModel}
+                    onModelChange={setThreadModel}
+                    project={projects.find((p) => p.id === thread.projectId)}
+                    projects={projects}
+                    onProjectChange={() => {}}
+                    workerId={workerId}
+                    workers={workers}
+                    onWorkerChange={setWorkerId}
+                    agent={agent}
+                    onAgentChange={setAgent}
+                    availableModels={modelsData?.models ?? []}
+                    defaultModel={modelsData?.defaultModel ?? ""}
+                    modelsLoading={modelsLoading}
+                    modelsError={modelsIsError ? "Could not load models for this agent" : null}
+                    submitLabel="Create Session"
+                    onSubmit={() => setNewSessionPopoverOpen(false)}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-          ) : (
-            <>
-              {/* Chat panel - visible on the left, hidden on task detail pages */}
-              {!isTaskDetailPage && (
-                <>
-                  <div
-                    className="flex-shrink-0 h-full overflow-hidden"
-                    style={{ width: `${leftPanelPercent}%` }}
-                  >
-                    {isChatReady && (
-                      <AgentChatPanel
-                        target={{
-                          type: "thread_overseer",
-                          entityId: thread.id,
-                          agentName: "Overseer",
-                          title: thread.topic || "Untitled",
-                          agentColor: "bg-violet-500",
-                        }}
-                        emptyStateContent={
-                          !hasAnySession ? (
-                            <ThreadSetupForm
-                              threadMode={thread.mode === "plan" || thread.mode === "build" ? thread.mode : "plan"}
-                              onModeChange={() => {}}
-                              threadModel={threadModel}
-                              onModelChange={setThreadModel}
-                              project={projects.find((p) => p.id === thread.projectId)}
-                              projects={projects}
-                              onProjectChange={() => {}}
-                              workerId={workerId}
-                              workers={workers}
-                              onWorkerChange={setWorkerId}
-                              agent={agent}
-                              onAgentChange={setAgent}
-                              sessionMode={sessionMode}
-                              onSessionModeChange={setSessionMode}
-                              availableModels={modelsData?.models ?? []}
-                              defaultModel={modelsData?.defaultModel ?? ""}
-                              modelsLoading={modelsLoading}
-                              modelsError={modelsIsError ? "Could not load models for this agent" : null}
-                            />
-                          ) : undefined
-                        }
-                        externalMessages={displayMessages}
-                        pendingAgentText={pendingAgentText}
-                        pendingThoughtText={pendingThoughtText}
-                        isStreaming={isPanelStreaming}
-                        onSend={handleSendMessage}
-                      />
-                    )}
-                  </div>
-                  {/* Resize handle - wide hit area, thin visual line */}
-                  <div
-                    className="w-3 -ml-[6px] -mr-[5px] flex-shrink-0 cursor-col-resize flex justify-center group relative z-10"
-                    onMouseDown={handleMouseDown}
-                  >
-                    <div className="w-px h-full bg-border group-hover:bg-primary/30 transition-colors" />
-                  </div>
-                </>
-              )}
+          </div>
+        )}
 
-              {/* Main content area */}
-              <div className="min-w-0 flex-1 overflow-hidden">
-                {view === "page" ? (
-                  <div className="h-full flex flex-col overflow-auto">
-                    {/* Tab Content via Outlet */}
-                    <Outlet />
-                  </div>
-                ) : (
-                  <div key={threadId} className="h-full bg-slate-100 relative">
-                    <ReactFlowProvider>
-                      <ThreadGraphView
-                        tasks={tasks}
-                        selectedTaskId={selectedTaskId}
-                        isSimulating={false}
-                        onStart={() => {}}
-                        onPause={() => {}}
-                        onReset={() => {}}
-                        onNodeClick={handleSelectTask}
-                      />
-                    </ReactFlowProvider>
-                    {/* Task detail sidebar for graph view */}
-                    {selectedTask && (
-                      <div className="absolute right-0 top-0 bottom-0 w-72 border-l bg-sidebar">
-                        <TaskDetailSidebar
-                          task={selectedTask}
-                          tasks={tasks}
-                          threadId={threadId}
-                          onClose={handleCloseTaskDetail}
-                          onSelectTask={handleSelectTask}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+        <div className="flex flex-1 min-h-0" ref={containerRef}>
+          {/* Chat panel - visible on the left, hidden on task detail pages */}
+          {!isTaskDetailPage && (
+            <>
+              <div
+                className="flex-shrink-0 h-full overflow-hidden"
+                style={{ width: `${leftPanelPercent}%` }}
+              >
+                {isChatReady && chatPanel}
+              </div>
+              {/* Resize handle */}
+              <div
+                className="w-3 -ml-[6px] -mr-[5px] flex-shrink-0 cursor-col-resize flex justify-center group relative z-10"
+                onMouseDown={handleMouseDown}
+              >
+                <div className="w-px h-full bg-border group-hover:bg-primary/30 transition-colors" />
               </div>
             </>
           )}
+
+          {/* Main content area */}
+          <div className="min-w-0 flex-1 overflow-hidden">
+            {view === "page" ? (
+              <div className="h-full flex flex-col overflow-auto">
+                <Outlet />
+              </div>
+            ) : (
+              <div key={threadId} className="h-full bg-slate-100 relative">
+                <ReactFlowProvider>
+                  <ThreadGraphView
+                    tasks={tasks}
+                    selectedTaskId={selectedTaskId}
+                    isSimulating={false}
+                    onStart={() => {}}
+                    onPause={() => {}}
+                    onReset={() => {}}
+                    onNodeClick={handleSelectTask}
+                  />
+                </ReactFlowProvider>
+                {selectedTask && (
+                  <div className="absolute right-0 top-0 bottom-0 w-72 border-l bg-sidebar">
+                    <TaskDetailSidebar
+                      task={selectedTask}
+                      tasks={tasks}
+                      threadId={threadId}
+                      onClose={handleCloseTaskDetail}
+                      onSelectTask={handleSelectTask}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </ThreadContext>

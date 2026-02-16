@@ -22,7 +22,7 @@ export interface Thread {
   resources?: ThreadResource[];
   vcs?: ThreadVCSContext;
   projectId: string;
-  mode: "plan" | "build";
+  mode?: string;
   controlPlaneId?: string;
   archived?: boolean;
   plan?: string;

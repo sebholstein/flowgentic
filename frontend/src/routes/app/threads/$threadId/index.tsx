@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Markdown } from "@/components/ui/markdown";
-import { Clock, Calendar, Layers, Activity, Zap, Users, User } from "lucide-react";
+import { Clock, Calendar, Layers, Activity, Zap, MessageSquare } from "lucide-react";
 import { useThreadContext } from "./route";
+import { PlanProposalPanel } from "@/components/threads/PlanProposalPanel";
 
 export const Route = createFileRoute("/app/threads/$threadId/")({
   component: ThreadOverviewTab,
@@ -20,7 +21,39 @@ const threadStatusConfig: Record<string, { color: string; bgColor: string; label
 };
 
 function ThreadOverviewTab() {
-  const { thread, tasks } = useThreadContext();
+  const { thread, tasks, viewState, parsedPlan } = useThreadContext();
+
+  // Planning state: show PlanProposalPanel
+  if (viewState === "planning" && parsedPlan) {
+    return <PlanProposalPanel plan={parsedPlan} />;
+  }
+
+  // Chat state (no session, no plan, no tasks): show welcome/empty state
+  if (viewState === "chat") {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center max-w-sm space-y-3">
+          <MessageSquare className="size-10 text-muted-foreground/40 mx-auto" />
+          <h3 className="text-sm font-medium text-muted-foreground">No activity yet</h3>
+          <p className="text-xs text-muted-foreground/70">
+            Start a conversation to begin working on this thread.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Executing state (or has tasks): show stats overview
+  return <ThreadStatsOverview thread={thread} tasks={tasks} />;
+}
+
+function ThreadStatsOverview({
+  thread,
+  tasks,
+}: {
+  thread: ThreadContextValue["thread"];
+  tasks: ThreadContextValue["tasks"];
+}) {
   const threadStatus = threadStatusConfig["pending"];
   const completedCount = tasks.filter((t) => t.status === "completed").length;
   const runningCount = tasks.filter((t) => t.status === "running").length;
@@ -33,7 +66,6 @@ function ThreadOverviewTab() {
   ).length;
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  // Calculate total tokens across all executions
   const totalTokens = useMemo(() => {
     let input = 0;
     let output = 0;
@@ -56,18 +88,6 @@ function ThreadOverviewTab() {
           <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
             <Badge className={cn("text-xs", threadStatus.bgColor, threadStatus.color)}>
               {threadStatus.label}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs gap-1",
-                thread.mode === "build"
-                  ? "text-slate-400 border-slate-500/30"
-                  : "text-violet-400 border-violet-500/30",
-              )}
-            >
-              {thread.mode === "build" ? <User className="size-3" /> : <Users className="size-3" />}
-              {thread.mode === "build" ? "Build" : "Plan"}
             </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight mb-3">{thread.topic}</h1>
@@ -185,3 +205,6 @@ function ThreadOverviewTab() {
     </ScrollArea>
   );
 }
+
+// Import the type for the extracted component props
+import type { ThreadContextValue } from "./route";
