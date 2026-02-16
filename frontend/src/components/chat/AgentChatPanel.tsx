@@ -18,6 +18,7 @@ import { ThinkingBlock } from "./ThinkingBlock";
 import { InlineFeedbackCard } from "./InlineFeedbackCard";
 import { Markdown } from "@/components/ui/markdown";
 import type { InboxItem } from "@/types/inbox";
+import type { ModelInfo } from "@/proto/gen/worker/v1/system_service_pb";
 import type { ChatMessage } from "@/lib/session-event-mapper";
 
 export type { ChatMessage };
@@ -63,7 +64,7 @@ interface AgentChatPanelProps {
   /** Currently selected model name */
   selectedModel?: string;
   /** Available models for the dropdown */
-  availableModels?: string[];
+  availableModels?: ModelInfo[];
   /** Callback when model changes */
   onModelChange?: (model: string) => void;
   /** Current session mode */
@@ -396,7 +397,9 @@ export function AgentChatPanel({
                       type="button"
                       className="flex items-center gap-0.5 rounded-md px-1.5 h-7 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
                     >
-                      <span className="max-w-[120px] truncate">{selectedModel || "Model"}</span>
+                      <span className="max-w-[120px] truncate">
+                        {availableModels.find((m) => m.id === selectedModel)?.displayName || selectedModel || "Model"}
+                      </span>
                       <ChevronDown className="size-3 shrink-0 opacity-60" />
                     </button>
                   </DropdownMenuTrigger>
@@ -404,8 +407,13 @@ export function AgentChatPanel({
                     <DropdownMenuLabel>Model</DropdownMenuLabel>
                     <DropdownMenuRadioGroup value={selectedModel} onValueChange={onModelChange}>
                       {availableModels.map((model) => (
-                        <DropdownMenuRadioItem key={model} value={model}>
-                          {model}
+                        <DropdownMenuRadioItem key={model.id} value={model.id}>
+                          <div className="flex flex-col">
+                            <span>{model.displayName || model.id}</span>
+                            {model.description && (
+                              <span className="text-[10px] text-muted-foreground">{model.description}</span>
+                            )}
+                          </div>
                         </DropdownMenuRadioItem>
                       ))}
                     </DropdownMenuRadioGroup>

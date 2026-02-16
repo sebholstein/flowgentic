@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { ServerStatusDot } from "@/components/servers/ServerStatusDot";
 import { Bot, Cpu, Folder } from "lucide-react";
 import { Agent } from "@/proto/gen/worker/v1/agent_pb";
+import type { ModelInfo } from "@/proto/gen/worker/v1/system_service_pb";
 import type { Project } from "@/types/project";
 import type { Worker } from "@/types/server";
 import {
@@ -25,7 +26,7 @@ interface ThreadSetupFormProps {
   onWorkerChange: (workerId: string) => void;
   agent: Agent;
   onAgentChange: (agent: Agent) => void;
-  availableModels: string[];
+  availableModels: ModelInfo[];
   defaultModel: string;
   modelsLoading: boolean;
   modelsError: string | null;
@@ -64,8 +65,9 @@ export function ThreadSetupForm({
   onSubmit,
 }: ThreadSetupFormProps) {
   const modelItems = availableModels.map((model) => ({
-    id: model,
-    name: model,
+    id: model.id,
+    name: model.displayName || model.id,
+    description: model.description,
     icon: <Bot className="size-3" />,
   }));
 

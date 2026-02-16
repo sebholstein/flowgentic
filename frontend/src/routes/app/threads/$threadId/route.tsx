@@ -271,9 +271,10 @@ function ThreadLayout() {
   useEffect(() => {
     if (!modelsData) return;
     const models = modelsData.models;
-    const fallbackModel = modelsData.defaultModel || models[0] || "";
+    const fallbackModel = modelsData.defaultModel || models[0]?.id || "";
     if (!fallbackModel) return;
-    if (!threadModel || !models.includes(threadModel)) {
+    const modelIds = models.map((m) => m.id);
+    if (!threadModel || !modelIds.includes(threadModel)) {
       setThreadModel(fallbackModel);
     }
   }, [modelsData, threadModel]);

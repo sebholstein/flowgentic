@@ -15,6 +15,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 export interface SearchableSelectItem {
   id: string;
   name: string;
+  description?: string;
   icon?: React.ReactNode;
   trailing?: React.ReactNode;
 }
@@ -80,7 +81,12 @@ export function SearchableSelect({
                     )}
                   />
                   {item.icon}
-                  <span className="flex-1 truncate">{item.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="truncate block">{item.name}</span>
+                    {item.description && (
+                      <span className="text-[10px] text-muted-foreground truncate block">{item.description}</span>
+                    )}
+                  </div>
                   {item.trailing}
                 </CommandItem>
               ))}
